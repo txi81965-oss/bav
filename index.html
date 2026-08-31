@@ -1385,7 +1385,32 @@ table{border-collapse:separate;border-spacing:0;width:100%}
 </style>
 </head>
 <body>
-<div id="root"></div>
+<div id="root">
+  <div id="boot-fallback" style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#F6F5F1;font-family:Arial,sans-serif;color:#101828;padding:24px;text-align:center">
+    <div>
+      <div style="font-size:18px;font-weight:700;margin-bottom:8px">Hệ thống Truyền thông · BAV Phú Yên</div>
+      <div style="font-size:14px;color:#667085">Đang khởi động hệ thống…</div>
+      <div id="boot-error" style="display:none;margin-top:14px;padding:12px 14px;border-radius:10px;background:#FEF3F2;color:#B42318;font-size:12px;max-width:720px;text-align:left"></div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  window.__bavBootOK=false;
+  window.addEventListener('error',function(e){
+    if(window.__bavBootOK) return;
+    var box=document.getElementById('boot-error');
+    if(box){box.style.display='block';box.textContent='Website gặp lỗi khi khởi động: '+(e.message||'Lỗi JavaScript')+' — '+(e.filename||'')+':'+(e.lineno||'');}
+    console.error(e.error||e.message||e);
+  });
+  window.addEventListener('unhandledrejection',function(e){
+    if(window.__bavBootOK) return;
+    var box=document.getElementById('boot-error');
+    if(box){box.style.display='block';box.textContent='Website gặp lỗi khi tải dữ liệu: '+(e.reason&&e.reason.message?e.reason.message:String(e.reason));}
+    console.error(e.reason||e);
+  });
+})();
+</script>
 <script type="text/babel" data-presets="react">
 const { useState, useEffect, useCallback } = React;
 
@@ -3895,6 +3920,7 @@ function BackupRestoreCard({ db, update, log, show, admin }) {
 
 const rtRoot = ReactDOM.createRoot(document.getElementById('root'));
 rtRoot.render(<App />);
+setTimeout(() => { window.__bavBootOK = true; }, 1500);
 </script>
 </body>
 </html>
