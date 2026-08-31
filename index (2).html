@@ -1548,9 +1548,9 @@ const C = {
 
 const ACTIVITY_TYPES = [
   { code: "SH", name: "Chia sẻ bài viết", icon: Share2, color: C.amber, rule: "10 lượt chia sẻ hợp lệ = 01 hoạt động. Chỉ tính lượt chia sẻ trong vòng 02 ngày kể từ khi bài viết được đăng." },
-  { code: "QC", name: "Quay / chụp", icon: Camera, color: C.blue, rule: "Quy định 2: tham gia quay/chụp cùng CLB Truyền thông; 05 lần tham gia được xác nhận = 01 hoạt động. Nếu là hoạt động do Ban Truyền thông tạo, sinh viên chỉ cần minh chứng có mặt hoặc được quản trị viên điểm danh." },
+  { code: "QC", name: "Quay / chụp", icon: Camera, color: C.blue, rule: "Quy định 2: tham gia quay/chụp hoạt động do Ban Truyền thông tổ chức. Không cần tạo sản phẩm riêng. Mỗi lần tham gia được xác nhận tính 1 lần; đủ 5 lần tham gia = 01 hoạt động. Điểm danh của quản trị viên được ưu tiên cao nhất." },
   { code: "TV", name: "Tư vấn tuyển sinh", icon: Mic, color: C.green, rule: "01 lần tham gia tư vấn tuyển sinh (được điểm danh xác nhận) = 01 hoạt động." },
-  { code: "VD", name: "Video tự thực hiện", icon: Video, color: C.red, rule: "Quy định 4: chủ động quay, biên tập và hoàn thiện video từ 30 giây trở lên; được BTT thẩm định đạt yêu cầu và đăng tải. 01 video đạt yêu cầu = 01 hoạt động." },
+  { code: "VD", name: "Video", icon: Video, color: C.red, rule: "01 video đạt yêu cầu (tối thiểu 30 giây, đúng nội dung, được thẩm định và đăng tải) = 01 hoạt động." },
   { code: "GT", name: "Giới thiệu người học", icon: UserPlus2, color: C.purple, rule: "01 người học nhập học và hoàn thành học phí kỳ đầu tiên (đã xác minh) = 02 hoạt động." },
   { code: "KH", name: "Hoạt động khác", icon: Layers, color: C.teal, rule: "Quy đổi theo cấu hình riêng do quản trị viên định nghĩa khi tạo hoạt động." },
 ];
@@ -1631,8 +1631,14 @@ function quyDoiForActivity(activity, evidences) {
       const total = dat.reduce((s, e) => s + (Number(e.data.soLuot) || 0), 0);
       return Math.floor(total / 10);
     }
-    case "QC":
+    case "QC": {
+      if (String(activity.id || "").startsWith("chu_dong-QC")) {
+        const self = dat.filter((e) => e.data?.nguon === "tu_lam").length;
+        const club = dat.filter((e) => e.data?.nguon === "cau_lac_bo").length;
+        return self + Math.floor(club / 5);
+      }
       return Math.floor(dat.length / 5);
+    }
     case "TV":
       return dat.length;
     case "VD":
@@ -2242,16 +2248,16 @@ function EmojiPicker({ onPick }) {
   const [open, setOpen] = useState(false);
   return (
     <div className="relative">
-      <button type="button" onClick={() => setOpen((o) => !o)} className="p-2.5 rounded-xl" style={{ background: C.grayBg }} title="Chèn icon/gif">
+      <button type="button" onClick={() => setOpen((o) => !o)} className="p-2.5 rounded-xl" style={{ background: C.grayBg }} title="Mở bộ icon">
         <span style={{ fontSize: 16, lineHeight: 1 }}>😊</span>
       </button>
       {open && (
-        <div className="absolute bottom-12 right-0 z-50 rounded-xl overflow-hidden" style={{ width: 360, maxWidth: "calc(100vw - 24px)", background: "#fff", border: `1px solid ${C.line}`, boxShadow: "0 18px 35px -12px rgba(0,0,0,0.28)" }}>
-          <div className="px-3 py-2 text-xs font-semibold border-b" style={{ color: C.navy, borderColor: C.line }}>Chọn biểu tượng</div>
-          <div className="grid grid-cols-8 gap-1 p-2 max-h-72 overflow-y-auto">
-          {EMOJI_LIST.map((em) => (
-            <button key={em} type="button" onClick={() => { onPick(em); setOpen(false); }} className="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center" style={{ fontSize: 17 }}>{em}</button>
-          ))}
+        <div className="absolute bottom-12 right-0 z-50 p-3 rounded-2xl" style={{ width: 340, maxHeight: 260, overflowY: "auto", background: "#fff", border: `1px solid ${C.line}`, boxShadow: "0 14px 30px rgba(16,24,40,.16)" }}>
+          <div className="text-[11px] font-semibold mb-2" style={{ color: C.gray }}>Chọn icon</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(8,minmax(0,1fr))", gap: 6 }}>
+            {EMOJI_LIST.map((em) => (
+              <button key={em} type="button" onClick={() => { onPick(em); setOpen(false); }} className="w-9 h-9 rounded-lg hover:bg-gray-100 flex items-center justify-center" style={{ fontSize: 19 }}>{em}</button>
+            ))}
           </div>
         </div>
       )}
@@ -2709,12 +2715,12 @@ function StudentProactive({ update, log, show, student }) {
   const [openGT, setOpenGT] = useState(false);
   const cards = [
     { key: "SH", icon: Share2, title: "Chia sẻ bài viết", desc: "Khai báo số bài đã chia sẻ và link Facebook cá nhân.", action: () => setOpenShare(true), color: C.amber },
-    { key: "QC", icon: Camera, title: "Video / tham gia CLB", desc: "Tự thực hiện video theo Quy định 4 hoặc tham gia cùng CLB Truyền thông theo Quy định 2.", action: () => setOpenQC(true), color: C.blue },
+    { key: "QC", icon: Video, title: "Video", desc: "Tự quay/tự biên tập theo Quy định 4 hoặc tham gia cùng CLB Truyền thông theo Quy định 2.", action: () => setOpenQC(true), color: C.blue },
     { key: "GT", icon: UserPlus2, title: "Giới thiệu người học", desc: "Khai báo người học bạn giới thiệu và xác nhận tình trạng nhập học, nộp học phí.", action: () => setOpenGT(true), color: C.purple },
   ];
   return (
     <div>
-      <PageHead title="Nộp minh chứng chủ động" sub="Dành cho hoạt động Chia sẻ bài viết và Quay/chụp không thuộc một hoạt động cụ thể do Ban Truyền thông tạo." />
+      <PageHead title="Nộp minh chứng chủ động" sub="Dành cho Chia sẻ bài viết, Video tự thực hiện và tham gia cùng CLB Truyền thông không gắn với một hoạt động cụ thể." />
       <div className="text-xs p-3 rounded-xl mb-5 flex items-start gap-2" style={{ background: C.blueBg, color: C.blue }}>
         <Info size={14} className="mt-0.5 shrink-0" />
         Hoạt động do Ban Truyền thông tổ chức (quay/chụp sự kiện, tư vấn tuyển sinh, video theo yêu cầu, giới thiệu người học...) vui lòng vào mục "Hoạt động" để nộp minh chứng đúng hoạt động tương ứng.
@@ -2732,7 +2738,7 @@ function StudentProactive({ update, log, show, student }) {
       <Modal open={openShare} onClose={() => setOpenShare(false)} title="Nộp minh chứng · Chia sẻ bài viết" width="max-w-lg">
         <ProactiveShareForm update={update} log={log} show={show} student={student} onDone={() => setOpenShare(false)} />
       </Modal>
-      <Modal open={openQC} onClose={() => setOpenQC(false)} title="Nộp minh chứng · Video / tham gia CLB" width="max-w-lg">
+      <Modal open={openQC} onClose={() => setOpenQC(false)} title="Nộp minh chứng · Video" width="max-w-lg">
         <ProactiveQCForm update={update} log={log} show={show} student={student} onDone={() => setOpenQC(false)} />
       </Modal>
       <Modal open={openGT} onClose={() => setOpenGT(false)} title="Nộp minh chứng · Giới thiệu người học" width="max-w-lg">
@@ -2845,16 +2851,15 @@ function ProactiveShareForm({ update, log, show, student, onDone }) {
 function ProactiveQCForm({ update, log, show, student, onDone }) {
   const [nguon, setNguon] = useState("tu_lam");
   const [soLuong, setSoLuong] = useState(1);
-  const [items, setItems] = useState([{ link: "", ten: "", nguoiMoi: "" }]);
+  const [items, setItems] = useState([{ ten: "", link: "", nguoiMoi: "" }]);
   const [camKet, setCamKet] = useState(false);
   const [err, setErr] = useState("");
-  const isSelf = nguon === "tu_lam";
   const setCount = (n) => {
     n = Math.max(1, Math.min(20, Number(n) || 1));
     setSoLuong(n);
     setItems((prev) => {
       const next = prev.slice(0, n);
-      while (next.length < n) next.push({ link: "", ten: "", nguoiMoi: "" });
+      while (next.length < n) next.push({ ten: "", link: "", nguoiMoi: "" });
       return next;
     });
   };
@@ -2862,60 +2867,49 @@ function ProactiveQCForm({ update, log, show, student, onDone }) {
   const submit = (e) => {
     e.preventDefault(); setErr("");
     for (const it of items) {
-      if (isSelf) {
-        if (!it.ten.trim()) return setErr("Vui lòng nhập tên video / sản phẩm cho từng minh chứng.");
-        if (!it.link.trim()) return setErr("Vui lòng nhập link Google Drive cho từng video.");
+      if (!it.ten.trim()) return setErr(nguon === "tu_lam" ? "Vui lòng nhập tên video/sản phẩm cho từng video." : "Vui lòng nhập tên video cho từng lần tham gia CLB.");
+      if (nguon === "tu_lam") {
+        if (!it.link.trim()) return setErr("Video tự thực hiện bắt buộc phải có link Google Drive.");
         if (!isDriveLink(it.link)) return setErr("Link video phải là link Google Drive.");
-      } else if (!it.nguoiMoi.trim()) {
-        return setErr("Vui lòng nhập tên thành viên CLB Truyền thông đã mời bạn tham gia cho từng lần.");
       }
     }
     if (!camKet) return setErr("Vui lòng cam kết thông tin trung thực.");
     const batch = items.map((it) => ({
-      id: uid(), activityId: null, mssv: student.mssv,
-      loai: isSelf ? "VD" : "QC", nguonNop: "chu_dong",
-      data: isSelf
-        ? { nguon: "tu_lam", ten: it.ten.trim(), link: it.link.trim() }
-        : { nguon: "cau_lac_bo", nguoiMoi: it.nguoiMoi.trim() },
+      id: uid(), activityId: null, mssv: student.mssv, loai: "QC", nguonNop: "chu_dong",
+      data: { nguon, ten: it.ten.trim(), nguoiMoi: it.nguoiMoi || "", link: nguon === "tu_lam" ? it.link.trim() : "" },
       status: "cho_kiem_tra", note: "", approvedBy: "", approvedAt: "", submittedAt: nowISO(), camKet: true
     }));
     update("evidences", (arr) => [...batch, ...arr]);
-    log(student.mssv, "Nộp minh chứng chủ động", isSelf ? "VD-CD" : "QC-CD", `Đã gửi ${batch.length} minh chứng, chờ kiểm tra`);
-    show(isSelf ? `Đã gửi ${batch.length} video tự thực hiện.` : `Đã gửi ${batch.length} lần tham gia CLB Truyền thông.`);
-    onDone();
+    log(student.mssv, "Nộp minh chứng chủ động", "QC-CD", `Đã gửi ${batch.length} minh chứng, chờ kiểm tra`);
+    show(`Đã gửi ${batch.length} video/minh chứng.`); onDone();
   };
   return (<form onSubmit={submit}>
-    <Field label="Hình thức" required>
-      <Select value={nguon} onChange={(e) => { setNguon(e.target.value); setErr(""); }}>
-        <option value="tu_lam">Tự quay / tự biên tập video — Quy định 4</option>
-        <option value="cau_lac_bo">Tham gia cùng CLB Truyền thông — Quy định 2</option>
+    <Field label="Hình thức tham gia" required>
+      <Select value={nguon} onChange={(e) => setNguon(e.target.value)}>
+        <option value="tu_lam">Tự quay / tự biên tập · Quy định 4</option>
+        <option value="cau_lac_bo">Tham gia cùng CLB Truyền thông · Quy định 2</option>
       </Select>
     </Field>
-    {isSelf ? (
-      <div className="text-xs p-3 rounded-lg mb-3" style={{ background: C.redBg, color: C.red }}>
-        <b>Quy định 4:</b> Chủ động quay, biên tập và hoàn thiện video từ 30 giây trở lên; nội dung phản ánh học tập, rèn luyện, đời sống sinh viên hoặc hoạt động của Phân viện. Video phải được BTT thẩm định đạt yêu cầu và đăng tải. <b>01 video đạt = 01 hoạt động.</b>
-      </div>
-    ) : (
-      <div className="text-xs p-3 rounded-lg mb-3" style={{ background: C.blueBg, color: C.blue }}>
-        <b>Quy định 2:</b> Khai báo từng lần tham gia quay/chụp cùng CLB Truyền thông và ghi tên thành viên CLB đã mời bạn. <b>05 lần tham gia được xác nhận = 01 hoạt động.</b>
-      </div>
-    )}
+    <div className="text-xs p-3 rounded-lg mb-3" style={{ background: C.blueBg, color: C.blue }}>
+      {nguon === "tu_lam" ? <><b>Quy định 4:</b> Chủ động quay, biên tập và hoàn thiện video từ 30 giây trở lên. <b>01 video đạt yêu cầu = 01 hoạt động.</b> Bắt buộc nhập link Google Drive và phải mở quyền chia sẻ để BTT xem được.</> : <><b>Quy định 2:</b> Chỉ ghi nhận việc bạn tham gia cùng CLB Truyền thông. <b>05 lần tham gia được xác nhận = 01 hoạt động.</b> Không cần link Drive, chỉ cần tên video/minh chứng.</>}
+    </div>
     <Field label="Số lượng" required><TextInput type="number" min="1" max="20" value={soLuong} onChange={(e) => setCount(e.target.value)} /></Field>
     <div className="space-y-2 mb-3">
-      {items.map((it, i) => <div key={i} className="rounded-xl p-3" style={{ background: C.grayBg }}>
-        <div className="text-xs font-semibold mb-2" style={{ color: C.navy2 }}>Lần / minh chứng #{i + 1}</div>
-        {isSelf ? <>
-          <TextInput className="mb-2" placeholder="Tên video / sản phẩm" value={it.ten} onChange={(e) => setItem(i, "ten", e.target.value)} />
-          <TextInput placeholder="Link Google Drive video" value={it.link} onChange={(e) => setItem(i, "link", e.target.value)} />
-        </> : <TextInput placeholder="Tên thành viên CLB đã mời bạn tham gia" value={it.nguoiMoi} onChange={(e) => setItem(i, "nguoiMoi", e.target.value)} />}
-      </div>)}
+      {items.map((it, i) => (
+        <div key={i} className="rounded-xl p-3" style={{ background: C.grayBg }}>
+          <div className="text-xs font-semibold mb-2" style={{ color: C.navy2 }}>Minh chứng #{i + 1}</div>
+          <TextInput className="mb-2" placeholder={nguon === "tu_lam" ? "Tên video / sản phẩm" : "Tên video / minh chứng tham gia"} value={it.ten} onChange={(e) => setItem(i, "ten", e.target.value)} />
+          {nguon === "tu_lam" && <TextInput placeholder="Link Google Drive video" value={it.link} onChange={(e) => setItem(i, "link", e.target.value)} />}
+        </div>
+      ))}
     </div>
-    {isSelf && <div className="text-xs p-3 rounded-lg mb-3" style={{ background: C.blueBg, color: C.blue }}><b>Chú ý:</b> Link Google Drive phải mở quyền chia sẻ để Ban Truyền thông có thể xem video.</div>}
-    <label className="flex items-start gap-2 text-xs mb-3" style={{ color: C.navy2 }}><input type="checkbox" checked={camKet} onChange={(e) => setCamKet(e.target.checked)} className="mt-0.5" />Tôi cam kết các thông tin cung cấp là trung thực, chính xác và thuộc về hoạt động tôi thực sự tham gia.</label>
+    {nguon === "tu_lam" && <div className="text-xs p-3 rounded-lg mb-3" style={{ background: "#FEF3D8", color: C.amber2 }}><b>Lưu ý:</b> Link Drive phải mở quyền chia sẻ để BTT có thể xem video. Video đạt yêu cầu phải từ 30 giây trở lên.</div>}
+    <label className="flex items-start gap-2 text-xs mb-3" style={{ color: C.navy2 }}><input type="checkbox" checked={camKet} onChange={(e) => setCamKet(e.target.checked)} className="mt-0.5" />Tôi cam kết thông tin và minh chứng cung cấp là trung thực, chính xác.</label>
     {err && <div className="text-xs font-medium mb-3" style={{ color: C.red }}>{err}</div>}
-    <Btn type="submit" variant="amber" className="w-full">Gửi minh chứng</Btn>
+    <Btn type="submit" variant="amber" className="w-full">Gửi {items.length} minh chứng</Btn>
   </form>);
 }
+
 function StudentHistory({ db, student }) {
   const rows = db.evidences.filter((e) => e.mssv === student.mssv).sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
   const [viewEv, setViewEv] = useState(null);
@@ -3334,12 +3328,12 @@ function AdminActivities({ db, update, log, show, admin }) {
     if (new Date(next.ketThuc) <= new Date(next.batDau)) return show("Ngày kết thúc phải sau ngày bắt đầu.");
     update("activities", arr=>arr.map(x=>x.id===next.id?{...x,...next}:x));
     const before = db.activities.find(x=>x.id===next.id);
-    log(admin.hoten,"Chỉnh sửa hoạt động",next.ma,"Đã cập nhật",{key:"activities",value:db.activities,kind:"restore"}); show(`Đã cập nhật ${next.ma}.`); setEditing(null);
+    log(admin.hoten,"Chỉnh sửa hoạt động",next.ma,"Đã cập nhật",{key:"activities",value:db.activities}); show(`Đã cập nhật ${next.ma}.`); setEditing(null);
   };
   const removeActivity = (a) => {
     if (!window.confirm(`Xóa hoạt động ${a.ma} · ${a.ten}? Minh chứng đã nộp sẽ được giữ lại nhưng không còn gắn với hoạt động.`)) return;
     update("activities",arr=>arr.filter(x=>x.id!==a.id));
-    log(admin.hoten,"Xóa hoạt động",a.ma,"Đã xóa hoạt động",{key:"activities",value:db.activities,kind:"restore"}); show(`Đã xóa ${a.ma}.`);
+    log(admin.hoten,"Xóa hoạt động",a.ma,"Đã xóa hoạt động",{key:"activities",value:db.activities}); show(`Đã xóa ${a.ma}.`);
   };
   return (<div>
     <PageHead title="Quản lý hoạt động" sub={`${db.activities.length} hoạt động đã tạo`} right={<Btn variant="amber" icon={Plus} onClick={()=>setOpenCreate(true)}>Tạo hoạt động</Btn>} />
@@ -3376,7 +3370,7 @@ function CreateActivityForm({ db, update, log, show, admin, onDone }) {
     const ma = genCode(loai, db.activities);
     const rec = { id: uid(), ma, loai, ten: f.ten, batDau: f.batDau, ketThuc: f.ketThuc, quyDinh: f.quyDinh, ghiChu: f.ghiChu, trangThai: "active", createdBy: admin.hoten, createdAt: nowISO(), soLuongCanDat: Number(f.soLuongCanDat) || 1, quyDoiHoatDong: Number(f.quyDoiHoatDong) || 1 };
     update("activities", (arr) => [rec, ...arr]);
-    log(admin.hoten, "Tạo hoạt động", ma, "Thành công", {key:"activities", value:db.activities, kind:"restore"});
+    log(admin.hoten, "Tạo hoạt động", ma, "Thành công", {key:"activities", value:db.activities});
     show(`Đã tạo hoạt động ${ma}`); onDone();
   };
   return (
@@ -3677,7 +3671,7 @@ function buildExportSummaryRowsFiltered(db, opts = {}) {
   const hasSelf = approved.some((e) => !e.activityId && e.loai === "QC" && e.data?.nguon === "tu_lam");
   const hasClub = approved.some((e) => !e.activityId && e.loai === "QC" && e.data?.nguon === "cau_lac_bo");
   const hasShare = approved.some((e) => !e.activityId && e.loai === "SH");
-  if (hasSelf) columns.push("Tự quay/chụp");
+  if (hasSelf) columns.push("Video tự thực hiện");
   if (hasClub) columns.push("Tham gia cùng CLB Truyền thông");
   if (hasShare) columns.push("Chia sẻ bài viết");
   columns.push("Tổng hoạt động", "Điểm cộng");
@@ -3690,7 +3684,7 @@ function buildExportSummaryRowsFiltered(db, opts = {}) {
       out[`${a.ma} · ${a.ten}`] = q || "";
       total += q;
     });
-    if (hasSelf) { const q = Math.floor(approved.filter((e) => e.mssv === st.mssv && !e.activityId && e.loai === "QC" && e.data?.nguon === "tu_lam").length / 5); out["Tự quay/chụp"] = q || ""; total += q; }
+    if (hasSelf) { const q = approved.filter((e) => e.mssv === st.mssv && !e.activityId && e.loai === "QC" && e.data?.nguon === "tu_lam").length; out["Video tự thực hiện"] = q || ""; total += q; }
     if (hasClub) { const q = Math.floor(approved.filter((e) => e.mssv === st.mssv && !e.activityId && e.loai === "QC" && e.data?.nguon === "cau_lac_bo").length / 5); out["Tham gia cùng CLB Truyền thông"] = q || ""; total += q; }
     if (hasShare) { const q = Math.floor(approved.filter((e) => e.mssv === st.mssv && !e.activityId && e.loai === "SH").reduce((n,e)=>n+(Number(e.data?.soLuot)||0),0) / 10); out["Chia sẻ bài viết"] = q || ""; total += q; }
     out["Tổng hoạt động"] = total;
@@ -3708,7 +3702,7 @@ function buildExportSummaryRows(db) {
   const hasShare = approved.some((e) => e.activityId === null && e.loai === "SH");
   const columns = ["STT", "MSSV", "Họ tên", "Khóa", "Lớp"];
   bttActs.forEach((a) => columns.push(`${a.ma} · ${a.ten}`));
-  if (hasSelf) columns.push("Tự quay/chụp");
+  if (hasSelf) columns.push("Video tự thực hiện");
   if (hasClub) columns.push("Tham gia cùng CLB Truyền thông");
   if (hasShare) columns.push("Chia sẻ bài viết");
   columns.push("Tổng hoạt động", "Điểm cộng");
@@ -3716,7 +3710,7 @@ function buildExportSummaryRows(db) {
     const out = { STT: idx + 1, MSSV: s.mssv, "Họ tên": s.hoTen, Khóa: s.khoa, Lớp: s.lop };
     let total = 0;
     bttActs.forEach((a) => { const q = quyDoiForActivity(a, db.evidences.filter((e) => e.mssv === s.mssv && e.activityId === a.id)); out[`${a.ma} · ${a.ten}`] = q; total += q; });
-    if (hasSelf) { const q = Math.floor(db.evidences.filter((e) => e.mssv === s.mssv && e.status === "dat" && !e.activityId && e.loai === "QC" && e.data?.nguon === "tu_lam").length / 5); out["Tự quay/chụp"] = q; total += q; }
+    if (hasSelf) { const q = db.evidences.filter((e) => e.mssv === s.mssv && e.status === "dat" && !e.activityId && e.loai === "QC" && e.data?.nguon === "tu_lam").length; out["Tự quay/chụp"] = q; total += q; }
     if (hasClub) { const q = Math.floor(db.evidences.filter((e) => e.mssv === s.mssv && e.status === "dat" && !e.activityId && e.loai === "QC" && e.data?.nguon === "cau_lac_bo").length / 5); out["Tham gia cùng CLB Truyền thông"] = q; total += q; }
     if (hasShare) { const q = Math.floor(db.evidences.filter((e) => e.mssv === s.mssv && e.status === "dat" && !e.activityId && e.loai === "SH").reduce((n,e)=>n+(Number(e.data?.soLuot)||0),0) / 10); out["Chia sẻ bài viết"] = q; total += q; }
     out["Tổng hoạt động"] = total; out["Điểm cộng"] = calcPoints(total);
@@ -3739,17 +3733,8 @@ function AdminExport({ db, update, log, admin, show }) {
     show("Đã lưu bảng xem trước trên thiết bị này.");
   };
   const [searchAdd, setSearchAdd] = useState("");
-  const [clock, setClock] = useState(Date.now());
-  useEffect(() => {
-    const timer = setInterval(() => setClock(Date.now()), 60000);
-    return () => clearInterval(timer);
-  }, []);
-  const liveNow = new Date(clock);
-  const [period, setPeriod] = useState(academicYearForDate(liveNow));
-  const semester = from ? semesterForDate(from) : semesterForDate(liveNow);
-  useEffect(() => {
-    if (!from && !to) setPeriod(academicYearForDate(liveNow));
-  }, [clock, from, to]);
+  const period = from ? academicYearForDate(from) : academicYearForDate(new Date());
+  const semester = from ? semesterForDate(from) : semesterForDate(new Date());
   const khoas = [...new Set(db.students.map((s) => s.khoa).filter(Boolean))].sort((a,b)=>Number(a.replace(/\D/g,''))-Number(b.replace(/\D/g,'')));
   const lops = [...new Set(db.students.filter((s)=>!khoa || s.khoa===khoa).map((s)=>s.lop).filter(Boolean))].sort();
 
@@ -3757,7 +3742,6 @@ function AdminExport({ db, update, log, admin, show }) {
     const selectedLop = scope === "class" ? lop : "";
     const data = buildExportSummaryRowsFiltered(db, { from, to, khoa, lop: selectedLop });
     setDraft(data);
-    setPeriod(from ? academicYearForDate(from) : academicYearForDate(liveNow));
     show(`Đã tạo bảng xem trước: ${data.rows.length} sinh viên có minh chứng Đạt.`);
   };
   const setCell = (rowIndex, col, value) => setDraft((d) => ({ ...d, rows: d.rows.map((r,i)=>i===rowIndex ? { ...r, [col]: value } : r) }));
@@ -3793,7 +3777,6 @@ function AdminExport({ db, update, log, admin, show }) {
         <Field label="Đến ngày"><TextInput type="date" value={to} onChange={(e)=>setTo(e.target.value)} /></Field>
         <Field label="Học kỳ (tự động)"><TextInput value={semester} readOnly /></Field>
         <Field label="Niên khóa (tự động)"><TextInput value={period} readOnly /></Field>
-        <div className="md:col-span-4 text-xs" style={{color:C.gray}}>Niên khóa và học kỳ hiện tại tự cập nhật theo thời gian thực.</div>
       </div>
       <div className="grid md:grid-cols-3 gap-3 mt-3">
         <Field label="Phạm vi"><Select value={scope} onChange={(e)=>{setScope(e.target.value); if(e.target.value==='all')setLop("");}}><option value="all">Toàn khóa</option><option value="class">Theo lớp</option></Select></Field>
@@ -3880,8 +3863,8 @@ function AddAdminForm({ db, update, log, show, admin, onDone }) {
 
 function AdminAudit({ db, update, log, show, admin }) {
   const [q,setQ]=useState(""); const list=db.auditlog.filter(l=>!q||JSON.stringify(l).toLowerCase().includes(q.toLowerCase()));
-  const undoEntry=(l)=>{ if(!l.undo)return show("Thao tác này chưa có dữ liệu hoàn tác."); if(l.undone)return show("Thao tác này đã được hoàn tác."); if(!confirm(`Hoàn tác: ${l.action} · ${l.target}?`))return; const u=l.undo; update(u.key,u.value); update("auditlog", arr=>arr.map(x=>x.id===l.id?{...x,undone:true}:x)); log(admin?.hoten||"Quản trị viên","Hoàn tác thao tác",l.target,`Hoàn tác ${l.action}`); show("Đã hoàn tác thao tác."); };
-  return <div><PageHead title="Nhật ký quản trị" sub="Theo dõi thao tác quản trị và hoàn tác các thao tác đã được lưu trạng thái."/><div className="relative mb-4 max-w-sm"><Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{color:C.gray}}/><TextInput className="pl-9" placeholder="Tìm theo người, hành động, đối tượng..." value={q} onChange={e=>setQ(e.target.value)}/></div><Card className="overflow-x-auto">{list.length===0?<Empty icon={History} title="Chưa có nhật ký nào"/>:<table className="w-full text-sm"><thead><tr style={{background:C.grayBg}}>{["Thời gian","Người thực hiện","Hành động","Đối tượng","Kết quả",""].map(h=><th key={h} className="text-left px-4 py-2.5 text-xs font-semibold" style={{color:C.gray}}>{h}</th>)}</tr></thead><tbody>{list.map(l=><tr key={l.id} className="border-t" style={{borderColor:C.line}}><td className="px-4 py-2.5 text-xs">{fmtDT(l.time)}</td><td className="px-4 py-2.5">{l.actor}</td><td className="px-4 py-2.5">{l.action}</td><td className="px-4 py-2.5 text-xs">{l.target}</td><td className="px-4 py-2.5 text-xs">{l.result}</td><td className="px-4 py-2.5 text-right">{l.undo&&<Btn variant="outline" disabled={l.undone} onClick={()=>undoEntry(l)}>{l.undone?"Đã hoàn tác":"Hoàn tác"}</Btn>}</td></tr>)}</tbody></table>}</Card></div>;
+  const undoEntry=(l)=>{ if(!l.undo)return show("Thao tác này chưa có dữ liệu hoàn tác."); if(!confirm(`Hoàn tác: ${l.action} · ${l.target}?`))return; const u=l.undo; update(u.key,u.value); log(admin?.hoten||"Quản trị viên","Hoàn tác thao tác",l.target,`Hoàn tác ${l.action}`); show("Đã hoàn tác thao tác."); };
+  return <div><PageHead title="Nhật ký quản trị" sub="Theo dõi thao tác quản trị và hoàn tác các thao tác đã được lưu trạng thái."/><div className="relative mb-4 max-w-sm"><Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{color:C.gray}}/><TextInput className="pl-9" placeholder="Tìm theo người, hành động, đối tượng..." value={q} onChange={e=>setQ(e.target.value)}/></div><Card className="overflow-x-auto">{list.length===0?<Empty icon={History} title="Chưa có nhật ký nào"/>:<table className="w-full text-sm"><thead><tr style={{background:C.grayBg}}>{["Thời gian","Người thực hiện","Hành động","Đối tượng","Kết quả",""].map(h=><th key={h} className="text-left px-4 py-2.5 text-xs font-semibold" style={{color:C.gray}}>{h}</th>)}</tr></thead><tbody>{list.map(l=><tr key={l.id} className="border-t" style={{borderColor:C.line}}><td className="px-4 py-2.5 text-xs">{fmtDT(l.time)}</td><td className="px-4 py-2.5">{l.actor}</td><td className="px-4 py-2.5">{l.action}</td><td className="px-4 py-2.5 text-xs">{l.target}</td><td className="px-4 py-2.5 text-xs">{l.result}</td><td className="px-4 py-2.5 text-right">{l.undo&&<Btn variant="outline" onClick={()=>undoEntry(l)}>Hoàn tác</Btn>}</td></tr>)}</tbody></table>}</Card></div>;
 }
 function AdminCohorts({ db, update, log, show, admin }) {
   useEffect(() => {
