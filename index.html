@@ -1551,6 +1551,64 @@ function calcPoints(n) {
   if (n >= 1) return 2;
   return 0;
 }
+/* =========================================================================
+   NIÊN KHÓA TỰ ĐỘNG
+   Quy ước: năm học bắt đầu từ tháng 8 và kết thúc vào tháng 7 năm sau.
+   Mốc hiện tại theo yêu cầu: K29 = 2026–2030 (4 năm).
+   Suy ra: K28 = 2025–2029, K27 = 2024–2028, K26 = 2023–2027...
+   ========================================================================= */
+const CURRENT_COHORT_NUMBER = 29;
+const CURRENT_COHORT_START_YEAR = 2026;
+const COHORT_DURATION_YEARS = 4;
+
+function cohortNumber(khoa) {
+  const m = String(khoa || "").toUpperCase().match(/^K(\\d+)$/);
+  return m ? Number(m[1]) : null;
+}
+function cohortAcademicYears(khoa) {
+  const n = cohortNumber(khoa);
+  if (!n) return null;
+  const start = CURRENT_COHORT_START_YEAR + (n - CURRENT_COHORT_NUMBER);
+  return { start, end: start + COHORT_DURATION_YEARS, label: `${start}–${start + COHORT_DURATION_YEARS}` };
+}
+function academicYearForDate(dateValue = new Date()) {
+  const d = dateValue instanceof Date ? dateValue : new Date(dateValue);
+  if (Number.isNaN(d.getTime())) return `${CURRENT_COHORT_START_YEAR}–${CURRENT_COHORT_START_YEAR + 1}`;
+  const y = d.getFullYear();
+  const start = d.getMonth() >= 7 ? y : y - 1; // tháng 8 = index 7
+  return `${start}–${start + 1}`;
+}
+function semesterForDate(dateValue = new Date()) {
+  const d = dateValue instanceof Date ? dateValue : new Date(dateValue);
+  if (Number.isNaN(d.getTime())) return "Học kỳ I";
+  return d.getMonth() >= 7 ? "Học kỳ I" : "Học kỳ II";
+}
+function cohortIsExpired(khoa, now = new Date()) {
+  const meta = cohortAcademicYears(khoa);
+  if (!meta) return false;
+  // Chỉ hết hạn sau khi đã đi qua tháng 7 của năm kết thúc.
+  const currentStart = now.getMonth() >= 7 ? now.getFullYear() : now.getFullYear() - 1;
+  return currentStart > meta.end;
+}
+function computedCohortEntries(db) {
+  const names = [...new Set([
+    ...(db.settings?.cohorts || []).map(x => typeof x === "string" ? x : x?.name),
+    ...(db.students || []).map(s => s.khoa)
+  ].filter(Boolean))];
+  return names.map(name => {
+    const meta = cohortAcademicYears(name);
+    const saved = (db.settings?.cohorts || []).find(x => (typeof x === "string" ? x : x?.name) === name);
+    return {
+      name,
+      academicYear: meta?.label || (typeof saved === "object" ? saved.academicYear || "" : ""),
+      startYear: meta?.start ?? null,
+      endYear: meta?.end ?? null,
+      status: typeof saved === "object" ? (saved.status || "active") : "active",
+      count: (db.students || []).filter(s => s.khoa === name).length
+    };
+  }).sort((a,b) => (b.startYear ?? -1) - (a.startYear ?? -1) || b.name.localeCompare(a.name));
+}
+
 const POINT_ROWS = [
   ["≥ 10 hoạt động", "10 điểm"],
   ["5 – 9 hoạt động", "7 điểm"],
@@ -1785,7 +1843,7 @@ let realtimeChannel = null;
 const saveQueues = new Map();
 
 function defaultValueForKey(k) {
-  if (k === "settings") return { locked: false, term: "Học kỳ I – Năm học 2026–2027", semester: "Học kỳ I", academicYear: "2026–2027" };
+  if (k === "settings") { const ay = academicYearForDate(new Date()); const sem = semesterForDate(new Date()); return { locked: false, term: `${sem} – Năm học ${ay}`, semester: sem, academicYear: ay, cohorts: [{ name: "K29", academicYear: "2026–2030", startYear: 2026, endYear: 2030, status: "active" }, { name: "K28", academicYear: "2025–2029", startYear: 2025, endYear: 2029, status: "active" }, { name: "K27", academicYear: "2024–2028", startYear: 2024, endYear: 2028, status: "active" }, { name: "K26", academicYear: "2023–2027", startYear: 2023, endYear: 2027, status: "active" }] }; }
   return [];
 }
 function cacheGet(key) {
@@ -1805,6 +1863,60 @@ async function cloudSet(key, value) {
   if (!CLOUD_READY) throw new Error("Chưa cấu hình database online.");
   const { error } = await sb.from("bav_app_state").upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: "key" });
   if (error) throw error;
+}
+
+
+/* Tự động dọn dữ liệu khóa đã hết thời hạn.
+   Chính sách: K29 2026–2030 => giữ đến hết 31/12/2030, từ 01/01/2031
+   mới xóa. K26 => 2023–2027, giữ đến hết 31/12/2027.
+   Vì đây là website tĩnh, thao tác tự động được kiểm tra mỗi lần website
+   khởi động; không cần quản trị viên bấm nút.
+*/
+function autoPurgeExpiredCohorts(out) {
+  const year = new Date().getFullYear();
+  const expired = new Set();
+
+  (out.settings?.cohorts || []).forEach(x => {
+    const name = typeof x === "string" ? x : x?.name;
+    const meta = cohortAcademicYears(name);
+    if (meta && year > meta.end) expired.add(name);
+  });
+  (out.students || []).forEach(s => {
+    const meta = cohortAcademicYears(s.khoa);
+    if (meta && year > meta.end) expired.add(s.khoa);
+  });
+
+  if (!expired.size) return { out, changed: false, expired: [] };
+
+  const ids = new Set((out.students || []).filter(s => expired.has(s.khoa)).map(s => s.mssv));
+  const before = {
+    students: out.students || [],
+    evidences: out.evidences || [],
+    complaints: out.complaints || [],
+    notifications: out.notifications || []
+  };
+
+  out.students = before.students.filter(s => !expired.has(s.khoa));
+  out.evidences = before.evidences.filter(e => !ids.has(e.mssv));
+  out.complaints = before.complaints.filter(c => !ids.has(c.mssv));
+  out.notifications = before.notifications.filter(n => !ids.has(n.mssv));
+
+  // Xóa luôn bản lưu trữ đã đến hạn.
+  out.archives = (out.archives || []).filter(a => {
+    const meta = cohortAcademicYears(a.khoa);
+    return !(meta && year > meta.end);
+  });
+
+  out.settings = {
+    ...(out.settings || {}),
+    cohorts: (out.settings?.cohorts || []).map(x => {
+      const o = typeof x === "string" ? { name:x } : { ...x };
+      if (expired.has(o.name)) return { ...o, status:"expired_deleted", deletedAt:nowISO() };
+      return o;
+    })
+  };
+
+  return { out, changed: true, expired:[...expired] };
 }
 
 async function loadAll() {
@@ -1832,6 +1944,13 @@ async function loadAll() {
       const localValue = cacheGet(k);
       out[k] = localValue === null ? defaultValueForKey(k) : localValue;
     }
+  }
+  const cleanup = autoPurgeExpiredCohorts(out);
+  if (cleanup.changed) {
+    for (const k of ["students","evidences","complaints","notifications","archives","settings"]) {
+      await saveKey(k, out[k]);
+    }
+    console.warn("BAV auto-purge expired cohorts:", cleanup.expired);
   }
   return out;
 }
@@ -3550,15 +3669,20 @@ function buildExportDataset(db, from, to, selectedMssv) {
     let total = 0;
     activities.forEach(a => {
       const evs = rangeEvs.filter(e=>e.mssv===s.mssv && e.activityId===a.id);
-      const q = contributionForActivity(a, evs); row["act:"+a.id]=q || ""; total += q;
+      const q = contributionForActivity(a, evs);
+      row["act:"+a.id] = q || "";
+      total += q;
     });
     proactive.forEach(c => {
       let evs=[];
       if(c.key==="pro:tu_lam") evs=rangeEvs.filter(e=>e.mssv===s.mssv&&!e.activityId&&e.loai==="QC"&&e.data?.nguon==="tu_lam");
       if(c.key==="pro:cau_lac_bo") evs=rangeEvs.filter(e=>e.mssv===s.mssv&&!e.activityId&&e.loai==="QC"&&e.data?.nguon==="cau_lac_bo");
       if(c.key==="pro:SH") evs=rangeEvs.filter(e=>e.mssv===s.mssv&&!e.activityId&&e.loai==="SH");
-      const q = c.key==="pro:SH" ? Math.floor(evs.reduce((n,e)=>n+(Number(e.data?.soLuot)||0),0)/10) : Math.floor(evs.length/5);
-      row[c.key]=q || ""; total += q;
+      const q = c.key==="pro:SH"
+        ? Math.floor(evs.reduce((n,e)=>n+(Number(e.data?.soLuot)||0),0)/10)
+        : Math.floor(evs.length/5);
+      row[c.key]=q || "";
+      total += q;
     });
     row["Tổng hoạt động"] = total;
     row["Điểm cộng"] = calcPoints(total);
@@ -3567,27 +3691,73 @@ function buildExportDataset(db, from, to, selectedMssv) {
   const students = db.students.filter(s=>selectedMssv.includes(s.mssv)).map(makeRow).filter(x=>x.total>0);
   return { activities, proactive, columns:allColumns, students, rangeEvs };
 }
+
 function AdminExport({ db, update, log, admin, show }) {
   const today = new Date();
   const defaultFrom = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-01`;
   const defaultTo = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
-  const [from,setFrom]=useState(defaultFrom); const [to,setTo]=useState(defaultTo);
-  const [semester,setSemester]=useState(db.settings?.semester||"Học kỳ I"); const [academicYear,setAcademicYear]=useState(db.settings?.academicYear||"2026–2027");
-  const [draft,setDraft]=useState([]); const [preview,setPreview]=useState(false); const [addOpen,setAddOpen]=useState(false); const [extra,setExtra]=useState([]); const [summaryMode,setSummaryMode]=useState("all");
+  const [from,setFrom]=useState(defaultFrom);
+  const [to,setTo]=useState(defaultTo);
+  const [semester,setSemester]=useState(semesterForDate(today));
+  const [academicYear,setAcademicYear]=useState(academicYearForDate(today));
+  const [selectedKhoa,setSelectedKhoa]=useState("");
+  const [exportScope,setExportScope]=useState("all");
+  const [selectedClass,setSelectedClass]=useState("");
+  const [draft,setDraft]=useState([]);
+  const [preview,setPreview]=useState(false);
+  const [addOpen,setAddOpen]=useState(false);
   const [error,setError]=useState("");
-  const selectedIds = draft.length ? draft.map(r=>r.mssv) : db.students.map(s=>s.mssv);
-  const data = buildExportDataset(db,from,to,selectedIds);
+
+  const cohortEntries = computedCohortEntries(db);
+  const activeCohorts = cohortEntries.filter(c => c.status !== "archived");
+  const defaultKhoa = selectedKhoa || activeCohorts[0]?.name || "";
+  const effectiveKhoa = selectedKhoa || defaultKhoa;
+
+  // Niên khóa/học kỳ luôn tự cập nhật theo ngày hiện tại; người dùng không phải sửa tay.
+  useEffect(() => {
+    const tick = () => {
+      const now = new Date();
+      setAcademicYear(academicYearForDate(now));
+      setSemester(semesterForDate(now));
+    };
+    tick();
+    const timer = setInterval(tick, 60 * 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!selectedKhoa && defaultKhoa) setSelectedKhoa(defaultKhoa);
+  }, [defaultKhoa, selectedKhoa]);
+
+  const sourceStudents = db.students.filter(s => !effectiveKhoa || s.khoa === effectiveKhoa);
+  const sourceIds = sourceStudents.map(s => s.mssv);
+  const data = buildExportDataset(db,from,to,sourceIds);
+
   const ensureDraft=()=>{
     if(!from||!to||new Date(from)>new Date(to)) return setError("Thời gian tổng kết không hợp lệ.");
+    // Niên khóa được xác định theo ngày bắt đầu của đợt tổng kết.
+    const exportDate = new Date(from + "T00:00:00");
+    setAcademicYear(academicYearForDate(exportDate));
+    setSemester(semesterForDate(exportDate));
     const rows=data.students.map(x=>({mssv:x.row.MSSV, ...x.row}));
-    if(!rows.length) return setError("Không có sinh viên nào có điểm cộng trong khoảng thời gian đã chọn.");
-    setDraft(rows); setPreview(true); setError("");
+    if(!rows.length) return setError("Không có sinh viên nào có điểm cộng (minh chứng Đạt) trong khoảng thời gian đã chọn.");
+    setDraft(rows);
+    setPreview(true);
+    setError("");
+    setSelectedClass("");
+    setExportScope("all");
   };
+
   const colDefs=[
-    {key:"MSSV",label:"MSSV"},{key:"HỌ VÀ TÊN",label:"HỌ VÀ TÊN"},{key:"KHÓA",label:"KHÓA"},{key:"LỚP",label:"LỚP"},
+    {key:"MSSV",label:"MSSV"},
+    {key:"HỌ VÀ TÊN",label:"HỌ VÀ TÊN"},
+    {key:"KHÓA",label:"KHÓA"},
+    {key:"LỚP",label:"LỚP"},
     ...data.columns.map(c=>({key:c.key,label:c.label})),
-    {key:"Tổng hoạt động",label:"TỔNG HOẠT ĐỘNG"},{key:"Điểm cộng",label:"ĐIỂM CỘNG"}
+    {key:"Tổng hoạt động",label:"TỔNG HOẠT ĐỘNG"},
+    {key:"Điểm cộng",label:"ĐIỂM CỘNG"}
   ];
+
   const editCell=(i,k,v)=>setDraft(prev=>prev.map((r,idx)=>{
     if(idx!==i) return r;
     const next={...r,[k]:v};
@@ -3596,61 +3766,151 @@ function AdminExport({ db, update, log, admin, show }) {
         if(c.key.startsWith("act:")||c.key.startsWith("pro:")) return sum+(Number(next[c.key])||0);
         return sum;
       },0);
-      next["Tổng hoạt động"]=total; next["Điểm cộng"]=calcPoints(total);
+      next["Tổng hoạt động"]=total;
+      next["Điểm cộng"]=calcPoints(total);
     }
     return next;
   }));
+
   const addStudent=(mssv)=>{
-    const s=db.students.find(x=>x.mssv===mssv); if(!s) return;
+    const s=db.students.find(x=>x.mssv===mssv);
+    if(!s) return;
+    if(effectiveKhoa && s.khoa !== effectiveKhoa) return show(`Sinh viên ${s.hoTen} không thuộc ${effectiveKhoa}.`);
     const built=buildExportDataset(db,from,to,[mssv]).students[0];
-    if(!built) { const base={"MSSV":s.mssv,"HỌ VÀ TÊN":s.hoTen,"KHÓA":s.khoa,"LỚP":s.lop}; data.columns.forEach(c=>base[c.key]=""); base["Tổng hoạt động"]=0;base["Điểm cộng"]=0; setDraft(prev=>[...prev,base]); }
-    else setDraft(prev=>prev.some(r=>r.MSSV===mssv)?prev:[...prev,{mssv:mssv,...built.row}]);
-    setExtra(prev=>prev.filter(x=>x!==mssv));
+    const base=built?.row || {"MSSV":s.mssv,"HỌ VÀ TÊN":s.hoTen,"KHÓA":s.khoa,"LỚP":s.lop};
+    if(!built) {
+      data.columns.forEach(c=>base[c.key]="");
+      base["Tổng hoạt động"]=0;
+      base["Điểm cộng"]=0;
+    }
+    setDraft(prev=>prev.some(r=>r.MSSV===mssv)?prev:[...prev,{mssv:mssv,...base}]);
+    setAddOpen(false);
   };
+
   const getExportRows=()=>{
     let rows=draft.map(r=>({...r}));
-    if(summaryMode!=="all") rows=rows.filter(r=>r.LỚP===summaryMode);
+    if(exportScope==="class" && selectedClass) rows=rows.filter(r=>r.LỚP===selectedClass);
     return rows;
   };
+
   const filename=`Tổng kết điểm cộng truyền thông ${semester} ${academicYear}`;
   const buildTableRows=(rows)=>rows.map(r=>colDefs.map(c=>r[c.key]??""));
+
   const exportExcel=()=>{
-    const rows=getExportRows(); if(!rows.length)return show("Không có dữ liệu để xuất.");
-    const header=colDefs.map(c=>c.label); const aoa=[header,...buildTableRows(rows)];
-    const wb=XLSX.utils.book_new(); const ws=XLSX.utils.aoa_to_sheet(aoa); XLSX.utils.book_append_sheet(wb,ws,"Tổng hợp");
-    const byClass={}; rows.forEach(r=>(byClass[r.LỚP]??=[]).push(r));
-    Object.entries(byClass).forEach(([lop,rs])=>{const w=XLSX.utils.aoa_to_sheet([header,...buildTableRows(rs)]);XLSX.utils.book_append_sheet(wb,w,lop.slice(0,31));});
-    XLSX.writeFile(wb,filename+".xlsx"); log(admin.hoten,"Xuất Excel",filename,"Thành công"); show("Đã xuất danh sách Excel.");
+    const rows=getExportRows();
+    if(!rows.length)return show("Không có dữ liệu để xuất.");
+    const header=colDefs.map(c=>c.label);
+    const aoa=[header,...buildTableRows(rows)];
+    const wb=XLSX.utils.book_new();
+    const ws=XLSX.utils.aoa_to_sheet(aoa);
+    XLSX.utils.book_append_sheet(wb,ws,exportScope==="all"?"Toàn khóa":(selectedClass||"Theo lớp"));
+    XLSX.writeFile(wb,filename+".xlsx");
+    log(admin.hoten,"Xuất Excel",filename,exportScope==="all"?"Tổng hợp toàn khóa":"Tổng hợp lớp "+selectedClass);
+    show("Đã xuất danh sách Excel.");
   };
-  const exportWord=()=>{const rows=getExportRows(); if(!rows.length)return show("Không có dữ liệu để xuất."); const table={heading:summaryMode==="all"?"Tổng hợp toàn khóa":"Tổng hợp lớp "+summaryMode,columns:colDefs.map(c=>c.label),rows:buildTableRows(rows)}; exportWordFromTables(filename,filename,[table]);log(admin.hoten,"Xuất Word",filename,"Thành công");show("Đã xuất Word.");};
-  const exportPdf=()=>{const rows=getExportRows(); if(!rows.length)return show("Không có dữ liệu để xuất."); const table={heading:summaryMode==="all"?"Tổng hợp toàn khóa":"Tổng hợp lớp "+summaryMode,columns:colDefs.map(c=>c.label),rows:buildTableRows(rows)};exportPdfFromTables(filename,[table]);log(admin.hoten,"Xuất PDF",filename,"Thành công");};
+
+  const exportWord=()=>{
+    const rows=getExportRows();
+    if(!rows.length)return show("Không có dữ liệu để xuất.");
+    const table={heading:exportScope==="all"?"Tổng hợp toàn khóa":`Tổng hợp lớp ${selectedClass}`,columns:colDefs.map(c=>c.label),rows:buildTableRows(rows)};
+    exportWordFromTables(filename,filename,[table]);
+    log(admin.hoten,"Xuất Word",filename,exportScope==="all"?"Tổng hợp toàn khóa":"Tổng hợp lớp "+selectedClass);
+    show("Đã xuất Word.");
+  };
+
+  const exportPdf=()=>{
+    const rows=getExportRows();
+    if(!rows.length)return show("Không có dữ liệu để xuất.");
+    const table={heading:exportScope==="all"?"Tổng hợp toàn khóa":`Tổng hợp lớp ${selectedClass}`,columns:colDefs.map(c=>c.label),rows:buildTableRows(rows)};
+    exportPdfFromTables(filename,[table]);
+    log(admin.hoten,"Xuất PDF",filename,exportScope==="all"?"Tổng hợp toàn khóa":"Tổng hợp lớp "+selectedClass);
+  };
+
   const classes=[...new Set(draft.map(r=>r.LỚP).filter(Boolean))].sort();
-  const missing=db.students.filter(s=>!draft.some(r=>r.MSSV===s.mssv));
+  const missing=db.students.filter(s =>
+    (!effectiveKhoa || s.khoa===effectiveKhoa) && !draft.some(r=>r.MSSV===s.mssv)
+  );
+
   return <div>
-    <PageHead title="Tổng kết & xuất danh sách điểm cộng" sub="Chọn thời hạn → học kỳ/niên khóa → xem trước → chỉnh sửa → xuất file." />
+    <PageHead title="Tổng kết & xuất danh sách điểm cộng" sub="Chọn thời hạn → hệ thống tự xác định niên khóa → xem trước → chỉnh sửa → chọn toàn khóa/lớp → xuất file." />
     <Card className="p-5 mb-4">
-      <div className="grid md:grid-cols-4 gap-3">
+      <div className="grid md:grid-cols-5 gap-3">
         <Field label="Từ ngày"><TextInput type="date" value={from} onChange={e=>setFrom(e.target.value)} /></Field>
         <Field label="Đến ngày"><TextInput type="date" value={to} onChange={e=>setTo(e.target.value)} /></Field>
-        <Field label="Học kỳ"><Select value={semester} onChange={e=>setSemester(e.target.value)}><option>Học kỳ I</option><option>Học kỳ II</option><option>Học kỳ III</option></Select></Field>
-        <Field label="Niên khóa"><TextInput value={academicYear} onChange={e=>setAcademicYear(e.target.value)} placeholder="2026–2027" /></Field>
+        <Field label="Học kỳ (tự động)"><Select value={semester} onChange={()=>{}} disabled><option>{semester}</option></Select></Field>
+        <Field label="Niên khóa (tự động)"><TextInput value={academicYear} readOnly /></Field>
+        <Field label="Khóa"><Select value={effectiveKhoa} onChange={e=>{setSelectedKhoa(e.target.value);setDraft([]);setPreview(false);}}><option value="">Tất cả khóa</option>{activeCohorts.map(c=><option key={c.name} value={c.name}>{c.name} · {c.academicYear}</option>)}</Select></Field>
       </div>
-      <div className="text-xs mt-2" style={{color:C.gray}}>Chỉ minh chứng <b>Đạt</b> trong thời hạn mới được tính. Danh sách chỉ hiển thị sinh viên có điểm cộng.</div>
+      <div className="text-xs mt-2" style={{color:C.gray}}>
+        Năm học tự đổi theo thời gian thực: <b>tháng 8–tháng 7</b>. Ví dụ 01/08/2026–31/07/2027 là niên khóa <b>2026–2027</b>. Chỉ minh chứng <b>Đạt</b> trong thời hạn mới được tính.
+      </div>
       {error&&<div className="text-sm mt-3 p-2.5 rounded-lg" style={{background:C.redBg,color:C.red}}>{error}</div>}
-      <div className="flex flex-wrap gap-2 mt-4"><Btn variant="amber" icon={Eye} onClick={ensureDraft}>Tạo bảng xem trước</Btn>{draft.length>0&&<Btn variant="outline" onClick={()=>setDraft([])}>Tạo lại</Btn>}</div>
+      <div className="flex flex-wrap gap-2 mt-4">
+        <Btn variant="amber" icon={Eye} onClick={ensureDraft}>Tạo bảng xem trước</Btn>
+        {draft.length>0&&<Btn variant="outline" onClick={()=>{setDraft([]);setPreview(false);}}>Tạo lại</Btn>}
+      </div>
     </Card>
+
     {preview&&<Card className="p-4">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-        <div><div className="font-bold" style={{color:C.navy}}>Xem trước: {filename}</div><div className="text-xs" style={{color:C.gray}}>Từ {fmtD(from)} đến {fmtD(to)} · {draft.length} dòng</div></div>
-        <div className="flex flex-wrap gap-2"><Btn variant="outline" icon={Plus} onClick={()=>setAddOpen(true)}>Thêm sinh viên</Btn><Select style={{width:180}} value={summaryMode} onChange={e=>setSummaryMode(e.target.value)}><option value="all">Tổng hợp toàn khóa</option>{classes.map(c=><option key={c} value={c}>Theo lớp {c}</option>)}</Select></div>
+        <div>
+          <div className="font-bold" style={{color:C.navy}}>Xem trước: {filename}</div>
+          <div className="text-xs" style={{color:C.gray}}>Từ {fmtD(from)} đến {fmtD(to)} · {effectiveKhoa||"Tất cả khóa"} · {draft.length} sinh viên có điểm cộng</div>
+        </div>
+        <div className="flex flex-wrap gap-2 items-end">
+          <Btn variant="outline" icon={Plus} onClick={()=>setAddOpen(true)}>Thêm sinh viên</Btn>
+          <Field label="Phạm vi xuất">
+            <Select style={{width:190}} value={exportScope} onChange={e=>{setExportScope(e.target.value);if(e.target.value==="all")setSelectedClass("");}}>
+              <option value="all">Xuất toàn khóa</option>
+              <option value="class">Xuất theo lớp</option>
+            </Select>
+          </Field>
+          {exportScope==="class"&&<Field label="Chọn lớp">
+            <Select style={{width:190}} value={selectedClass} onChange={e=>setSelectedClass(e.target.value)}>
+              <option value="">-- Chọn lớp --</option>
+              {classes.map(c=><option key={c} value={c}>{c}</option>)}
+            </Select>
+          </Field>}
+        </div>
       </div>
-      <div className="overflow-x-auto border rounded-xl"><table className="w-full text-xs"><thead><tr style={{background:C.grayBg}}>{colDefs.map(c=><th key={c.key} className="px-2 py-2 text-left whitespace-nowrap" style={{color:C.gray}}>{c.label}</th>)}</tr></thead><tbody>{getExportRows().map((r,i)=><tr key={r.MSSV} className="border-t" style={{borderColor:C.line}}>{colDefs.map(c=><td key={c.key} className="px-1 py-1"><input className="w-full min-w-[90px] px-2 py-1.5 rounded-lg border bg-white" value={r[c.key]??""} onChange={e=>editCell(draft.findIndex(x=>x.MSSV===r.MSSV),c.key,e.target.value)} /></td>)}</tr>)}</tbody></table></div>
-      <div className="flex flex-wrap gap-2 mt-4"><Btn variant="amber" icon={Download} onClick={exportExcel}>Xuất Excel</Btn><Btn variant="outline" icon={Download} onClick={exportWord}>Xuất Word</Btn><Btn variant="outline" icon={Download} onClick={exportPdf}>Xuất PDF</Btn></div>
-      <div className="text-xs mt-3 p-3 rounded-lg" style={{background:C.blueBg,color:C.blue}}>Các chỉnh sửa trong bảng chỉ chỉnh nội dung file xuất, không sửa dữ liệu gốc của sinh viên/minh chứng.</div>
+
+      <div className="overflow-x-auto border rounded-xl">
+        <table className="w-full text-xs">
+          <thead><tr style={{background:C.grayBg}}>
+            {colDefs.map(c=><th key={c.key} className="px-2 py-2 text-left whitespace-nowrap" style={{color:C.gray}}>{c.label}</th>)}
+          </tr></thead>
+          <tbody>
+            {getExportRows().map((r)=>{
+              const idx=draft.findIndex(x=>x.MSSV===r.MSSV);
+              return <tr key={r.MSSV} className="border-t" style={{borderColor:C.line}}>
+                {colDefs.map(c=><td key={c.key} className="px-1 py-1">
+                  <input className="w-full min-w-[90px] px-2 py-1.5 rounded-lg border bg-white" value={r[c.key]??""} onChange={e=>editCell(idx,c.key,e.target.value)} />
+                </td>)}
+              </tr>;
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="flex flex-wrap gap-2 mt-4">
+        <Btn variant="amber" icon={Download} onClick={exportExcel}>Xuất Excel</Btn>
+        <Btn variant="outline" icon={Download} onClick={exportWord}>Xuất Word</Btn>
+        <Btn variant="outline" icon={Download} onClick={exportPdf}>Xuất PDF</Btn>
+      </div>
+      <div className="text-xs mt-3 p-3 rounded-lg" style={{background:C.blueBg,color:C.blue}}>
+        Các chỉnh sửa trong bảng chỉ chỉnh nội dung file xuất, không sửa dữ liệu gốc. Chỉ những sinh viên có ít nhất 01 minh chứng <b>Đạt</b> mới được tự động đưa vào bảng.
+      </div>
     </Card>}
+
     <Modal open={addOpen} onClose={()=>setAddOpen(false)} title="Thêm sinh viên vào bảng tổng kết" width="max-w-2xl">
-      <div className="text-xs mb-3" style={{color:C.gray}}>Dùng khi thiếu sót trong danh sách. Có thể thêm bất kỳ sinh viên nào từ Tổng sinh viên.</div>
-      <div className="max-h-[420px] overflow-auto space-y-1">{missing.map(s=><button key={s.mssv} className="w-full text-left p-3 rounded-xl border hover:bg-gray-50 flex items-center justify-between" onClick={()=>addStudent(s.mssv)}><span><b>{s.hoTen}</b><span className="text-xs ml-2" style={{color:C.gray}}>{s.mssv} · {s.lop}</span></span><Plus size={15}/></button>)}</div>
+      <div className="text-xs mb-3" style={{color:C.gray}}>Dùng khi thiếu sót trong danh sách. Chỉ hiển thị sinh viên thuộc {effectiveKhoa||"các khóa đang hoạt động"}.</div>
+      <div className="max-h-[420px] overflow-auto space-y-1">
+        {missing.length===0
+          ? <Empty title="Không còn sinh viên nào để thêm" />
+          : missing.map(s=><button key={s.mssv} className="w-full text-left p-3 rounded-xl border hover:bg-gray-50 flex items-center justify-between" onClick={()=>addStudent(s.mssv)}>
+              <span><b>{s.hoTen}</b><span className="text-xs ml-2" style={{color:C.gray}}>{s.mssv} · {s.lop}</span></span><Plus size={15}/>
+            </button>)}
+      </div>
     </Modal>
   </div>;
 }
@@ -3755,56 +4015,162 @@ function AdminAudit({ db }) {
 
 function AdminCohortData({ db, update, log, show, admin }) {
   const [newKhoa,setNewKhoa]=useState("");
-  const [newYear,setNewYear]=useState("");
   const [confirm,setConfirm]=useState(null);
-  const cohorts=[...new Set([...(db.settings?.cohorts||[]).map(x=>typeof x==="string"?x:x.name), ...db.students.map(s=>s.khoa).filter(Boolean)])].sort();
+  const [now,setNow]=useState(new Date());
+
+  useEffect(()=>{
+    const timer=setInterval(()=>setNow(new Date()),60000);
+    return ()=>clearInterval(timer);
+  },[]);
+
+  const cohortEntries=computedCohortEntries(db);
   const archives=db.archives||[];
+
   const addCohort=()=>{
-    const name=newKhoa.trim(); if(!name) return show("Vui lòng nhập tên khóa.");
-    if(cohorts.includes(name)) return show("Khóa này đã tồn tại.");
-    update("settings",{...db.settings,cohorts:[...(db.settings?.cohorts||[]),{name,academicYear:newYear.trim(),createdAt:nowISO(),status:"active"}]});
-    log(admin.hoten,"Thêm khóa mới",name,newYear.trim()?`Niên khóa ${newYear.trim()}`:"Thành công");
-    show(`Đã thêm ${name}.`);setNewKhoa("");setNewYear("");
+    const name=newKhoa.trim().toUpperCase();
+    if(!/^K\d+$/.test(name)) return show("Tên khóa phải có dạng K + số, ví dụ K30.");
+    if(cohortEntries.some(c=>c.name===name)) return show("Khóa này đã tồn tại.");
+    const meta=cohortAcademicYears(name);
+    if(!meta) return show("Không xác định được niên khóa của khóa này.");
+    const record={name,academicYear:meta.label,startYear:meta.start,endYear:meta.end,createdAt:nowISO(),status:"active"};
+    update("settings",{...db.settings,cohorts:[...(db.settings?.cohorts||[]).filter(x=>(typeof x==="string"?x:x?.name)!==name),record]});
+    log(admin.hoten,"Thêm khóa mới",name,`Tự tính niên khóa ${meta.label}`);
+    show(`Đã thêm ${name} · niên khóa ${meta.label}.`);
+    setNewKhoa("");
   };
+
   const doArchive=(khoa)=>{
-    const students=db.students.filter(s=>s.khoa===khoa); if(!students.length) return show("Khóa này hiện không có sinh viên để lưu trữ.");
+    const students=db.students.filter(s=>s.khoa===khoa);
+    if(!students.length) return show("Khóa này hiện không có sinh viên để lưu trữ.");
     const ids=new Set(students.map(s=>s.mssv));
-    const snap={id:uid(),khoa,academicYear:(db.settings?.cohorts||[]).find(x=>(typeof x==="string"?x:x.name)===khoa)?.academicYear||"",archivedAt:nowISO(),archivedBy:admin.hoten,students,evidences:db.evidences.filter(e=>ids.has(e.mssv)),complaints:db.complaints.filter(c=>ids.has(c.mssv)),notifications:db.notifications.filter(n=>ids.has(n.mssv))};
+    const meta=cohortAcademicYears(khoa);
+    const snap={
+      id:uid(),khoa,
+      academicYear:meta?.label||"",
+      startYear:meta?.start||null,
+      endYear:meta?.end||null,
+      archivedAt:nowISO(),
+      archivedBy:admin.hoten,
+      students,
+      evidences:db.evidences.filter(e=>ids.has(e.mssv)),
+      complaints:db.complaints.filter(c=>ids.has(c.mssv)),
+      notifications:db.notifications.filter(n=>ids.has(n.mssv))
+    };
     update("archives",arr=>[snap,...(arr||[])]);
     update("students",arr=>arr.filter(s=>s.khoa!==khoa));
     update("evidences",arr=>arr.filter(e=>!ids.has(e.mssv)));
     update("complaints",arr=>arr.filter(c=>!ids.has(c.mssv)));
     update("notifications",arr=>arr.filter(n=>!ids.has(n.mssv)));
-    update("settings",{...db.settings,cohorts:(db.settings?.cohorts||[]).map(x=>{const o=typeof x==="string"?{name:x}:x;return o.name===khoa?{...o,status:"archived",archivedAt:nowISO()}:o;})});
-    log(admin.hoten,"Lưu trữ khóa dữ liệu",khoa,`Đã lưu ${students.length} sinh viên`);show(`Đã lưu trữ ${khoa}. Có thể xóa vĩnh viễn tại mục dữ liệu đã lưu trữ.`);setConfirm(null);
+    update("settings",{...db.settings,cohorts:(db.settings?.cohorts||[]).map(x=>{
+      const o=typeof x==="string"?{name:x}:x;
+      return o.name===khoa?{...o,status:"archived",archivedAt:nowISO(),academicYear:meta?.label||o.academicYear}:o;
+    })});
+    log(admin.hoten,"Lưu trữ khóa dữ liệu",khoa,`Đã lưu ${students.length} sinh viên · niên khóa ${meta?.label||""}`);
+    show(`Đã lưu trữ ${khoa}.`);
+    setConfirm(null);
   };
+
   const restore=(a)=>{
-    const ids=new Set(db.students.map(s=>s.mssv)); const fresh=a.students.filter(s=>!ids.has(s.mssv));
-    update("students",arr=>[...arr,...fresh]); update("evidences",arr=>[...arr,...a.evidences]); update("complaints",arr=>[...arr,...(a.complaints||[])]); update("notifications",arr=>[...arr,...(a.notifications||[])]);
+    const ids=new Set(db.students.map(s=>s.mssv));
+    const fresh=a.students.filter(s=>!ids.has(s.mssv));
+    update("students",arr=>[...arr,...fresh]);
+    update("evidences",arr=>[...arr,...a.evidences]);
+    update("complaints",arr=>[...arr,...(a.complaints||[])]);
+    update("notifications",arr=>[...arr,...(a.notifications||[])]);
     update("archives",arr=>arr.filter(x=>x.id!==a.id));
-    update("settings",{...db.settings,cohorts:(db.settings?.cohorts||[]).map(x=>{const o=typeof x==="string"?{name:x}:x;return o.name===a.khoa?{...o,status:"active"}:o;})});
-    log(admin.hoten,"Khôi phục khóa dữ liệu",a.khoa,"Thành công");show(`Đã khôi phục ${a.khoa}.`);
+    update("settings",{...db.settings,cohorts:(db.settings?.cohorts||[]).map(x=>{
+      const o=typeof x==="string"?{name:x}:x;
+      return o.name===a.khoa?{...o,status:"active"}:o;
+    })});
+    log(admin.hoten,"Khôi phục khóa dữ liệu",a.khoa,"Thành công");
+    show(`Đã khôi phục ${a.khoa}.`);
   };
-  const purge=(a)=>{update("archives",arr=>arr.filter(x=>x.id!==a.id));log(admin.hoten,"Xóa vĩnh viễn dữ liệu khóa cũ",a.khoa,"Đã xóa khỏi hệ thống");show(`Đã xóa vĩnh viễn dữ liệu ${a.khoa}.`);setConfirm(null);};
+
+  const purge=(a)=>{
+    update("archives",arr=>arr.filter(x=>x.id!==a.id));
+    log(admin.hoten,"Xóa vĩnh viễn dữ liệu khóa cũ",a.khoa,"Đã xóa khỏi hệ thống");
+    show(`Đã xóa vĩnh viễn dữ liệu ${a.khoa}.`);
+    setConfirm(null);
+  };
+
+  const expired=cohortEntries.filter(c=>c.endYear && now.getFullYear() > c.endYear);
   return <div>
-    <PageHead title="Quản lý khóa dữ liệu" sub="Thêm khóa mới, lưu trữ khóa đã ra trường và xóa vĩnh viễn dữ liệu cũ khi cần." />
+    <PageHead title="Quản lý khóa dữ liệu" sub="Niên khóa tự suy ra theo K29 = 2026–2030. Khóa mới và thời hạn lưu trữ được tính tự động." />
+
     <Card className="p-5 mb-4">
       <div className="font-bold mb-3" style={{color:C.navy}}>Thêm khóa mới</div>
-      <div className="grid md:grid-cols-3 gap-3"><Field label="Tên khóa" required><TextInput placeholder="VD: K29" value={newKhoa} onChange={e=>setNewKhoa(e.target.value)} /></Field><Field label="Niên khóa"><TextInput placeholder="2027–2028" value={newYear} onChange={e=>setNewYear(e.target.value)} /></Field><div className="flex items-end"><Btn variant="amber" icon={Plus} onClick={addCohort}>Thêm khóa</Btn></div></div>
+      <div className="grid md:grid-cols-2 gap-3">
+        <Field label="Tên khóa" required>
+          <TextInput placeholder="VD: K30" value={newKhoa} onChange={e=>setNewKhoa(e.target.value)} />
+        </Field>
+        <Field label="Niên khóa tự động">
+          <div className="h-10 px-3 rounded-lg border flex items-center text-sm" style={{borderColor:C.line,color:C.gray}}>
+            {cohortAcademicYears(newKhoa.trim().toUpperCase())?.label || "Nhập K30 để hệ thống tự tính"}
+          </div>
+        </Field>
+      </div>
+      <div className="flex items-center justify-between mt-3 gap-3">
+        <div className="text-xs" style={{color:C.gray}}>
+          Không nhập niên khóa thủ công. Ví dụ K29 = 2026–2030 → K28 = 2025–2029 → K27 = 2024–2028 → K26 = 2023–2027.
+        </div>
+        <Btn variant="amber" icon={Plus} onClick={addCohort}>Thêm khóa</Btn>
+      </div>
     </Card>
+
     <Card className="p-5 mb-4">
       <div className="font-bold mb-3" style={{color:C.navy}}>Khóa đang quản lý</div>
-      <div className="space-y-2">{cohorts.length===0?<Empty title="Chưa có khóa"/>:cohorts.map(k=>{const count=db.students.filter(s=>s.khoa===k).length;const meta=(db.settings?.cohorts||[]).find(x=>(typeof x==="string"?x:x.name)===k);return <div key={k} className="flex flex-wrap items-center gap-3 p-3 rounded-xl border" style={{borderColor:C.line}}><div className="flex-1"><b style={{color:C.navy}}>{k}</b><div className="text-xs" style={{color:C.gray}}>{typeof meta==="object"?meta.academicYear||"":""} · {count} sinh viên đang hoạt động</div></div><Btn variant="outline" icon={Archive} onClick={()=>setConfirm({type:"archive",khoa:k})}>Lưu trữ khóa</Btn></div>})}</div>
+      <div className="text-xs mb-3" style={{color:C.gray}}>
+        Hôm nay: {fmtDT(now.toISOString())}. Quy ước năm học: tháng 8 năm này → tháng 7 năm sau.
+        K26 hiện được suy ra là <b>2023–2027</b> (sinh viên năm 4 theo mốc K29 = 2026–2030).
+      </div>
+      <div className="space-y-2">
+        {cohortEntries.length===0?<Empty title="Chưa có khóa"/>:cohortEntries.map(c=>{
+          const expiredFlag=c.endYear && now.getFullYear()>c.endYear;
+          return <div key={c.name} className="flex flex-wrap items-center gap-3 p-3 rounded-xl border" style={{borderColor:C.line}}>
+            <div className="flex-1">
+              <div className="flex items-center gap-2"><b style={{color:C.navy}}>{c.name}</b><Badge bg={c.status==="archived"?C.grayBg:C.greenBg} fg={c.status==="archived"?C.gray:C.green}>{c.status==="archived"?"Đã lưu trữ":"Đang hoạt động"}</Badge></div>
+              <div className="text-xs" style={{color:C.gray}}>Niên khóa {c.academicYear} · kết thúc {c.endYear || "—"} · {c.count} sinh viên đang hoạt động</div>
+            </div>
+            {c.status!=="archived" && <Btn variant="outline" icon={Archive} onClick={()=>setConfirm({type:"archive",khoa:c.name})}>Lưu trữ</Btn>}
+            {expiredFlag && c.status!=="archived" && <Badge bg={C.redBg} fg={C.red}>Đã quá hạn lưu trữ</Badge>}
+          </div>;
+        })}
+      </div>
     </Card>
+
     <Card className="p-5">
       <div className="font-bold mb-3 flex items-center gap-2" style={{color:C.navy}}><Archive size={16}/> Dữ liệu khóa đã lưu trữ</div>
-      <div className="text-xs mb-3" style={{color:C.gray}}>Dữ liệu được giữ riêng trong Supabase. Bạn có thể khôi phục hoặc xóa vĩnh viễn. Xóa vĩnh viễn không thể hoàn tác.</div>
-      {archives.length===0?<Empty title="Chưa có khóa nào được lưu trữ"/>:<div className="space-y-2">{archives.map(a=><div key={a.id} className="flex flex-wrap items-center gap-3 p-3 rounded-xl border" style={{borderColor:C.line}}><div className="flex-1"><b style={{color:C.navy}}>{a.khoa}</b><div className="text-xs" style={{color:C.gray}}>{a.academicYear||""} · {a.students?.length||0} sinh viên · lưu ngày {fmtDT(a.archivedAt)}</div></div><Btn variant="outline" onClick={()=>setConfirm({type:"restore",archive:a})}>Khôi phục</Btn><Btn variant="danger" onClick={()=>setConfirm({type:"purge",archive:a})}>Xóa vĩnh viễn</Btn></div>)}</div>}
+      <div className="text-xs mb-3" style={{color:C.gray}}>
+        Dữ liệu lưu trữ vẫn nằm trên Supabase cho đến khi quản trị viên chọn xóa vĩnh viễn.
+        Hệ thống không tự xóa âm thầm để tránh mất dữ liệu ngoài ý muốn; thời hạn xóa được suy ra từ niên khóa.
+      </div>
+      {archives.length===0?<Empty title="Chưa có khóa nào được lưu trữ"/>:<div className="space-y-2">
+        {archives.map(a=><div key={a.id} className="flex flex-wrap items-center gap-3 p-3 rounded-xl border" style={{borderColor:C.line}}>
+          <div className="flex-1">
+            <b style={{color:C.navy}}>{a.khoa}</b>
+            <div className="text-xs" style={{color:C.gray}}>Niên khóa {a.academicYear||cohortAcademicYears(a.khoa)?.label||"—"} · {a.students?.length||0} sinh viên · lưu ngày {fmtDT(a.archivedAt)}</div>
+          </div>
+          <Btn variant="outline" onClick={()=>setConfirm({type:"restore",archive:a})}>Khôi phục</Btn>
+          <Btn variant="danger" onClick={()=>setConfirm({type:"purge",archive:a})}>Xóa vĩnh viễn</Btn>
+        </div>)}
+      </div>}
     </Card>
+
     <Modal open={!!confirm} onClose={()=>setConfirm(null)} title={confirm?.type==="archive"?`Lưu trữ ${confirm.khoa}`:confirm?.type==="purge"?`Xóa vĩnh viễn ${confirm.archive.khoa}`:"Khôi phục dữ liệu"}>
-      {confirm?.type==="archive"&&<div className="text-sm"><div className="p-3 rounded-lg mb-4" style={{background:C.blueBg,color:C.blue}}>Hệ thống sẽ lưu toàn bộ sinh viên của khóa, minh chứng, khiếu nại và thông báo liên quan vào khu lưu trữ, sau đó đưa chúng ra khỏi dữ liệu đang hoạt động. Hoạt động chung và nhật ký quản trị vẫn được giữ.</div><Btn variant="amber" className="w-full" onClick={()=>doArchive(confirm.khoa)}>Xác nhận lưu trữ</Btn></div>}
-      {confirm?.type==="restore"&&<div className="text-sm"><div className="p-3 rounded-lg mb-4" style={{background:C.greenBg,color:C.green}}>Khôi phục sẽ đưa dữ liệu của {confirm.archive.khoa} trở lại hệ thống đang hoạt động.</div><Btn variant="amber" className="w-full" onClick={()=>restore(confirm.archive)}>Xác nhận khôi phục</Btn></div>}
-      {confirm?.type==="purge"&&<div className="text-sm"><div className="p-3 rounded-lg mb-4" style={{background:C.redBg,color:C.red}}>CẢNH BÁO: dữ liệu của {confirm.archive.khoa} sẽ bị xóa vĩnh viễn khỏi kho lưu trữ và không thể hoàn tác. Hãy chắc chắn bạn đã sao lưu.</div><Btn variant="danger" className="w-full" onClick={()=>purge(confirm.archive)}>Xác nhận xóa vĩnh viễn</Btn></div>}
+      {confirm?.type==="archive"&&<div className="text-sm">
+        <div className="p-3 rounded-lg mb-4" style={{background:C.blueBg,color:C.blue}}>
+          {confirm.khoa} có niên khóa <b>{cohortAcademicYears(confirm.khoa)?.label||"—"}</b>. Hệ thống sẽ đưa sinh viên, minh chứng, khiếu nại và thông báo của khóa vào kho lưu trữ; hoạt động chung và nhật ký vẫn giữ nguyên.
+        </div>
+        <Btn variant="amber" className="w-full" onClick={()=>doArchive(confirm.khoa)}>Xác nhận lưu trữ</Btn>
+      </div>}
+      {confirm?.type==="restore"&&<div className="text-sm">
+        <div className="p-3 rounded-lg mb-4" style={{background:C.greenBg,color:C.green}}>Khôi phục sẽ đưa dữ liệu của {confirm.archive.khoa} trở lại hệ thống đang hoạt động.</div>
+        <Btn variant="amber" className="w-full" onClick={()=>restore(confirm.archive)}>Xác nhận khôi phục</Btn>
+      </div>}
+      {confirm?.type==="purge"&&<div className="text-sm">
+        <div className="p-3 rounded-lg mb-4" style={{background:C.redBg,color:C.red}}>CẢNH BÁO: dữ liệu của {confirm.archive.khoa} sẽ bị xóa vĩnh viễn khỏi kho lưu trữ và không thể hoàn tác.</div>
+        <Btn variant="danger" className="w-full" onClick={()=>purge(confirm.archive)}>Xác nhận xóa vĩnh viễn</Btn>
+      </div>}
     </Modal>
   </div>;
 }
