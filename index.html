@@ -1381,6 +1381,7 @@ table{border-collapse:separate;border-spacing:0;width:100%}
 .hover\:-translate-y-0\.5:hover{transform:translateY(-2px)}
 .disabled\:opacity-40:disabled{opacity:0.4}
 .disabled\:cursor-not-allowed:disabled{cursor:not-allowed}
+@media print{table{font-size:10px}th,td{white-space:nowrap}}
 </style>
 </head>
 <body>
@@ -1397,7 +1398,6 @@ const ICON_PATHS = {
   FileSpreadsheet: '<rect x="4" y="3" width="16" height="18" rx="2"/><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="14" x2="20" y2="14"/><line x1="10" y1="9" x2="10" y2="21"/>',
   ShieldCheck: '<path d="M12 3l7 3v6c0 5-3.4 8.4-7 9-3.6-.6-7-4-7-9V6l7-3z"/><path d="M9 12l2 2 4-4"/>',
   History: '<path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 8v4l3 2"/>',
-  Archive: '<path d="M3 7h18v13H3z"/><path d="M3 7l2-4h14l2 4"/><line x1="9" y1="12" x2="15" y2="12"/>',
   Bell: '<path d="M6 10a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 20a2 2 0 0 0 4 0"/>',
   User: '<circle cx="12" cy="8" r="4"/><path d="M4 20c0-4.4 3.6-8 8-8s8 3.6 8 8"/>',
   BookOpen: '<path d="M12 5c-2-1.3-5-2-8-1v13c3-1 6-0.3 8 1 2-1.3 5-2 8-1V4c-3-1-6-0.3-8 1z"/><line x1="12" y1="5" x2="12" y2="18"/>',
@@ -1431,6 +1431,7 @@ const ICON_PATHS = {
   Info: '<circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16"/><circle cx="12" cy="7.5" r="0.6" fill="currentColor"/>',
   Send: '<path d="M22 2L11 13"/><path d="M22 2L15 22l-4-9-9-4 20-7z"/>',
   Sparkles: '<path d="M12 2l1.8 5.2L19 9l-5.2 1.8L12 16l-1.8-5.2L5 9l5.2-1.8L12 2z"/><path d="M19 15l0.7 2 2 0.7-2 0.7-0.7 2-0.7-2-2-0.7 2-0.7z"/>',
+  HelpCircle: '<circle cx="12" cy="12" r="9"/><path d="M9.6 9a2.6 2.6 0 1 1 4.3 2c-.9.7-1.9 1.2-1.9 2.6"/><circle cx="12" cy="17" r="0.7" fill="currentColor"/>',
 };
 
 function Icon({ name, size = 16, style, className }) {
@@ -1450,7 +1451,6 @@ const MessageSquareWarning = (p) => Icon({ ...p, name: "MessageSquareWarning" })
 const FileSpreadsheet = (p) => Icon({ ...p, name: "FileSpreadsheet" });
 const ShieldCheck = (p) => Icon({ ...p, name: "ShieldCheck" });
 const History = (p) => Icon({ ...p, name: "History" });
-const Archive = (p) => Icon({ ...p, name: "Archive" });
 const Bell = (p) => Icon({ ...p, name: "Bell" });
 const User = (p) => Icon({ ...p, name: "User" });
 const BookOpen = (p) => Icon({ ...p, name: "BookOpen" });
@@ -1484,6 +1484,7 @@ const UploadCloud = (p) => Icon({ ...p, name: "UploadCloud" });
 const Info = (p) => Icon({ ...p, name: "Info" });
 const Send = (p) => Icon({ ...p, name: "Send" });
 const Sparkles = (p) => Icon({ ...p, name: "Sparkles" });
+const HelpCircle = (p) => Icon({ ...p, name: "HelpCircle" });
 
 
 
@@ -1514,7 +1515,7 @@ const C = {
 
 const ACTIVITY_TYPES = [
   { code: "SH", name: "Chia sẻ bài viết", icon: Share2, color: C.amber, rule: "10 lượt chia sẻ hợp lệ = 01 hoạt động. Chỉ tính lượt chia sẻ trong vòng 02 ngày kể từ khi bài viết được đăng." },
-  { code: "QC", name: "Quay / chụp", icon: Camera, color: C.blue, rule: "05 lần tham gia (minh chứng đạt) = 01 hoạt động. Gồm: hoạt động do Ban Truyền thông tổ chức, tham gia cùng CLB, hoặc tự quay/tự chụp." },
+  { code: "QC", name: "Quay / chụp", icon: Camera, color: C.blue, rule: "05 minh chứng đạt = 01 hoạt động. Có thể là hoạt động do Ban Truyền thông tổ chức, tham gia cùng CLB Truyền thông hoặc tự quay/tự chụp." },
   { code: "TV", name: "Tư vấn tuyển sinh", icon: Mic, color: C.green, rule: "01 lần tham gia tư vấn tuyển sinh (được điểm danh xác nhận) = 01 hoạt động." },
   { code: "VD", name: "Video", icon: Video, color: C.red, rule: "01 video đạt yêu cầu (tối thiểu 30 giây, đúng nội dung, được thẩm định và đăng tải) = 01 hoạt động." },
   { code: "GT", name: "Giới thiệu người học", icon: UserPlus2, color: C.purple, rule: "01 người học nhập học và hoàn thành học phí kỳ đầu tiên (đã xác minh) = 02 hoạt động." },
@@ -1536,7 +1537,10 @@ const COMPLAINT_STATUS = {
 };
 const CONTACT_NOTE = "Hãy đến phòng Truyền thông – Tuyển sinh tìm Cô Hiền hoặc Thoa để giải quyết.";
 const FANPAGE_URL = "https://www.facebook.com/phanvienphuyen.hvnh";
-const EMOJI_LIST = ["👍", "😊", "😂", "❤️", "🎉", "🙏", "😢", "😮", "🔥", "✅", "❌", "⏰", "📌", "👏", "💪", "🤝", "😅", "🥳", "📷", "🎥"];
+const EMOJI_LIST = [
+  "😀","😃","😄","😁","😆","😅","😂","🤣","😊","🙂","🙃","😉","😌","😍","🥰","😘","😗","😙","😚","😋","😛","😝","😜","🤪","🤨","🧐","🤓","😎","🥳","🤩",
+  "😏","😒","😞","😔","😟","😕","🙁","☹️","😣","😖","😫","😩","🥺","😢","😭","😤","😠","😡","🤬","🤯","😳","🥵","🥶","😱","😨","😰","😥","😓","🤗","🤔","🫡","🤭","🤫","🤥","😶","😐","😑","😬","🙄","😯","😦","😧","😮","😲","🥱","😴","🤤","😪","😵","🤐","🤢","🤮","🤧","😷","🤒","🤕",
+  "👍","👎","👌","✌️","🤞","🤟","🤘","🤙","👋","👏","🙌","🫶","🤝","🙏","💪","🫰","☝️","👆","👇","👉","👈","✍️","💅","🎉","🎊","🎈","🎁","🏆","🥇","🔥","✨","⭐","🌟","💯","✅","❌","⚡","💡","📌","📣","📷","🎥","🎬","🎤","🎧","❤️","🧡","💛","💚","💙","💜","🖤","🤍","🤎","💔","❣️","💕","💞","💓","💗","💖","💘","💝","💟","☀️","🌈","🌸","🌺","🌻","🌼","🍀","🌿","🌱","🌊","☕","🍰","🍕","🍜","🍔","🥤","⚽","🏀","🏐","🎮","🚀","📝","📚","💻","📱","🔔","⏰","🔗","📎","🔒","🔑"] ;
 
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 9);
 const nowISO = () => new Date().toISOString();
@@ -1551,64 +1555,6 @@ function calcPoints(n) {
   if (n >= 1) return 2;
   return 0;
 }
-/* =========================================================================
-   NIÊN KHÓA TỰ ĐỘNG
-   Quy ước: năm học bắt đầu từ tháng 8 và kết thúc vào tháng 7 năm sau.
-   Mốc hiện tại theo yêu cầu: K29 = 2026–2030 (4 năm).
-   Suy ra: K28 = 2025–2029, K27 = 2024–2028, K26 = 2023–2027...
-   ========================================================================= */
-const CURRENT_COHORT_NUMBER = 29;
-const CURRENT_COHORT_START_YEAR = 2026;
-const COHORT_DURATION_YEARS = 4;
-
-function cohortNumber(khoa) {
-  const m = String(khoa || "").toUpperCase().match(/^K(\\d+)$/);
-  return m ? Number(m[1]) : null;
-}
-function cohortAcademicYears(khoa) {
-  const n = cohortNumber(khoa);
-  if (!n) return null;
-  const start = CURRENT_COHORT_START_YEAR + (n - CURRENT_COHORT_NUMBER);
-  return { start, end: start + COHORT_DURATION_YEARS, label: `${start}–${start + COHORT_DURATION_YEARS}` };
-}
-function academicYearForDate(dateValue = new Date()) {
-  const d = dateValue instanceof Date ? dateValue : new Date(dateValue);
-  if (Number.isNaN(d.getTime())) return `${CURRENT_COHORT_START_YEAR}–${CURRENT_COHORT_START_YEAR + 1}`;
-  const y = d.getFullYear();
-  const start = d.getMonth() >= 7 ? y : y - 1; // tháng 8 = index 7
-  return `${start}–${start + 1}`;
-}
-function semesterForDate(dateValue = new Date()) {
-  const d = dateValue instanceof Date ? dateValue : new Date(dateValue);
-  if (Number.isNaN(d.getTime())) return "Học kỳ I";
-  return d.getMonth() >= 7 ? "Học kỳ I" : "Học kỳ II";
-}
-function cohortIsExpired(khoa, now = new Date()) {
-  const meta = cohortAcademicYears(khoa);
-  if (!meta) return false;
-  // Chỉ hết hạn sau khi đã đi qua tháng 7 của năm kết thúc.
-  const currentStart = now.getMonth() >= 7 ? now.getFullYear() : now.getFullYear() - 1;
-  return currentStart > meta.end;
-}
-function computedCohortEntries(db) {
-  const names = [...new Set([
-    ...(db.settings?.cohorts || []).map(x => typeof x === "string" ? x : x?.name),
-    ...(db.students || []).map(s => s.khoa)
-  ].filter(Boolean))];
-  return names.map(name => {
-    const meta = cohortAcademicYears(name);
-    const saved = (db.settings?.cohorts || []).find(x => (typeof x === "string" ? x : x?.name) === name);
-    return {
-      name,
-      academicYear: meta?.label || (typeof saved === "object" ? saved.academicYear || "" : ""),
-      startYear: meta?.start ?? null,
-      endYear: meta?.end ?? null,
-      status: typeof saved === "object" ? (saved.status || "active") : "active",
-      count: (db.students || []).filter(s => s.khoa === name).length
-    };
-  }).sort((a,b) => (b.startYear ?? -1) - (a.startYear ?? -1) || b.name.localeCompare(a.name));
-}
-
 const POINT_ROWS = [
   ["≥ 10 hoạt động", "10 điểm"],
   ["5 – 9 hoạt động", "7 điểm"],
@@ -1827,186 +1773,147 @@ function FilterChip({ active, onClick, children }) {
 }
 
 /* =========================================================================
-   STORAGE — DATABASE ONLINE + REALTIME
-   =========================================================================
-   Dữ liệu chính nằm trên Supabase nên mọi thiết bị dùng cùng website sẽ
-   đọc/ghi cùng một nguồn dữ liệu. IndexedDB/localStorage chỉ là bộ nhớ đệm
-   dự phòng khi mạng tạm thời mất.
-*/
-const KEYS = ["students", "admins", "activities", "evidences", "complaints", "notifications", "auditlog", "settings", "messages", "archives"];
-const LOCAL_PREFIX = "BAV_PY_CACHE_";
+   STORAGE · SUPABASE ONLINE + LOCAL FALLBACK
+   ========================================================================= */
+const KEYS = ["students", "admins", "activities", "evidences", "complaints", "notifications", "auditlog", "settings", "messages", "cohortArchives"];
+const DEFAULT_SETTINGS = { locked: false, term: "Học kỳ I – Năm học 2026–2027" };
 const SUPABASE_URL = window.BAV_CONFIG?.SUPABASE_URL || "";
-const SUPABASE_ANON_KEY = window.BAV_CONFIG?.SUPABASE_ANON_KEY || "";
-const CLOUD_READY = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase?.createClient);
-const sb = CLOUD_READY ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
-let realtimeChannel = null;
-const saveQueues = new Map();
+const SUPABASE_KEY = window.BAV_CONFIG?.SUPABASE_ANON_KEY || "";
+const supabaseClient = (SUPABASE_URL && SUPABASE_KEY && window.supabase)
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+  : null;
 
-function defaultValueForKey(k) {
-  if (k === "settings") { const ay = academicYearForDate(new Date()); const sem = semesterForDate(new Date()); return { locked: false, term: `${sem} – Năm học ${ay}`, semester: sem, academicYear: ay, cohorts: [{ name: "K29", academicYear: "2026–2030", startYear: 2026, endYear: 2030, status: "active" }, { name: "K28", academicYear: "2025–2029", startYear: 2025, endYear: 2029, status: "active" }, { name: "K27", academicYear: "2024–2028", startYear: 2024, endYear: 2028, status: "active" }, { name: "K26", academicYear: "2023–2027", startYear: 2023, endYear: 2027, status: "active" }] }; }
-  return [];
+function getLocal(k) {
+  try { const v = localStorage.getItem(`bav_${k}`); return v ? JSON.parse(v) : null; } catch { return null; }
 }
-function cacheGet(key) {
-  try { const raw = localStorage.getItem(LOCAL_PREFIX + key); return raw === null ? null : JSON.parse(raw); } catch { return null; }
+function setLocal(k, value) {
+  try { localStorage.setItem(`bav_${k}`, JSON.stringify(value)); } catch {}
 }
-function cacheSet(key, value) {
-  try { localStorage.setItem(LOCAL_PREFIX + key, JSON.stringify(value)); return true; } catch { return false; }
+function getPersistent(k) {
+  const local = getLocal(k);
+  if (local !== null) return local;
+  try {
+    const m = document.cookie.match(new RegExp(`(?:^|; )bav_${k}=([^;]*)`));
+    return m ? JSON.parse(decodeURIComponent(m[1])) : null;
+  } catch { return null; }
 }
-
-async function cloudGet(key) {
-  if (!CLOUD_READY) return null;
-  const { data, error } = await sb.from("bav_app_state").select("key,value,updated_at").eq("key", key).maybeSingle();
-  if (error) throw error;
-  return data ? data.value : null;
+function setPersistent(k, value) {
+  setLocal(k, value);
+  try {
+    if (value === null || value === undefined) {
+      document.cookie = `bav_${k}=; Max-Age=0; Path=/; SameSite=Lax`;
+    } else {
+      document.cookie = `bav_${k}=${encodeURIComponent(JSON.stringify(value))}; Max-Age=2592000; Path=/; SameSite=Lax`;
+    }
+  } catch {}
 }
-async function cloudSet(key, value) {
-  if (!CLOUD_READY) throw new Error("Chưa cấu hình database online.");
-  const { error } = await sb.from("bav_app_state").upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: "key" });
-  if (error) throw error;
+function clearPersistent(k) {
+  try { localStorage.removeItem(`bav_${k}`); } catch {}
+  try { document.cookie = `bav_${k}=; Max-Age=0; Path=/; SameSite=Lax`; } catch {}
 }
-
-
-/* Tự động dọn dữ liệu khóa đã hết thời hạn.
-   Chính sách: K29 2026–2030 => giữ đến hết 31/12/2030, từ 01/01/2031
-   mới xóa. K26 => 2023–2027, giữ đến hết 31/12/2027.
-   Vì đây là website tĩnh, thao tác tự động được kiểm tra mỗi lần website
-   khởi động; không cần quản trị viên bấm nút.
-*/
-function autoPurgeExpiredCohorts(out) {
-  const year = new Date().getFullYear();
-  const expired = new Set();
-
-  (out.settings?.cohorts || []).forEach(x => {
-    const name = typeof x === "string" ? x : x?.name;
-    const meta = cohortAcademicYears(name);
-    if (meta && year > meta.end) expired.add(name);
+function purgeExpiredArchivedCohorts(archives) {
+  const nowYear = new Date().getFullYear();
+  const list = Array.isArray(archives) ? archives : [];
+  return list.filter((a) => {
+    const start = cohortStartYear(a.khoa);
+    const end = start ? start + 4 : null;
+    // Keep archived data through the entire graduation year; purge only from Jan 1 of the following year.
+    if (end && nowYear > end) return false;
+    return true;
   });
-  (out.students || []).forEach(s => {
-    const meta = cohortAcademicYears(s.khoa);
-    if (meta && year > meta.end) expired.add(s.khoa);
-  });
-
-  if (!expired.size) return { out, changed: false, expired: [] };
-
-  const ids = new Set((out.students || []).filter(s => expired.has(s.khoa)).map(s => s.mssv));
-  const before = {
-    students: out.students || [],
-    evidences: out.evidences || [],
-    complaints: out.complaints || [],
-    notifications: out.notifications || []
-  };
-
-  out.students = before.students.filter(s => !expired.has(s.khoa));
-  out.evidences = before.evidences.filter(e => !ids.has(e.mssv));
-  out.complaints = before.complaints.filter(c => !ids.has(c.mssv));
-  out.notifications = before.notifications.filter(n => !ids.has(n.mssv));
-
-  // Xóa luôn bản lưu trữ đã đến hạn.
-  out.archives = (out.archives || []).filter(a => {
-    const meta = cohortAcademicYears(a.khoa);
-    return !(meta && year > meta.end);
-  });
-
-  out.settings = {
-    ...(out.settings || {}),
-    cohorts: (out.settings?.cohorts || []).map(x => {
-      const o = typeof x === "string" ? { name:x } : { ...x };
-      if (expired.has(o.name)) return { ...o, status:"expired_deleted", deletedAt:nowISO() };
-      return o;
-    })
-  };
-
-  return { out, changed: true, expired:[...expired] };
 }
-
 async function loadAll() {
-  const out = {};
-  if (CLOUD_READY) {
+  const fallback = {};
+  KEYS.forEach((k) => { fallback[k] = getLocal(k) ?? (k === "settings" ? { ...DEFAULT_SETTINGS } : []); });
+  fallback.cohortArchives = purgeExpiredArchivedCohorts(fallback.cohortArchives);
+  if (!supabaseClient) return { ...fallback, __online: false };
+  try {
+    const { data, error } = await supabaseClient.from("bav_app_state").select("key,value,updated_at");
+    if (error) throw error;
+    const out = {};
+    KEYS.forEach((k) => {
+      const row = data?.find((r) => r.key === k);
+      out[k] = row?.value ?? fallback[k];
+    });
+    const cleanedArchives = purgeExpiredArchivedCohorts(out.cohortArchives);
+    if (JSON.stringify(cleanedArchives) !== JSON.stringify(out.cohortArchives || [])) {
+      out.cohortArchives = cleanedArchives;
+      await saveKey("cohortArchives", cleanedArchives);
+    }
+    // Migrate existing local data only when the online table is empty for that key.
     for (const k of KEYS) {
-      try {
-        const cloudValue = await cloudGet(k);
-        if (cloudValue !== null && cloudValue !== undefined) {
-          out[k] = cloudValue;
-          cacheSet(k, cloudValue);
-        } else {
-          const localValue = cacheGet(k);
-          out[k] = localValue === null ? defaultValueForKey(k) : localValue;
-          if (localValue !== null) await cloudSet(k, localValue);
-        }
-      } catch (e) {
-        console.warn("Cloud read failed", k, e);
-        const localValue = cacheGet(k);
-        out[k] = localValue === null ? defaultValueForKey(k) : localValue;
-      }
+      const hasRemote = data?.some((r) => r.key === k);
+      if (!hasRemote && getLocal(k) !== null) await saveKey(k, out[k]);
+      setLocal(k, out[k]);
     }
-  } else {
-    for (const k of KEYS) {
-      const localValue = cacheGet(k);
-      out[k] = localValue === null ? defaultValueForKey(k) : localValue;
-    }
+    return { ...out, __online: true };
+  } catch (e) {
+    console.error("Supabase load failed", e);
+    return { ...fallback, __online: false };
   }
-  const cleanup = autoPurgeExpiredCohorts(out);
-  if (cleanup.changed) {
-    for (const k of ["students","evidences","complaints","notifications","archives","settings"]) {
-      await saveKey(k, out[k]);
-    }
-    console.warn("BAV auto-purge expired cohorts:", cleanup.expired);
-  }
-  return out;
 }
-
-function saveKey(key, value) {
-  cacheSet(key, value);
-  const previous = saveQueues.get(key) || Promise.resolve();
-  const next = previous.then(async () => {
-    if (!CLOUD_READY) return;
-    try { await cloudSet(key, value); }
-    catch (e) { console.error("Cloud save failed", key, e); }
-  }).catch(e => console.error("save queue failed", key, e));
-  saveQueues.set(key, next);
-  return next;
+async function saveKey(key, value) {
+  setLocal(key, value);
+  if (!supabaseClient) return false;
+  try {
+    const { error } = await supabaseClient.from("bav_app_state").upsert({ key, value, updated_at: nowISO() }, { onConflict: "key" });
+    if (error) throw error;
+    return true;
+  } catch (e) { console.error("Supabase save failed", key, e); return false; }
 }
-
-function subscribeRealtime(onRemoteChange) {
-  if (!CLOUD_READY || realtimeChannel) return;
-  realtimeChannel = sb.channel("bav-app-state-sync")
-    .on("postgres_changes", { event: "INSERT", schema: "public", table: "bav_app_state" }, payload => onRemoteChange(payload.new))
-    .on("postgres_changes", { event: "UPDATE", schema: "public", table: "bav_app_state" }, payload => onRemoteChange(payload.new))
-    .subscribe((status) => console.log("BAV realtime:", status));
-}
-
 /* =========================================================================
    ROOT APP
    ========================================================================= */
 function App() {
   const [loading, setLoading] = useState(true);
   const [db, setDb] = useState(null);
-  const [portal, setPortal] = useState(null);
-  const [session, setSession] = useState(null);
+  const [portalState, setPortalState] = useState(() => getPersistent("ui_portal"));
+  const [sessionState, setSessionState] = useState(() => getPersistent("ui_session"));
   const [toast, setToast] = useState("");
+  const [online, setOnline] = useState(!!supabaseClient);
+  const portal = portalState;
+  const session = sessionState;
+  const setPortal = useCallback((value) => {
+    setPortalState(value);
+    if (value) setPersistent("ui_portal", value);
+    else clearPersistent("ui_portal");
+  }, []);
+  const setSession = useCallback((value) => {
+    setSessionState(value);
+    if (value) setPersistent("ui_session", value);
+    else clearPersistent("ui_session");
+  }, []);
 
   useEffect(() => {
+    let mounted = true;
     loadAll().then(async (out) => {
       if (!out.admins || out.admins.length === 0) {
         out.admins = [{ username: "thoa", hoten: "Nguyễn Thị Mỹ Thoa", password: "Admin@2026", sdt: "", email: "", trangThai: "active", role: "super_admin", createdAt: nowISO() }];
         await saveKey("admins", out.admins);
       }
       out.complaints = (out.complaints || []).map((c) => (c.messages ? c : { ...c, messages: c.noiDung ? [{ id: uid(), sender: "student", senderName: "", text: c.noiDung, createdAt: c.createdAt }] : [], escalated: false }));
-      setDb(out);
-      setLoading(false);
-      subscribeRealtime((remote) => {
-        if (!remote || !KEYS.includes(remote.key)) return;
-        setDb((current) => current ? { ...current, [remote.key]: remote.value } : current);
-        cacheSet(remote.key, remote.value);
-      });
+      if (!mounted) return;
+      setDb(out); setOnline(!!out.__online); setLoading(false);
     });
+    if (supabaseClient) {
+      const channel = supabaseClient.channel("bav_app_state_realtime")
+        .on("postgres_changes", { event: "*", schema: "public", table: "bav_app_state" }, (payload) => {
+          const row = payload.new || payload.old;
+          if (!row?.key || !KEYS.includes(row.key)) return;
+          setDb((prev) => prev ? { ...prev, [row.key]: row.value } : prev);
+          setLocal(row.key, row.value);
+          setOnline(true);
+        }).subscribe((status) => { if (status === "SUBSCRIBED") setOnline(true); });
+      return () => { mounted = false; supabaseClient.removeChannel(channel); };
+    }
+    return () => { mounted = false; };
   }, []);
 
   const update = useCallback((key, updater) => {
     setDb((prev) => {
-      const next = { ...prev, [key]: typeof updater === "function" ? updater(prev[key]) : updater };
-      saveKey(key, next[key]);
-      return next;
+      const nextValue = typeof updater === "function" ? updater(prev[key]) : updater;
+      saveKey(key, nextValue);
+      return { ...prev, [key]: nextValue };
     });
   }, []);
 
@@ -2026,7 +1933,7 @@ function App() {
     );
   }
 
-  const ctx = { db, update, notify, log, show };
+  const ctx = { db, update, notify, log, show, online };
 
   return (
     <div style={{ fontFamily: "'Be Vietnam Pro', sans-serif", background: C.paper, color: C.ink, minHeight: 600 }} className="w-full">
@@ -2039,9 +1946,6 @@ function App() {
         .line-clamp-2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
       `}</style>
       <Toast msg={toast} onDone={() => setToast("")} />
-      <div className="fixed top-3 right-3 z-[70] px-3 py-1.5 rounded-full text-[11px] font-semibold shadow" style={{ background: CLOUD_READY ? "#E9F7EF" : "#FFF3E0", color: CLOUD_READY ? "#18794E" : "#9A5B00", border: `1px solid ${C.line}` }}>
-        {CLOUD_READY ? "● Đã đồng bộ dữ liệu online" : "● Chưa kết nối database online"}
-      </div>
       {!session && !portal && <Landing db={db} onPick={setPortal} />}
       {!session && portal === "student" && (
         <StudentAuth db={db} update={update} onBack={() => setPortal(null)} onLogin={(mssv) => setSession({ type: "student", id: mssv })} show={show} log={log} />
@@ -2243,7 +2147,7 @@ function AdminAuth({ db, onBack, onLogin, show }) {
 /* =========================================================================
    SHELL
    ========================================================================= */
-function Shell({ title, subtitle, tabs, active, onTab, onLogout, children, badgeCounts = {} }) {
+function Shell({ title, subtitle, tabs, active, onTab, onLogout, children, badgeCounts = {}, online = false }) {
   return (
     <div className="flex min-h-[680px]">
       <aside className="w-60 shrink-0 flex flex-col py-5 px-3" style={{ background: C.navy }}>
@@ -2265,7 +2169,14 @@ function Shell({ title, subtitle, tabs, active, onTab, onLogout, children, badge
         </nav>
         <button onClick={onLogout} className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium mt-2" style={{ color: "#C3CBE0" }}><LogOut size={16} /> Đăng xuất</button>
       </aside>
-      <main className="flex-1 min-w-0 p-6 sm:p-8" style={{ background: C.paper }}>{children}</main>
+      <main className="flex-1 min-w-0 p-6 sm:p-8" style={{ background: C.paper }}>
+        <div className="flex justify-end mb-3">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-semibold" style={{ background: online ? C.greenBg : C.grayBg, color: online ? C.green : C.gray }}>
+            <span className="w-2 h-2 rounded-full" style={{ background: online ? C.green : C.gray }} /> {online ? "Đã đồng bộ dữ liệu online" : "Chưa kết nối database online"}
+          </div>
+        </div>
+        {children}
+      </main>
     </div>
   );
 }
@@ -2442,7 +2353,8 @@ function ChatPanel({ mssv, studentName, update, notify, messages, role, currentN
 function StudentApp(props) {
   const { db, mssv, onLogout } = props;
   const student = db.students.find((s) => s.mssv === mssv);
-  const [tab, setTab] = useState("dashboard");
+  const [tab, setTabState] = useState(() => getPersistent(`student_tab_${mssv}`) || "dashboard");
+  const setTab = useCallback((value) => { setTabState(value); setPersistent(`student_tab_${mssv}`, value); }, [mssv]);
   if (!student) return null;
 
   const unread = db.notifications.filter((n) => n.mssv === mssv && !n.read).length;
@@ -2458,10 +2370,11 @@ function StudentApp(props) {
     { key: "notifications", label: "Thông báo", icon: Bell },
     { key: "profile", label: "Hồ sơ", icon: User },
     { key: "rules", label: "Quy định", icon: BookOpen },
+    { key: "help", label: "Hướng dẫn sử dụng", icon: HelpCircle },
   ];
 
   return (
-    <Shell title="CỔNG SINH VIÊN" subtitle={student.hoTen} tabs={tabs} active={tab} onTab={setTab} onLogout={onLogout} badgeCounts={{ notifications: unread, chat: unreadChat }}>
+    <Shell title="CỔNG SINH VIÊN" subtitle={student.hoTen} tabs={tabs} active={tab} onTab={setTab} onLogout={onLogout} badgeCounts={{ notifications: unread, chat: unreadChat }} online={props.online}>
       {tab === "dashboard" && <StudentDashboard {...props} student={student} onTab={setTab} />}
       {tab === "activities" && <StudentActivities {...props} student={student} />}
       {tab === "proactive" && <StudentProactive {...props} student={student} />}
@@ -2471,6 +2384,7 @@ function StudentApp(props) {
       {tab === "notifications" && <StudentNotifications {...props} student={student} />}
       {tab === "profile" && <StudentProfile {...props} student={student} />}
       {tab === "rules" && <RulesPage />}
+      {tab === "help" && <HelpPage role="student" />}
     </Shell>
   );
 }
@@ -2620,25 +2534,27 @@ function ActivityDetailModal({ a, onClose, db, update, log, show, student }) {
     if ((a.loai === "TV" || a.loai === "GT") && mine.some((e) => e.status === "cho_kiem_tra")) return setErr("Bạn đã có minh chứng đang chờ kiểm tra cho hoạt động này.");
     let data = {};
     if (a.loai === "SH") {
-      if (!form.soLuot || !form.thoiGian || !form.link) return setErr("Vui lòng nhập đầy đủ số lượt, thời gian và link minh chứng.");
-      data = { soLuot: Number(form.soLuot), thoiGian: form.thoiGian, link: form.link };
+      if (!form.soLuot || !form.link) return setErr("Vui lòng nhập số lượt chia sẻ và link Facebook cá nhân.");
+      data = { soLuot: Number(form.soLuot), link: form.link, video: form.video || "" };
     } else if (a.loai === "QC") {
-      if (!form.nguon || !form.thoiGian || !form.link) return setErr("Vui lòng nhập đầy đủ thông tin.");
-      if (!isDriveLink(form.link)) return setErr("Link minh chứng phải là link Google Drive.");
-      data = { nguon: form.nguon, thoiGian: form.thoiGian, thucHienCung: form.nguon === "tu_lam" ? "" : (form.thucHienCung || ""), link: form.link, moTa: form.moTa || "" };
+      if (!form.nguon || !form.link) return setErr("Vui lòng nhập đầy đủ thông tin.");
+      if (!isDriveLink(form.link)) return setErr("Link video/minh chứng phải là link Google Drive.");
+      if (form.nguon === "tu_lam" && !form.ten) return setErr("Vui lòng nhập tên minh chứng / tên video.");
+      if (form.nguon === "cau_lac_bo" && !form.nguoiMoi) return setErr("Vui lòng nhập tên thành viên CLB đã mời bạn tham gia.");
+      data = { nguon: form.nguon, ten: form.ten || "", nguoiMoi: form.nguoiMoi || "", link: form.link, video: form.video || "" };
     } else if (a.loai === "TV") {
       if (!form.thoiGian) return setErr("Vui lòng nhập thời gian tham gia tư vấn.");
-      data = { thoiGian: form.thoiGian };
+      data = { thoiGian: form.thoiGian, video: form.video || "" };
     } else if (a.loai === "VD") {
       if (!form.link) return setErr("Vui lòng nhập link Google Drive video.");
       if (!isDriveLink(form.link)) return setErr("Link phải là link Google Drive.");
       data = { link: form.link, moTa: form.moTa || "" };
     } else if (a.loai === "GT") {
       if (!form.hoTen || !form.sdt) return setErr("Vui lòng nhập họ tên và số điện thoại người được giới thiệu.");
-      data = { hoTen: form.hoTen, sdt: form.sdt, ghiChu: form.ghiChu || "" };
+      data = { hoTen: form.hoTen, sdt: form.sdt, ghiChu: form.ghiChu || "", video: form.video || "" };
     } else if (a.loai === "KH") {
       if (!form.moTa) return setErr("Vui lòng mô tả hoạt động đã thực hiện.");
-      data = { moTa: form.moTa, link: form.link || "" };
+      data = { moTa: form.moTa, link: form.link || "", video: form.video || "" };
     }
     const ev = { id: uid(), activityId: a.id, mssv: student.mssv, loai: a.loai, data, status: "cho_kiem_tra", note: "", approvedBy: "", approvedAt: "", submittedAt: nowISO(), camKet: true };
     update("evidences", (arr) => [ev, ...arr]);
@@ -2651,6 +2567,7 @@ function ActivityDetailModal({ a, onClose, db, update, log, show, student }) {
     <Modal open onClose={onClose} title={`${a.ma} · ${a.ten}`} width="max-w-2xl">
       <div className="flex items-center gap-2 mb-3"><RuntimeBadge activity={a} /><Badge bg={C.grayBg} fg={C.gray}>{T.name}</Badge></div>
       <div className="text-sm rounded-xl p-3 mb-4" style={{ background: C.grayBg, color: C.navy2 }}>{T.rule}</div>
+      {a.loai === "VD" && <div className="text-xs p-3 rounded-xl mb-4 flex items-start gap-2" style={{ background: "#FEF3D8", color: C.amber2 }}><Info size={14} className="mt-0.5 shrink-0" /><span><b>Chú ý khi nộp minh chứng:</b> Chủ động quay, biên tập và hoàn thiện video có thời lượng từ 30 giây trở lên, với nội dung phản ánh hoạt động học tập, rèn luyện, đời sống sinh viên hoặc các hoạt động của Phân viện; video được gửi về BTT, được thẩm định đạt yêu cầu và đăng tải trên các nền tảng truyền thông chính thức của Phân viện (01 video đạt yêu cầu được tính là 01 hoạt động).</span></div>}
       <div className="grid grid-cols-2 gap-3 text-xs mb-4">
         <div><span style={{ color: C.gray }}>Bắt đầu:</span> <b>{fmtDT(a.batDau)}</b></div>
         <div><span style={{ color: C.gray }}>Kết thúc:</span> <b>{fmtDT(a.ketThuc)}</b></div>
@@ -2696,43 +2613,13 @@ function ActivityDetailModal({ a, onClose, db, update, log, show, student }) {
 }
 function EvidenceForm({ loai, form, setForm }) {
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
-  if (loai === "SH") return (<>
-    <div className="grid grid-cols-2 gap-3">
-      <Field label="Số lượt chia sẻ" required><TextInput type="number" min="1" value={form.soLuot || ""} onChange={set("soLuot")} /></Field>
-      <Field label="Thời gian chia sẻ" required><TextInput type="datetime-local" value={form.thoiGian || ""} onChange={set("thoiGian")} /></Field>
-    </div>
-    <Field label="Link minh chứng (Facebook/Drive)" required><TextInput value={form.link || ""} onChange={set("link")} placeholder="https://..." /></Field>
-  </>);
-  if (loai === "QC") return (<>
-    <Field label="Nguồn tham gia" required>
-      <Select value={form.nguon || ""} onChange={set("nguon")}>
-        <option value="">— Chọn —</option>
-        <option value="to_chuc">Do Ban Truyền thông tổ chức</option>
-        <option value="cau_lac_bo">Tham gia cùng CLB Truyền thông</option>
-        <option value="tu_lam">Tự quay / tự chụp</option>
-      </Select>
-    </Field>
-    <Field label="Thời gian thực hiện" required><TextInput type="datetime-local" value={form.thoiGian || ""} onChange={set("thoiGian")} /></Field>
-    {form.nguon === "cau_lac_bo" && <Field label="Thực hiện cùng ai"><TextInput value={form.thucHienCung || ""} onChange={set("thucHienCung")} /></Field>}
-    <Field label="Link Google Drive minh chứng" required hint="Bắt buộc là link drive.google.com"><TextInput value={form.link || ""} onChange={set("link")} placeholder="https://drive.google.com/..." /></Field>
-    <Field label="Mô tả sản phẩm"><TextArea rows={2} value={form.moTa || ""} onChange={set("moTa")} /></Field>
-  </>);
-  if (loai === "TV") return <Field label="Thời gian tham gia tư vấn" required><TextInput type="datetime-local" value={form.thoiGian || ""} onChange={set("thoiGian")} /></Field>;
-  if (loai === "VD") return (<>
-    <Field label="Link Google Drive video" required hint="Bắt buộc là link drive.google.com"><TextInput value={form.link || ""} onChange={set("link")} placeholder="https://drive.google.com/..." /></Field>
-    <Field label="Mô tả nội dung video"><TextArea rows={2} value={form.moTa || ""} onChange={set("moTa")} /></Field>
-  </>);
-  if (loai === "GT") return (<>
-    <div className="grid grid-cols-2 gap-3">
-      <Field label="Họ tên người được giới thiệu" required><TextInput value={form.hoTen || ""} onChange={set("hoTen")} /></Field>
-      <Field label="Số điện thoại" required><TextInput value={form.sdt || ""} onChange={set("sdt")} /></Field>
-    </div>
-    <Field label="Ghi chú thêm"><TextArea rows={2} value={form.ghiChu || ""} onChange={set("ghiChu")} /></Field>
-  </>);
-  if (loai === "KH") return (<>
-    <Field label="Mô tả hoạt động đã thực hiện" required><TextArea rows={2} value={form.moTa || ""} onChange={set("moTa")} /></Field>
-    <Field label="Link minh chứng (nếu có)"><TextInput value={form.link || ""} onChange={set("link")} /></Field>
-  </>);
+  const VideoField = () => <Field label="Video minh chứng bổ sung (nếu có)" hint="Có thể dùng link Google Drive nếu muốn gửi thêm video để quản trị viên thẩm định."><TextInput value={form.video || ""} onChange={set("video")} placeholder="https://drive.google.com/..." /></Field>;
+  if (loai === "SH") return (<><Field label="Số lượt chia sẻ" required><TextInput type="number" min="1" value={form.soLuot || ""} onChange={set("soLuot")} /></Field><Field label="Link Facebook cá nhân" required hint="Chỉ cần link Facebook cá nhân, không cần link minh chứng riêng."><TextInput value={form.link || ""} onChange={set("link")} placeholder="https://facebook.com/..." /></Field><VideoField /></>);
+  if (loai === "QC") return (<><Field label="Nguồn tham gia" required><Select value={form.nguon || ""} onChange={set("nguon")}><option value="">— Chọn —</option><option value="to_chuc">Do Ban Truyền thông tổ chức</option><option value="cau_lac_bo">Tham gia cùng CLB Truyền thông</option><option value="tu_lam">Tự quay / tự chụp</option></Select></Field>{form.nguon === "tu_lam" && <Field label="Tên minh chứng / tên video" required><TextInput value={form.ten || ""} onChange={set("ten")} placeholder="Ví dụ: Video hoạt động ngoại khóa..." /></Field>}{form.nguon === "cau_lac_bo" && <Field label="Tên thành viên CLB đã mời bạn tham gia" required><TextInput value={form.nguoiMoi || ""} onChange={set("nguoiMoi")} placeholder="Họ và tên thành viên CLB" /></Field>}<Field label="Link Google Drive video/minh chứng" required hint="Ưu tiên video hoặc tệp minh chứng trên Google Drive."><TextInput value={form.link || ""} onChange={set("link")} placeholder="https://drive.google.com/..." /></Field><VideoField /></>);
+  if (loai === "TV") return <><Field label="Thời gian tham gia tư vấn" required><TextInput type="datetime-local" value={form.thoiGian || ""} onChange={set("thoiGian")} /></Field><VideoField /></>;
+  if (loai === "VD") return (<><Field label="Link Google Drive video" required hint="Video tối thiểu 30 giây và phải đạt yêu cầu thẩm định, đăng tải."><TextInput value={form.link || ""} onChange={set("link")} placeholder="https://drive.google.com/..." /></Field><Field label="Mô tả nội dung video"><TextArea rows={2} value={form.moTa || ""} onChange={set("moTa")} /></Field></>);
+  if (loai === "GT") return (<><div className="grid grid-cols-2 gap-3"><Field label="Họ tên người được giới thiệu" required><TextInput value={form.hoTen || ""} onChange={set("hoTen")} /></Field><Field label="Số điện thoại" required><TextInput value={form.sdt || ""} onChange={set("sdt")} /></Field></div><Field label="Ghi chú thêm"><TextArea rows={2} value={form.ghiChu || ""} onChange={set("ghiChu")} /></Field><VideoField /></>);
+  if (loai === "KH") return (<><Field label="Mô tả hoạt động đã thực hiện" required><TextArea rows={2} value={form.moTa || ""} onChange={set("moTa")} /></Field><Field label="Link minh chứng (nếu có)"><TextInput value={form.link || ""} onChange={set("link")} /></Field><VideoField /></>);
   return null;
 }
 
@@ -2795,7 +2682,7 @@ function ProactiveShareForm({ update, log, show, student, onDone }) {
       </div>
       <div className="grid grid-cols-2 gap-3">
         <Field label="Số bài đã chia sẻ" required><TextInput type="number" min="1" value={f.soLuot} onChange={set("soLuot")} /></Field>
-        <Field label="Link Facebook" required><TextInput value={f.link} onChange={set("link")} placeholder="https://facebook.com/..." /></Field>
+        <Field label="Link Facebook cá nhân" required hint="Chỉ cần link Facebook cá nhân, không cần link minh chứng riêng."><TextInput value={f.link} onChange={set("link")} placeholder="https://facebook.com/..." /></Field>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <Field label="Từ ngày" required hint="Ngày bạn bắt đầu share bài đầu tiên"><TextInput type="date" value={f.tuNgay} onChange={set("tuNgay")} /></Field>
@@ -2820,68 +2707,34 @@ function ProactiveShareForm({ update, log, show, student, onDone }) {
 function ProactiveQCForm({ update, log, show, student, onDone }) {
   const [nguon, setNguon] = useState("tu_lam");
   const [soLuong, setSoLuong] = useState(1);
-  const [thoiGian, setThoiGian] = useState("");
-  const [items, setItems] = useState([{ link: "", ten: "" }]);
+  const [items, setItems] = useState([{ link: "", ten: "", nguoiMoi: "" }]);
   const [camKet, setCamKet] = useState(false);
   const [err, setErr] = useState("");
-  const setCount = (n) => {
-    n = Math.max(1, Math.min(20, Number(n) || 1));
-    setSoLuong(n);
-    setItems((prev) => { const next = prev.slice(0, n); while (next.length < n) next.push({ link: "", ten: "" }); return next; });
-  };
-  const setItem = (i, k, v) => setItems((prev) => prev.map((it, idx) => (idx === i ? { ...it, [k]: v } : it)));
+  const setCount = (n) => { n = Math.max(1, Math.min(20, Number(n) || 1)); setSoLuong(n); setItems((prev) => { const next = prev.slice(0, n); while (next.length < n) next.push({ link: "", ten: "", nguoiMoi: "" }); return next; }); };
+  const setItem = (i, k, v) => setItems((prev) => prev.map((it, idx) => idx === i ? { ...it, [k]: v } : it));
   const submit = (e) => {
     e.preventDefault(); setErr("");
-    if (!thoiGian) return setErr("Vui lòng nhập thời gian thực hiện.");
     for (const it of items) {
-      if (!it.link) return setErr("Vui lòng nhập link Drive cho tất cả sản phẩm.");
-      if (!isDriveLink(it.link)) return setErr("Link minh chứng phải là link Google Drive.");
-      if (nguon === "cau_lac_bo" && !it.ten) return setErr("Vui lòng nhập tên video đã tham gia cùng CLB.");
+      if (!it.link) return setErr("Vui lòng nhập link Drive cho tất cả minh chứng.");
+      if (!isDriveLink(it.link)) return setErr("Link video/minh chứng phải là link Google Drive.");
+      if (nguon === "tu_lam" && !it.ten) return setErr("Vui lòng nhập tên minh chứng / tên video cho từng sản phẩm.");
+      if (nguon === "cau_lac_bo" && !it.nguoiMoi) return setErr("Vui lòng nhập tên thành viên CLB đã mời bạn tham gia cho từng minh chứng.");
     }
     if (!camKet) return setErr("Vui lòng cam kết thông tin trung thực.");
-    const batch = items.map((it) => ({
-      id: uid(), activityId: null, mssv: student.mssv, loai: "QC", nguonNop: "chu_dong",
-      data: { nguon, thoiGian, link: it.link, ten: it.ten || "", moTa: "" },
-      status: "cho_kiem_tra", note: "", approvedBy: "", approvedAt: "", submittedAt: nowISO(), camKet: true,
-    }));
+    const batch = items.map((it) => ({ id: uid(), activityId: null, mssv: student.mssv, loai: "QC", nguonNop: "chu_dong", data: { nguon, ten: it.ten || "", nguoiMoi: it.nguoiMoi || "", link: it.link }, status: "cho_kiem_tra", note: "", approvedBy: "", approvedAt: "", submittedAt: nowISO(), camKet: true }));
     update("evidences", (arr) => [...batch, ...arr]);
     log(student.mssv, "Nộp minh chứng chủ động", "QC-CD", `Đã gửi ${batch.length} minh chứng, chờ kiểm tra`);
     show(`Đã gửi ${batch.length} minh chứng quay/chụp.`); onDone();
   };
-  return (
-    <form onSubmit={submit}>
-      <Field label="Hình thức tham gia" required>
-        <Select value={nguon} onChange={(e) => setNguon(e.target.value)}>
-          <option value="tu_lam">Tự quay / tự chụp</option>
-          <option value="cau_lac_bo">Tham gia cùng CLB Truyền thông</option>
-        </Select>
-      </Field>
-      {nguon === "cau_lac_bo" && (
-        <div className="text-xs p-2.5 rounded-lg mb-3 flex items-start gap-2" style={{ background: "#FEF3D8", color: C.amber2 }}>
-          <Info size={14} className="mt-0.5 shrink-0" /> Lưu ý: video chỉ được tính khi đã được đăng tải trên nền tảng truyền thông chính thức của trường. Video chưa đăng sẽ chưa được duyệt.
-        </div>
-      )}
-      <div className="grid grid-cols-2 gap-3">
-        <Field label="Số lượng sản phẩm" required><TextInput type="number" min="1" max="20" value={soLuong} onChange={(e) => setCount(e.target.value)} /></Field>
-        <Field label="Thời gian thực hiện" required><TextInput type="date" value={thoiGian} onChange={(e) => setThoiGian(e.target.value)} /></Field>
-      </div>
-      <div className="space-y-2 mb-3">
-        {items.map((it, i) => (
-          <div key={i} className="rounded-xl p-3" style={{ background: C.grayBg }}>
-            <div className="text-xs font-semibold mb-2" style={{ color: C.navy2 }}>Sản phẩm #{i + 1}</div>
-            {nguon === "cau_lac_bo" && <TextInput className="mb-2" placeholder="Tên video đã tham gia" value={it.ten} onChange={(e) => setItem(i, "ten", e.target.value)} />}
-            <TextInput placeholder="Link Google Drive minh chứng" value={it.link} onChange={(e) => setItem(i, "link", e.target.value)} />
-          </div>
-        ))}
-      </div>
-      <label className="flex items-start gap-2 text-xs mb-3" style={{ color: C.navy2 }}>
-        <input type="checkbox" checked={camKet} onChange={(e) => setCamKet(e.target.checked)} className="mt-0.5" />
-        Tôi cam kết các thông tin và minh chứng cung cấp là trung thực, chính xác và thuộc về hoạt động tôi thực sự tham gia.
-      </label>
-      {err && <div className="text-xs font-medium mb-3" style={{ color: C.red }}>{err}</div>}
-      <Btn type="submit" variant="amber" className="w-full">Gửi {items.length} minh chứng</Btn>
-    </form>
-  );
+  return (<form onSubmit={submit}>
+    <Field label="Hình thức tham gia" required><Select value={nguon} onChange={(e) => setNguon(e.target.value)}><option value="tu_lam">Tự quay / tự chụp</option><option value="cau_lac_bo">Tham gia cùng CLB Truyền thông</option></Select></Field>
+    <div className="text-xs p-3 rounded-lg mb-3 flex items-start gap-2" style={{ background: "#FEF3D8", color: C.amber2 }}><Info size={14} className="mt-0.5 shrink-0" /><span><b>Không cần nhập ngày thực hiện.</b> Mỗi minh chứng cần có tên/link phù hợp. Với CLB Truyền thông, phải ghi đúng tên thành viên CLB đã mời bạn tham gia.</span></div>
+    <Field label="Số lượng minh chứng" required><TextInput type="number" min="1" max="20" value={soLuong} onChange={(e) => setCount(e.target.value)} /></Field>
+    <div className="space-y-2 mb-3">{items.map((it, i) => (<div key={i} className="rounded-xl p-3" style={{ background: C.grayBg }}><div className="text-xs font-semibold mb-2" style={{ color: C.navy2 }}>Minh chứng #{i + 1}</div>{nguon === "tu_lam" && <TextInput className="mb-2" placeholder="Tên minh chứng / tên video" value={it.ten} onChange={(e) => setItem(i, "ten", e.target.value)} />}{nguon === "cau_lac_bo" && <TextInput className="mb-2" placeholder="Tên thành viên CLB đã mời bạn tham gia" value={it.nguoiMoi} onChange={(e) => setItem(i, "nguoiMoi", e.target.value)} />}<TextInput placeholder="Link Google Drive video/minh chứng" value={it.link} onChange={(e) => setItem(i, "link", e.target.value)} /></div>))}</div>
+    <div className="text-xs p-3 rounded-lg mb-3" style={{ background: C.blueBg, color: C.blue }}><b>Chú ý:</b> Chủ động quay, biên tập và hoàn thiện video có thời lượng từ 30 giây trở lên, với nội dung phản ánh hoạt động học tập, rèn luyện, đời sống sinh viên hoặc các hoạt động của Phân viện; video được gửi về BTT, được thẩm định đạt yêu cầu và đăng tải trên các nền tảng truyền thông chính thức của Phân viện (01 video đạt yêu cầu được tính là 01 hoạt động).</div>
+    <label className="flex items-start gap-2 text-xs mb-3" style={{ color: C.navy2 }}><input type="checkbox" checked={camKet} onChange={(e) => setCamKet(e.target.checked)} className="mt-0.5" />Tôi cam kết các thông tin và minh chứng cung cấp là trung thực, chính xác và thuộc về hoạt động tôi thực sự tham gia.</label>
+    {err && <div className="text-xs font-medium mb-3" style={{ color: C.red }}>{err}</div>}<Btn type="submit" variant="amber" className="w-full">Gửi {items.length} minh chứng</Btn>
+  </form>);
 }
 
 function StudentHistory({ db, student }) {
@@ -3074,6 +2927,29 @@ function StudentProfile({ update, show, log, student }) {
   );
 }
 
+function HelpPage({ role }) {
+  const studentSteps = [
+    ["1", "Đăng ký / đăng nhập", "Sinh viên đăng ký bằng MSSV, khóa, lớp và mật khẩu; sau đó đăng nhập để sử dụng cổng."],
+    ["2", "Xem hoạt động", "Vào Hoạt động để xem các hoạt động do Ban Truyền thông tạo, thời gian, yêu cầu và trạng thái."],
+    ["3", "Nộp minh chứng", "Chọn đúng hoạt động rồi nộp minh chứng. Chỉ minh chứng được quản trị viên duyệt Đạt mới được tính hoạt động và điểm cộng."],
+    ["4", "Tự quay / tự chụp", "Không cần nhập ngày thực hiện. Mỗi minh chứng cần tên minh chứng/tên video. Nếu tham gia cùng CLB Truyền thông, phải ghi tên thành viên CLB đã mời bạn tham gia."],
+    ["5", "Video chủ động", "Video phải từ 30 giây trở lên, phản ánh học tập, rèn luyện, đời sống sinh viên hoặc hoạt động của Phân viện; được BTT thẩm định đạt và đăng tải trên nền tảng chính thức thì 01 video đạt = 01 hoạt động."],
+    ["6", "Chia sẻ bài viết", "Chỉ cần link Facebook cá nhân theo yêu cầu; không cần link minh chứng riêng. Chỉ lượt chia sẻ hợp lệ trong thời gian quy định mới được tính."],
+    ["7", "Theo dõi điểm", "Vào Tổng quan hoặc Lịch sử để xem minh chứng, kết quả duyệt, số hoạt động quy đổi và điểm cộng."],
+    ["8", "Khiếu nại / trò chuyện", "Nếu có sai lệch, gửi khiếu nại hoặc nhắn trực tiếp cho Ban Truyền thông; có thể mở lại Hướng dẫn sử dụng bất cứ lúc nào."]
+  ];
+  const adminSteps = [
+    ["1", "Tạo hoạt động", "Tạo hoạt động theo 1 trong 6 loại và nhập thời gian, quy định, cách quy đổi nếu là Hoạt động khác."],
+    ["2", "Kiểm tra minh chứng", "Mở Kiểm tra minh chứng, xem từng hồ sơ, đối chiếu link/thông tin và chọn Đạt, Không đạt hoặc Yêu cầu bổ sung."],
+    ["3", "Tự động cộng điểm", "Ngay khi minh chứng được duyệt Đạt, hệ thống tính số hoạt động quy đổi và điểm theo quy định."],
+    ["4", "Xem tổng hợp", "Tổng hợp theo lớp chỉ dựa trên minh chứng Đạt; dữ liệu có thể lọc theo khóa."],
+    ["5", "Xuất danh sách", "Bảng xuất có xem trước, chỉnh sửa bản nháp rồi mới xuất Excel/Word/PDF. Các cột hoạt động của BTT và các nhóm chủ động chỉ hiện khi có dữ liệu."],
+    ["6", "Sao lưu", "Vào Cài đặt để xuất JSON sao lưu. Database online Supabase là nguồn dữ liệu dùng chung cho nhiều thiết bị."],
+  ];
+  const steps = role === "admin" ? adminSteps : studentSteps;
+  return (<div><PageHead title="Hướng dẫn sử dụng" sub="Có thể mở lại mục này bất cứ lúc nào khi cần xem cách dùng hệ thống." /><Card className="p-5 mb-4" style={{ background: C.blueBg, borderColor: "#D6E4F2" }}><div className="font-bold mb-1 flex items-center gap-2" style={{ color: C.navy }}><HelpCircle size={17} /> Hướng dẫn nhanh cho {role === "admin" ? "quản trị viên" : "sinh viên"}</div><div className="text-xs" style={{ color: C.navy2 }}>Mỗi bước đều có thể thực hiện lại; dữ liệu đã lưu trên database online không bị mất chỉ vì website được cập nhật code.</div></Card><div className="space-y-3">{steps.map(([n,t,d]) => <Card key={n} className="p-4 flex gap-3"><div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 font-bold" style={{ background: C.navy, color: C.gold }}>{n}</div><div><div className="font-bold text-sm" style={{ color: C.navy }}>{t}</div><div className="text-xs mt-1 leading-relaxed" style={{ color: C.gray }}>{d}</div></div></Card>)}</div></div>);
+}
+
 function RulesPage() {
   return (
     <div>
@@ -3110,7 +2986,8 @@ function RulesPage() {
 function AdminApp(props) {
   const { db, username, onLogout } = props;
   const admin = db.admins.find((a) => a.username === username);
-  const [tab, setTab] = useState("dashboard");
+  const [tab, setTabState] = useState(() => getPersistent(`admin_tab_${username}`) || "dashboard");
+  const setTab = useCallback((value) => { setTabState(value); setPersistent(`admin_tab_${username}`, value); }, [username]);
   if (!admin) return null;
   const pendingCount = db.evidences.filter((e) => e.status === "cho_kiem_tra").length;
   const complaintCount = db.complaints.filter((c) => c.trangThai === "cho_xu_ly").length;
@@ -3119,6 +2996,7 @@ function AdminApp(props) {
   const tabs = [
     { key: "dashboard", label: "Tổng quan", icon: LayoutDashboard },
     { key: "students", label: "Sinh viên", icon: Users },
+    { key: "cohorts", label: "Khóa dữ liệu", icon: History },
     { key: "activities", label: "Hoạt động", icon: CalendarDays },
     { key: "review", label: "Kiểm tra minh chứng", icon: ClipboardCheck },
     { key: "complaints", label: "Khiếu nại", icon: MessageSquareWarning },
@@ -3127,14 +3005,15 @@ function AdminApp(props) {
     { key: "export", label: "Xuất dữ liệu", icon: FileSpreadsheet },
     { key: "admins", label: "Quản trị viên", icon: ShieldCheck },
     { key: "audit", label: "Nhật ký quản trị", icon: History },
-    { key: "cohorts", label: "Quản lý khóa dữ liệu", icon: Archive },
     { key: "settings", label: "Cài đặt", icon: Settings },
+    { key: "help", label: "Hướng dẫn sử dụng", icon: HelpCircle },
   ];
 
   return (
-    <Shell title="CỔNG QUẢN TRỊ" subtitle={admin.hoten} tabs={tabs} active={tab} onTab={setTab} onLogout={onLogout} badgeCounts={{ review: pendingCount, complaints: complaintCount, chat: chatCount }}>
+    <Shell title="CỔNG QUẢN TRỊ" subtitle={admin.hoten} tabs={tabs} active={tab} onTab={setTab} onLogout={onLogout} badgeCounts={{ review: pendingCount, complaints: complaintCount, chat: chatCount }} online={props.online}>
       {tab === "dashboard" && <AdminDashboard {...props} onTab={setTab} />}
       {tab === "students" && <AdminStudents {...props} admin={admin} />}
+      {tab === "cohorts" && <AdminCohorts {...props} admin={admin} />}
       {tab === "activities" && <AdminActivities {...props} admin={admin} />}
       {tab === "review" && <AdminReview {...props} admin={admin} />}
       {tab === "complaints" && <AdminComplaints {...props} admin={admin} />}
@@ -3143,8 +3022,8 @@ function AdminApp(props) {
       {tab === "export" && <AdminExport {...props} />}
       {tab === "admins" && <AdminManageAdmins {...props} admin={admin} />}
       {tab === "audit" && <AdminAudit {...props} />}
-      {tab === "cohorts" && <AdminCohortData {...props} admin={admin} />}
       {tab === "settings" && <AdminSettings {...props} admin={admin} />}
+      {tab === "help" && <HelpPage role="admin" />}
     </Shell>
   );
 }
@@ -3246,7 +3125,7 @@ function AdminStudents({ db, update, log, show, admin }) {
       {editing && (
         <Modal open onClose={() => setEditing(null)} title={`Hồ sơ · ${editing.mssv}`}>
           <div className="space-y-2 text-sm mb-4">
-            {[["Họ tên", editing.hoTen], ["Khóa", editing.khoa], ["Lớp", editing.lop], ["SĐT", editing.sdt], ["Zalo", editing.zalo], ["Email", editing.email], ["Facebook", editing.facebook], ["Ngày đăng ký", fmtDT(editing.createdAt)]].map(([l, v]) => (
+            {[["Họ tên", editing.hoTen], ["Khóa", editing.khoa], ["Niên khóa", cohortAcademicYear(editing.khoa)], ["Năm học hiện tại", `Năm ${currentStudentYear(editing.khoa)}`], ["Lớp", editing.lop], ["SĐT", editing.sdt], ["Zalo", editing.zalo], ["Email", editing.email], ["Facebook", editing.facebook], ["Ngày đăng ký", fmtDT(editing.createdAt)]].map(([l, v]) => (
               <div key={l} className="flex justify-between py-1.5 border-b last:border-0" style={{ borderColor: C.line }}><span style={{ color: C.gray }}>{l}</span><span className="font-medium">{v || "—"}</span></div>
             ))}
             {(() => { const { total, points } = computeStudentTotals(db, editing.mssv); return <div className="flex justify-between py-1.5"><span style={{ color: C.gray }}>Hoạt động / Điểm</span><b>{total} hoạt động · {points} điểm</b></div>; })()}
@@ -3432,16 +3311,16 @@ function EvidenceDataView({ ev }) {
       d.tuNgay && ["Từ ngày (trang cá nhân)", fmtD(d.tuNgay)],
       d.denNgay && ["Đến ngày", fmtD(d.denNgay)],
       d.xacNhan2Ngay !== undefined && ["SV tự xác nhận trong hạn 2 ngày", d.xacNhan2Ngay ? "Có" : "Không"],
-      ["Link minh chứng", d.link],
+      ["Link Facebook cá nhân", d.link],
+      d.video && ["Video bổ sung", d.video],
     ].filter(Boolean);
   } else if (ev.loai === "QC") {
     rows = [
       ["Hình thức", { to_chuc: "Ban Truyền thông tổ chức", cau_lac_bo: "Tham gia CLB Truyền thông", tu_lam: "Tự quay/chụp" }[d.nguon] || d.nguon],
-      d.ten && ["Tên video", d.ten],
-      ["Thời gian", fmtFlex(d.thoiGian)],
-      d.thucHienCung && ["Thực hiện cùng", d.thucHienCung],
+      d.ten && ["Tên minh chứng / video", d.ten],
+      d.nguoiMoi && ["Thành viên CLB đã mời", d.nguoiMoi],
       ["Link Drive", d.link],
-      d.moTa && ["Mô tả", d.moTa],
+      d.video && ["Video bổ sung", d.video],
     ].filter(Boolean);
   } else if (ev.loai === "TV") {
     rows = [["Thời gian tham gia", fmtDT(d.thoiGian)]];
@@ -3619,300 +3498,171 @@ function objRowsToTable(heading, rows) {
   const columns = rows.length ? Object.keys(rows[0]) : [];
   return { heading, columns, rows: rows.map((r) => columns.map((c) => r[c])) };
 }
-function getEvidenceTime(e) {
-  return e.approvedAt || e.submittedAt || e.data?.thoiGian || e.data?.tuNgay || "";
+function academicYearForDate(dateValue) {
+  const d = dateValue ? new Date(dateValue) : new Date();
+  const y = d.getFullYear();
+  const m = d.getMonth() + 1;
+  const start = m >= 8 ? y : y - 1;
+  return `${start}–${start + 1}`;
+}
+function semesterForDate(dateValue) {
+  const d = dateValue ? new Date(dateValue) : new Date();
+  const m = d.getMonth() + 1;
+  return m >= 8 && m <= 12 ? "Học kỳ I" : "Học kỳ II";
+}
+function cohortStartYear(khoa) {
+  const n = Number(String(khoa || "").replace(/\D/g, ""));
+  return Number.isFinite(n) && n ? 2026 + (n - 29) : null;
+}
+function cohortAcademicYear(khoa) {
+  const y = cohortStartYear(khoa);
+  return y ? `${y}–${y + 4}` : "";
+}
+function currentStudentYear(khoa, dateValue = new Date()) {
+  const start = cohortStartYear(khoa);
+  if (!start) return "";
+  const d = dateValue instanceof Date ? dateValue : new Date(dateValue);
+  const academicStart = d.getMonth() + 1 >= 8 ? d.getFullYear() : d.getFullYear() - 1;
+  return Math.min(4, Math.max(1, academicStart - start + 1));
+}
+function dateOnly(value) {
+  if (!value) return "";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toISOString().slice(0,10);
 }
 function inDateRange(value, from, to) {
-  if (!value) return false;
-  const d = new Date(value); if (Number.isNaN(d.getTime())) return false;
-  const a = new Date(from + "T00:00:00");
-  const b = new Date(to + "T23:59:59.999");
-  return d >= a && d <= b;
+  const d = dateOnly(value);
+  return (!from || d >= from) && (!to || d <= to);
 }
-function evidenceIsDatInRange(e, from, to) {
-  if (e.status !== "dat") return false;
-  // Với minh chứng thuộc một hoạt động do BTT tạo, ưu tiên thời gian của hoạt động;
-  // với minh chứng chủ động (không có activityId), dùng thời gian minh chứng/nộp.
-  return inDateRange(getEvidenceTime(e), from, to);
-}
-function contributionForActivity(activity, evidences) {
-  const dat = evidences.filter(e => e.status === "dat");
-  if (!dat.length) return 0;
-  switch (activity.loai) {
-    case "SH": return Math.floor(dat.reduce((n,e)=>n+(Number(e.data?.soLuot)||0),0)/10);
-    case "QC": return Math.floor(dat.length/5);
-    case "TV": case "VD": case "GT": return activity.loai === "GT" ? dat.length*2 : dat.length;
-    case "KH": return Math.floor(dat.length/(Number(activity.soLuongCanDat)||1))*(Number(activity.quyDoiHoatDong)||1);
-    default: return 0;
-  }
-}
-function buildExportDataset(db, from, to, selectedMssv) {
-  const rangeEvs = db.evidences.filter(e => evidenceIsDatInRange(e, from, to));
-  const activities = db.activities.filter(a => {
-    const has = rangeEvs.some(e => e.activityId === a.id);
-    const start = a.batDau ? new Date(a.batDau) : null;
-    const end = a.ketThuc ? new Date(a.ketThuc) : null;
-    const f = new Date(from+"T00:00:00"), t = new Date(to+"T23:59:59.999");
-    const overlap = start && end && start <= t && end >= f;
-    return has || overlap;
-  }).sort((a,b)=>new Date(a.batDau||0)-new Date(b.batDau||0));
-
-  const columns = activities.map(a => ({ key:"act:"+a.id, label:a.ten }));
-  const proactive = [];
-  if (rangeEvs.some(e=>!e.activityId && e.loai === "QC" && e.data?.nguon === "tu_lam")) proactive.push({key:"pro:tu_lam",label:"Tự quay/chụp"});
-  if (rangeEvs.some(e=>!e.activityId && e.loai === "QC" && e.data?.nguon === "cau_lac_bo")) proactive.push({key:"pro:cau_lac_bo",label:"Tham gia cùng CLB Truyền thông"});
-  if (rangeEvs.some(e=>!e.activityId && e.loai === "SH")) proactive.push({key:"pro:SH",label:"Chia sẻ bài viết"});
-  const allColumns = [...columns, ...proactive];
-
-  const makeRow = (s) => {
-    const row = { "MSSV":s.mssv, "HỌ VÀ TÊN":s.hoTen, "KHÓA":s.khoa, "LỚP":s.lop };
+function buildExportSummaryRowsFiltered(db, opts = {}) {
+  const from = opts.from || "";
+  const to = opts.to || "";
+  const selectedKhoa = opts.khoa || "";
+  const selectedLop = opts.lop || "";
+  const approved = db.evidences.filter((e) => e.status === "dat" && inDateRange(e.submittedAt, from, to));
+  const studentIds = new Set(approved.map((e) => e.mssv));
+  const students = db.students.filter((s) => studentIds.has(s.mssv) && (!selectedKhoa || s.khoa === selectedKhoa) && (!selectedLop || s.lop === selectedLop));
+  const acts = db.activities.filter((a) => inDateRange(a.batDau || a.createdAt, from, to) || approved.some((e) => e.activityId === a.id));
+  const columns = ["STT", "MSSV", "Họ tên", "Khóa", "Lớp"];
+  acts.forEach((a) => columns.push(`${a.ma} · ${a.ten}`));
+  const hasSelf = approved.some((e) => !e.activityId && e.loai === "QC" && e.data?.nguon === "tu_lam");
+  const hasClub = approved.some((e) => !e.activityId && e.loai === "QC" && e.data?.nguon === "cau_lac_bo");
+  const hasShare = approved.some((e) => !e.activityId && e.loai === "SH");
+  if (hasSelf) columns.push("Tự quay/chụp");
+  if (hasClub) columns.push("Tham gia cùng CLB Truyền thông");
+  if (hasShare) columns.push("Chia sẻ bài viết");
+  columns.push("Tổng hoạt động", "Điểm cộng");
+  const rows = students.map((st, idx) => {
+    const out = { STT: idx + 1, MSSV: st.mssv, "Họ tên": st.hoTen, Khóa: st.khoa, Lớp: st.lop };
     let total = 0;
-    activities.forEach(a => {
-      const evs = rangeEvs.filter(e=>e.mssv===s.mssv && e.activityId===a.id);
-      const q = contributionForActivity(a, evs);
-      row["act:"+a.id] = q || "";
+    acts.forEach((a) => {
+      const evs = approved.filter((e) => e.mssv === st.mssv && e.activityId === a.id);
+      const q = quyDoiForActivity(a, evs);
+      out[`${a.ma} · ${a.ten}`] = q || "";
       total += q;
     });
-    proactive.forEach(c => {
-      let evs=[];
-      if(c.key==="pro:tu_lam") evs=rangeEvs.filter(e=>e.mssv===s.mssv&&!e.activityId&&e.loai==="QC"&&e.data?.nguon==="tu_lam");
-      if(c.key==="pro:cau_lac_bo") evs=rangeEvs.filter(e=>e.mssv===s.mssv&&!e.activityId&&e.loai==="QC"&&e.data?.nguon==="cau_lac_bo");
-      if(c.key==="pro:SH") evs=rangeEvs.filter(e=>e.mssv===s.mssv&&!e.activityId&&e.loai==="SH");
-      const q = c.key==="pro:SH"
-        ? Math.floor(evs.reduce((n,e)=>n+(Number(e.data?.soLuot)||0),0)/10)
-        : Math.floor(evs.length/5);
-      row[c.key]=q || "";
-      total += q;
-    });
-    row["Tổng hoạt động"] = total;
-    row["Điểm cộng"] = calcPoints(total);
-    return {row,total};
-  };
-  const students = db.students.filter(s=>selectedMssv.includes(s.mssv)).map(makeRow).filter(x=>x.total>0);
-  return { activities, proactive, columns:allColumns, students, rangeEvs };
+    if (hasSelf) { const q = Math.floor(approved.filter((e) => e.mssv === st.mssv && !e.activityId && e.loai === "QC" && e.data?.nguon === "tu_lam").length / 5); out["Tự quay/chụp"] = q || ""; total += q; }
+    if (hasClub) { const q = Math.floor(approved.filter((e) => e.mssv === st.mssv && !e.activityId && e.loai === "QC" && e.data?.nguon === "cau_lac_bo").length / 5); out["Tham gia cùng CLB Truyền thông"] = q || ""; total += q; }
+    if (hasShare) { const q = Math.floor(approved.filter((e) => e.mssv === st.mssv && !e.activityId && e.loai === "SH").reduce((n,e)=>n+(Number(e.data?.soLuot)||0),0) / 10); out["Chia sẻ bài viết"] = q || ""; total += q; }
+    out["Tổng hoạt động"] = total;
+    out["Điểm cộng"] = calcPoints(total);
+    return out;
+  }).filter((r) => Number(r["Điểm cộng"]) > 0);
+  rows.forEach((r, i) => { r.STT = i + 1; });
+  return { columns, rows };
 }
-
+function buildExportSummaryRows(db) {
+  const bttActs = db.activities.slice().sort((a,b) => new Date(a.batDau) - new Date(b.batDau));
+  const approved = db.evidences.filter((e) => e.status === "dat");
+  const hasSelf = approved.some((e) => e.activityId === null && e.loai === "QC" && e.data?.nguon === "tu_lam");
+  const hasClub = approved.some((e) => e.activityId === null && e.loai === "QC" && e.data?.nguon === "cau_lac_bo");
+  const hasShare = approved.some((e) => e.activityId === null && e.loai === "SH");
+  const columns = ["STT", "MSSV", "Họ tên", "Khóa", "Lớp"];
+  bttActs.forEach((a) => columns.push(`${a.ma} · ${a.ten}`));
+  if (hasSelf) columns.push("Tự quay/chụp");
+  if (hasClub) columns.push("Tham gia cùng CLB Truyền thông");
+  if (hasShare) columns.push("Chia sẻ bài viết");
+  columns.push("Tổng hoạt động", "Điểm cộng");
+  const rows = db.students.map((s, idx) => {
+    const out = { STT: idx + 1, MSSV: s.mssv, "Họ tên": s.hoTen, Khóa: s.khoa, Lớp: s.lop };
+    let total = 0;
+    bttActs.forEach((a) => { const q = quyDoiForActivity(a, db.evidences.filter((e) => e.mssv === s.mssv && e.activityId === a.id)); out[`${a.ma} · ${a.ten}`] = q; total += q; });
+    if (hasSelf) { const q = Math.floor(db.evidences.filter((e) => e.mssv === s.mssv && e.status === "dat" && !e.activityId && e.loai === "QC" && e.data?.nguon === "tu_lam").length / 5); out["Tự quay/chụp"] = q; total += q; }
+    if (hasClub) { const q = Math.floor(db.evidences.filter((e) => e.mssv === s.mssv && e.status === "dat" && !e.activityId && e.loai === "QC" && e.data?.nguon === "cau_lac_bo").length / 5); out["Tham gia cùng CLB Truyền thông"] = q; total += q; }
+    if (hasShare) { const q = Math.floor(db.evidences.filter((e) => e.mssv === s.mssv && e.status === "dat" && !e.activityId && e.loai === "SH").reduce((n,e)=>n+(Number(e.data?.soLuot)||0),0) / 10); out["Chia sẻ bài viết"] = q; total += q; }
+    out["Tổng hoạt động"] = total; out["Điểm cộng"] = calcPoints(total);
+    return out;
+  });
+  return { columns, rows };
+}
 function AdminExport({ db, update, log, admin, show }) {
-  const today = new Date();
-  const defaultFrom = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-01`;
-  const defaultTo = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
-  const [from,setFrom]=useState(defaultFrom);
-  const [to,setTo]=useState(defaultTo);
-  const [semester,setSemester]=useState(semesterForDate(today));
-  const [academicYear,setAcademicYear]=useState(academicYearForDate(today));
-  const [selectedKhoa,setSelectedKhoa]=useState("");
-  const [exportScope,setExportScope]=useState("all");
-  const [selectedClass,setSelectedClass]=useState("");
-  const [draft,setDraft]=useState([]);
-  const [preview,setPreview]=useState(false);
-  const [addOpen,setAddOpen]=useState(false);
-  const [error,setError]=useState("");
+  const now = new Date();
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const [scope, setScope] = useState("all");
+  const [khoa, setKhoa] = useState("");
+  const [lop, setLop] = useState("");
+  const [draft, setDraft] = useState({ columns: [], rows: [] });
+  const [showAdd, setShowAdd] = useState(false);
+  const [searchAdd, setSearchAdd] = useState("");
+  const [period, setPeriod] = useState(academicYearForDate(now));
+  const semester = from ? semesterForDate(from) : semesterForDate(now);
+  const khoas = [...new Set(db.students.map((s) => s.khoa).filter(Boolean))].sort((a,b)=>Number(a.replace(/\D/g,''))-Number(b.replace(/\D/g,'')));
+  const lops = [...new Set(db.students.filter((s)=>!khoa || s.khoa===khoa).map((s)=>s.lop).filter(Boolean))].sort();
 
-  const cohortEntries = computedCohortEntries(db);
-  const activeCohorts = cohortEntries.filter(c => c.status !== "archived");
-  const defaultKhoa = selectedKhoa || activeCohorts[0]?.name || "";
-  const effectiveKhoa = selectedKhoa || defaultKhoa;
-
-  // Niên khóa/học kỳ luôn tự cập nhật theo ngày hiện tại; người dùng không phải sửa tay.
-  useEffect(() => {
-    const tick = () => {
-      const now = new Date();
-      setAcademicYear(academicYearForDate(now));
-      setSemester(semesterForDate(now));
-    };
-    tick();
-    const timer = setInterval(tick, 60 * 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  useEffect(() => {
-    if (!selectedKhoa && defaultKhoa) setSelectedKhoa(defaultKhoa);
-  }, [defaultKhoa, selectedKhoa]);
-
-  const sourceStudents = db.students.filter(s => !effectiveKhoa || s.khoa === effectiveKhoa);
-  const sourceIds = sourceStudents.map(s => s.mssv);
-  const data = buildExportDataset(db,from,to,sourceIds);
-
-  const ensureDraft=()=>{
-    if(!from||!to||new Date(from)>new Date(to)) return setError("Thời gian tổng kết không hợp lệ.");
-    // Niên khóa được xác định theo ngày bắt đầu của đợt tổng kết.
-    const exportDate = new Date(from + "T00:00:00");
-    setAcademicYear(academicYearForDate(exportDate));
-    setSemester(semesterForDate(exportDate));
-    const rows=data.students.map(x=>({mssv:x.row.MSSV, ...x.row}));
-    if(!rows.length) return setError("Không có sinh viên nào có điểm cộng (minh chứng Đạt) trong khoảng thời gian đã chọn.");
-    setDraft(rows);
-    setPreview(true);
-    setError("");
-    setSelectedClass("");
-    setExportScope("all");
+  const buildPreview = () => {
+    const selectedLop = scope === "class" ? lop : "";
+    const data = buildExportSummaryRowsFiltered(db, { from, to, khoa, lop: selectedLop });
+    setDraft(data);
+    setPeriod(from ? academicYearForDate(from) : academicYearForDate(now));
+    show(`Đã tạo bảng xem trước: ${data.rows.length} sinh viên có minh chứng Đạt.`);
   };
-
-  const colDefs=[
-    {key:"MSSV",label:"MSSV"},
-    {key:"HỌ VÀ TÊN",label:"HỌ VÀ TÊN"},
-    {key:"KHÓA",label:"KHÓA"},
-    {key:"LỚP",label:"LỚP"},
-    ...data.columns.map(c=>({key:c.key,label:c.label})),
-    {key:"Tổng hoạt động",label:"TỔNG HOẠT ĐỘNG"},
-    {key:"Điểm cộng",label:"ĐIỂM CỘNG"}
-  ];
-
-  const editCell=(i,k,v)=>setDraft(prev=>prev.map((r,idx)=>{
-    if(idx!==i) return r;
-    const next={...r,[k]:v};
-    if(k!=="MSSV"&&k!=="HỌ VÀ TÊN"&&k!=="KHÓA"&&k!=="LỚP"&&k!=="Tổng hoạt động"&&k!=="Điểm cộng") {
-      const total=colDefs.reduce((sum,c)=>{
-        if(c.key.startsWith("act:")||c.key.startsWith("pro:")) return sum+(Number(next[c.key])||0);
-        return sum;
-      },0);
-      next["Tổng hoạt động"]=total;
-      next["Điểm cộng"]=calcPoints(total);
-    }
-    return next;
-  }));
-
-  const addStudent=(mssv)=>{
-    const s=db.students.find(x=>x.mssv===mssv);
-    if(!s) return;
-    if(effectiveKhoa && s.khoa !== effectiveKhoa) return show(`Sinh viên ${s.hoTen} không thuộc ${effectiveKhoa}.`);
-    const built=buildExportDataset(db,from,to,[mssv]).students[0];
-    const base=built?.row || {"MSSV":s.mssv,"HỌ VÀ TÊN":s.hoTen,"KHÓA":s.khoa,"LỚP":s.lop};
-    if(!built) {
-      data.columns.forEach(c=>base[c.key]="");
-      base["Tổng hoạt động"]=0;
-      base["Điểm cộng"]=0;
-    }
-    setDraft(prev=>prev.some(r=>r.MSSV===mssv)?prev:[...prev,{mssv:mssv,...base}]);
-    setAddOpen(false);
+  const setCell = (rowIndex, col, value) => setDraft((d) => ({ ...d, rows: d.rows.map((r,i)=>i===rowIndex ? { ...r, [col]: value } : r) }));
+  const addStudent = (st) => {
+    if (draft.rows.some((r)=>r.MSSV===st.mssv)) return;
+    const row = { STT: draft.rows.length + 1, MSSV: st.mssv, "Họ tên": st.hoTen, Khóa: st.khoa, Lớp: st.lop };
+    draft.columns.forEach((c)=>{ if (!(c in row)) row[c] = ""; });
+    setDraft((d)=>({ ...d, rows:[...d.rows, row] }));
+    setShowAdd(false); setSearchAdd("");
   };
-
-  const getExportRows=()=>{
-    let rows=draft.map(r=>({...r}));
-    if(exportScope==="class" && selectedClass) rows=rows.filter(r=>r.LỚP===selectedClass);
-    return rows;
+  const candidates = db.students.filter((s)=>
+    (!khoa || s.khoa===khoa) && (!lop || s.lop===lop) &&
+    (!searchAdd || `${s.mssv} ${s.hoTen} ${s.lop}`.toLowerCase().includes(searchAdd.toLowerCase())) &&
+    !draft.rows.some((r)=>r.MSSV===s.mssv)
+  ).slice(0,30);
+  const exportNow = (format) => {
+    if (!draft.rows.length) return show("Hãy tạo bảng xem trước trước khi xuất.");
+    const title = `Tổng kết điểm cộng truyền thông ${semester} ${period}`;
+    const filenameBase = `Tổng kết điểm cộng truyền thông ${semester} ${period}`;
+    const sheet = [{ name: "Tổng kết".slice(0,31), rows: draft.rows }];
+    if (format === "excel") downloadXlsx(`${filenameBase}.xlsx`, sheet);
+    if (format === "word") exportWordFromTables(`${filenameBase}.doc`, title, [objRowsToTable("Tổng kết", draft.rows)]);
+    if (format === "pdf") exportPdfFromTables(title, [objRowsToTable("Tổng kết", draft.rows)]);
+    log(admin.hoten, `Xuất ${format}`, title, scope === "class" ? `Theo lớp ${lop}` : `Toàn khóa ${khoa || "tất cả khóa"}`);
+    show(`Đã xuất ${filenameBase}.`);
   };
-
-  const filename=`Tổng kết điểm cộng truyền thông ${semester} ${academicYear}`;
-  const buildTableRows=(rows)=>rows.map(r=>colDefs.map(c=>r[c.key]??""));
-
-  const exportExcel=()=>{
-    const rows=getExportRows();
-    if(!rows.length)return show("Không có dữ liệu để xuất.");
-    const header=colDefs.map(c=>c.label);
-    const aoa=[header,...buildTableRows(rows)];
-    const wb=XLSX.utils.book_new();
-    const ws=XLSX.utils.aoa_to_sheet(aoa);
-    XLSX.utils.book_append_sheet(wb,ws,exportScope==="all"?"Toàn khóa":(selectedClass||"Theo lớp"));
-    XLSX.writeFile(wb,filename+".xlsx");
-    log(admin.hoten,"Xuất Excel",filename,exportScope==="all"?"Tổng hợp toàn khóa":"Tổng hợp lớp "+selectedClass);
-    show("Đã xuất danh sách Excel.");
-  };
-
-  const exportWord=()=>{
-    const rows=getExportRows();
-    if(!rows.length)return show("Không có dữ liệu để xuất.");
-    const table={heading:exportScope==="all"?"Tổng hợp toàn khóa":`Tổng hợp lớp ${selectedClass}`,columns:colDefs.map(c=>c.label),rows:buildTableRows(rows)};
-    exportWordFromTables(filename,filename,[table]);
-    log(admin.hoten,"Xuất Word",filename,exportScope==="all"?"Tổng hợp toàn khóa":"Tổng hợp lớp "+selectedClass);
-    show("Đã xuất Word.");
-  };
-
-  const exportPdf=()=>{
-    const rows=getExportRows();
-    if(!rows.length)return show("Không có dữ liệu để xuất.");
-    const table={heading:exportScope==="all"?"Tổng hợp toàn khóa":`Tổng hợp lớp ${selectedClass}`,columns:colDefs.map(c=>c.label),rows:buildTableRows(rows)};
-    exportPdfFromTables(filename,[table]);
-    log(admin.hoten,"Xuất PDF",filename,exportScope==="all"?"Tổng hợp toàn khóa":"Tổng hợp lớp "+selectedClass);
-  };
-
-  const classes=[...new Set(draft.map(r=>r.LỚP).filter(Boolean))].sort();
-  const missing=db.students.filter(s =>
-    (!effectiveKhoa || s.khoa===effectiveKhoa) && !draft.some(r=>r.MSSV===s.mssv)
-  );
-
-  return <div>
-    <PageHead title="Tổng kết & xuất danh sách điểm cộng" sub="Chọn thời hạn → hệ thống tự xác định niên khóa → xem trước → chỉnh sửa → chọn toàn khóa/lớp → xuất file." />
+  return (<div>
+    <PageHead title="Xuất tổng kết điểm cộng" sub="Chọn thời gian → chọn phạm vi → xem trước → chỉnh sửa → xuất file. Chỉ sinh viên có minh chứng Đạt được đưa vào bảng mặc định." />
     <Card className="p-5 mb-4">
-      <div className="grid md:grid-cols-5 gap-3">
-        <Field label="Từ ngày"><TextInput type="date" value={from} onChange={e=>setFrom(e.target.value)} /></Field>
-        <Field label="Đến ngày"><TextInput type="date" value={to} onChange={e=>setTo(e.target.value)} /></Field>
-        <Field label="Học kỳ (tự động)"><Select value={semester} onChange={()=>{}} disabled><option>{semester}</option></Select></Field>
-        <Field label="Niên khóa (tự động)"><TextInput value={academicYear} readOnly /></Field>
-        <Field label="Khóa"><Select value={effectiveKhoa} onChange={e=>{setSelectedKhoa(e.target.value);setDraft([]);setPreview(false);}}><option value="">Tất cả khóa</option>{activeCohorts.map(c=><option key={c.name} value={c.name}>{c.name} · {c.academicYear}</option>)}</Select></Field>
+      <div className="font-bold mb-4" style={{color:C.navy}}>Phạm vi và thời gian tổng kết</div>
+      <div className="grid md:grid-cols-4 gap-3">
+        <Field label="Từ ngày"><TextInput type="date" value={from} onChange={(e)=>setFrom(e.target.value)} /></Field>
+        <Field label="Đến ngày"><TextInput type="date" value={to} onChange={(e)=>setTo(e.target.value)} /></Field>
+        <Field label="Học kỳ (tự động)"><TextInput value={semester} readOnly /></Field>
+        <Field label="Niên khóa (tự động)"><TextInput value={period} readOnly /></Field>
       </div>
-      <div className="text-xs mt-2" style={{color:C.gray}}>
-        Năm học tự đổi theo thời gian thực: <b>tháng 8–tháng 7</b>. Ví dụ 01/08/2026–31/07/2027 là niên khóa <b>2026–2027</b>. Chỉ minh chứng <b>Đạt</b> trong thời hạn mới được tính.
+      <div className="grid md:grid-cols-3 gap-3 mt-3">
+        <Field label="Phạm vi"><Select value={scope} onChange={(e)=>{setScope(e.target.value); if(e.target.value==='all')setLop("");}}><option value="all">Toàn khóa</option><option value="class">Theo lớp</option></Select></Field>
+        <Field label="Khóa"><Select value={khoa} onChange={(e)=>{setKhoa(e.target.value);setLop("");}}><option value="">Tất cả khóa</option>{khoas.map(k=><option key={k} value={k}>{k} · {cohortAcademicYear(k)}</option>)}</Select></Field>
+        {scope === "class" ? <Field label="Lớp"><Select value={lop} onChange={(e)=>setLop(e.target.value)}><option value="">Chọn lớp</option>{lops.map(l=><option key={l} value={l}>{l}</option>)}</Select></Field> : <div className="flex items-end text-xs" style={{color:C.gray}}>Toàn khóa = tất cả lớp thuộc khóa đã chọn.</div>}
       </div>
-      {error&&<div className="text-sm mt-3 p-2.5 rounded-lg" style={{background:C.redBg,color:C.red}}>{error}</div>}
-      <div className="flex flex-wrap gap-2 mt-4">
-        <Btn variant="amber" icon={Eye} onClick={ensureDraft}>Tạo bảng xem trước</Btn>
-        {draft.length>0&&<Btn variant="outline" onClick={()=>{setDraft([]);setPreview(false);}}>Tạo lại</Btn>}
-      </div>
+      <div className="flex flex-wrap gap-2 mt-4"><Btn variant="amber" icon={Eye} onClick={buildPreview}>Tạo bảng xem trước</Btn><Btn variant="outline" icon={Plus} onClick={()=>setShowAdd(true)}>Thêm sinh viên bị thiếu</Btn></div>
     </Card>
-
-    {preview&&<Card className="p-4">
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-        <div>
-          <div className="font-bold" style={{color:C.navy}}>Xem trước: {filename}</div>
-          <div className="text-xs" style={{color:C.gray}}>Từ {fmtD(from)} đến {fmtD(to)} · {effectiveKhoa||"Tất cả khóa"} · {draft.length} sinh viên có điểm cộng</div>
-        </div>
-        <div className="flex flex-wrap gap-2 items-end">
-          <Btn variant="outline" icon={Plus} onClick={()=>setAddOpen(true)}>Thêm sinh viên</Btn>
-          <Field label="Phạm vi xuất">
-            <Select style={{width:190}} value={exportScope} onChange={e=>{setExportScope(e.target.value);if(e.target.value==="all")setSelectedClass("");}}>
-              <option value="all">Xuất toàn khóa</option>
-              <option value="class">Xuất theo lớp</option>
-            </Select>
-          </Field>
-          {exportScope==="class"&&<Field label="Chọn lớp">
-            <Select style={{width:190}} value={selectedClass} onChange={e=>setSelectedClass(e.target.value)}>
-              <option value="">-- Chọn lớp --</option>
-              {classes.map(c=><option key={c} value={c}>{c}</option>)}
-            </Select>
-          </Field>}
-        </div>
-      </div>
-
-      <div className="overflow-x-auto border rounded-xl">
-        <table className="w-full text-xs">
-          <thead><tr style={{background:C.grayBg}}>
-            {colDefs.map(c=><th key={c.key} className="px-2 py-2 text-left whitespace-nowrap" style={{color:C.gray}}>{c.label}</th>)}
-          </tr></thead>
-          <tbody>
-            {getExportRows().map((r)=>{
-              const idx=draft.findIndex(x=>x.MSSV===r.MSSV);
-              return <tr key={r.MSSV} className="border-t" style={{borderColor:C.line}}>
-                {colDefs.map(c=><td key={c.key} className="px-1 py-1">
-                  <input className="w-full min-w-[90px] px-2 py-1.5 rounded-lg border bg-white" value={r[c.key]??""} onChange={e=>editCell(idx,c.key,e.target.value)} />
-                </td>)}
-              </tr>;
-            })}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="flex flex-wrap gap-2 mt-4">
-        <Btn variant="amber" icon={Download} onClick={exportExcel}>Xuất Excel</Btn>
-        <Btn variant="outline" icon={Download} onClick={exportWord}>Xuất Word</Btn>
-        <Btn variant="outline" icon={Download} onClick={exportPdf}>Xuất PDF</Btn>
-      </div>
-      <div className="text-xs mt-3 p-3 rounded-lg" style={{background:C.blueBg,color:C.blue}}>
-        Các chỉnh sửa trong bảng chỉ chỉnh nội dung file xuất, không sửa dữ liệu gốc. Chỉ những sinh viên có ít nhất 01 minh chứng <b>Đạt</b> mới được tự động đưa vào bảng.
-      </div>
-    </Card>}
-
-    <Modal open={addOpen} onClose={()=>setAddOpen(false)} title="Thêm sinh viên vào bảng tổng kết" width="max-w-2xl">
-      <div className="text-xs mb-3" style={{color:C.gray}}>Dùng khi thiếu sót trong danh sách. Chỉ hiển thị sinh viên thuộc {effectiveKhoa||"các khóa đang hoạt động"}.</div>
-      <div className="max-h-[420px] overflow-auto space-y-1">
-        {missing.length===0
-          ? <Empty title="Không còn sinh viên nào để thêm" />
-          : missing.map(s=><button key={s.mssv} className="w-full text-left p-3 rounded-xl border hover:bg-gray-50 flex items-center justify-between" onClick={()=>addStudent(s.mssv)}>
-              <span><b>{s.hoTen}</b><span className="text-xs ml-2" style={{color:C.gray}}>{s.mssv} · {s.lop}</span></span><Plus size={15}/>
-            </button>)}
-      </div>
-    </Modal>
-  </div>;
+    <Card className="p-4 mb-4"><div className="flex flex-wrap items-center justify-between gap-3"><div><div className="font-bold flex items-center gap-2" style={{color:C.navy}}><FileSpreadsheet size={16}/> Bảng xem trước</div><div className="text-xs mt-1" style={{color:C.gray}}>Thứ tự: thông tin sinh viên → tên từng hoạt động → nhóm chủ động nếu có → Tổng hoạt động → Điểm cộng.</div></div><div className="flex gap-2"><Btn variant="outline" icon={Download} onClick={()=>exportNow("excel")}>Xuất Excel</Btn><Btn variant="outline" icon={Download} onClick={()=>exportNow("word")}>Xuất Word</Btn><Btn variant="amber" icon={Download} onClick={()=>exportNow("pdf")}>Xuất PDF</Btn></div></div></Card>
+    <Card className="overflow-auto"><table className="text-xs" style={{minWidth:Math.max(1100,draft.columns.length*145)}}><thead><tr style={{background:C.grayBg}}>{draft.columns.map(c=><th key={c} className="text-left px-3 py-2.5 font-semibold whitespace-nowrap" style={{color:C.gray}}>{c}</th>)}</tr></thead><tbody>{draft.rows.length ? draft.rows.map((r,i)=><tr key={i} className="border-t" style={{borderColor:C.line}}>{draft.columns.map(c=><td key={c} className="px-2 py-2 align-top"><input value={r[c] ?? ""} onChange={e=>setCell(i,c,e.target.value)} className="w-full min-w-[85px] rounded-lg px-2 py-1 border" style={{borderColor:C.line,color:C.navy}} /></td>)}</tr>) : <tr><td colSpan={draft.columns.length||1} className="p-8 text-center" style={{color:C.gray}}>Chưa có bảng xem trước. Chọn thời gian/phạm vi rồi bấm “Tạo bảng xem trước”.</td></tr>}</tbody></table></Card>
+    {showAdd && <Modal open onClose={()=>setShowAdd(false)} title="Thêm sinh viên vào bảng xem trước"><div className="mb-3"><TextInput placeholder="Tìm MSSV, họ tên hoặc lớp..." value={searchAdd} onChange={(e)=>setSearchAdd(e.target.value)} /></div><div className="max-h-80 overflow-auto space-y-2">{candidates.length ? candidates.map(st=><div key={st.mssv} className="flex items-center justify-between gap-3 p-3 rounded-xl border" style={{borderColor:C.line}}><div><div className="font-semibold text-sm" style={{color:C.navy}}>{st.hoTen}</div><div className="text-xs" style={{color:C.gray}}>{st.mssv} · {st.khoa} · {st.lop}</div></div><Btn variant="outline" onClick={()=>addStudent(st)}>Thêm</Btn></div>) : <div className="text-xs p-4 text-center" style={{color:C.gray}}>Không tìm thấy sinh viên phù hợp.</div>}</div></Modal>}
+  </div>);
 }
 
 function AdminManageAdmins({ db, update, log, show, admin }) {
@@ -4013,168 +3763,55 @@ function AdminAudit({ db }) {
   );
 }
 
-function AdminCohortData({ db, update, log, show, admin }) {
-  const [newKhoa,setNewKhoa]=useState("");
-  const [confirm,setConfirm]=useState(null);
-  const [now,setNow]=useState(new Date());
-
-  useEffect(()=>{
-    const timer=setInterval(()=>setNow(new Date()),60000);
-    return ()=>clearInterval(timer);
-  },[]);
-
-  const cohortEntries=computedCohortEntries(db);
-  const archives=db.archives||[];
-
-  const addCohort=()=>{
-    const name=newKhoa.trim().toUpperCase();
-    if(!/^K\d+$/.test(name)) return show("Tên khóa phải có dạng K + số, ví dụ K30.");
-    if(cohortEntries.some(c=>c.name===name)) return show("Khóa này đã tồn tại.");
-    const meta=cohortAcademicYears(name);
-    if(!meta) return show("Không xác định được niên khóa của khóa này.");
-    const record={name,academicYear:meta.label,startYear:meta.start,endYear:meta.end,createdAt:nowISO(),status:"active"};
-    update("settings",{...db.settings,cohorts:[...(db.settings?.cohorts||[]).filter(x=>(typeof x==="string"?x:x?.name)!==name),record]});
-    log(admin.hoten,"Thêm khóa mới",name,`Tự tính niên khóa ${meta.label}`);
-    show(`Đã thêm ${name} · niên khóa ${meta.label}.`);
-    setNewKhoa("");
+function AdminCohorts({ db, update, log, show, admin }) {
+  const [newKhoa, setNewKhoa] = useState("K30");
+  const [selected, setSelected] = useState("");
+  const activeKhoas = [...new Set(db.students.map(s=>s.khoa).filter(Boolean))].sort((a,b)=>Number(a.replace(/\D/g,''))-Number(b.replace(/\D/g,'')));
+  const archived = db.cohortArchives || [];
+  const all = [...new Set([...activeKhoas, ...archived.map(a=>a.khoa)])].sort((a,b)=>Number(a.replace(/\D/g,''))-Number(b.replace(/\D/g,'')));
+  const addKhoa = () => {
+    const k = newKhoa.trim().toUpperCase();
+    if (!/^K\d{2}$/.test(k)) return show("Khóa phải có dạng K29, K30...");
+    if (all.includes(k)) return show("Khóa này đã tồn tại.");
+    const record = { khoa:k, nienKhoa:cohortAcademicYear(k), createdAt:nowISO(), status:"active" };
+    update("cohortArchives", arr=>[record,...(arr||[])]);
+    log(admin.hoten,"Thêm khóa",k,`Niên khóa ${record.nienKhoa}`); show(`Đã thêm ${k} · niên khóa ${record.nienKhoa}.`);
   };
-
-  const doArchive=(khoa)=>{
-    const students=db.students.filter(s=>s.khoa===khoa);
-    if(!students.length) return show("Khóa này hiện không có sinh viên để lưu trữ.");
-    const ids=new Set(students.map(s=>s.mssv));
-    const meta=cohortAcademicYears(khoa);
-    const snap={
-      id:uid(),khoa,
-      academicYear:meta?.label||"",
-      startYear:meta?.start||null,
-      endYear:meta?.end||null,
-      archivedAt:nowISO(),
-      archivedBy:admin.hoten,
-      students,
-      evidences:db.evidences.filter(e=>ids.has(e.mssv)),
-      complaints:db.complaints.filter(c=>ids.has(c.mssv)),
-      notifications:db.notifications.filter(n=>ids.has(n.mssv))
-    };
-    update("archives",arr=>[snap,...(arr||[])]);
-    update("students",arr=>arr.filter(s=>s.khoa!==khoa));
-    update("evidences",arr=>arr.filter(e=>!ids.has(e.mssv)));
-    update("complaints",arr=>arr.filter(c=>!ids.has(c.mssv)));
-    update("notifications",arr=>arr.filter(n=>!ids.has(n.mssv)));
-    update("settings",{...db.settings,cohorts:(db.settings?.cohorts||[]).map(x=>{
-      const o=typeof x==="string"?{name:x}:x;
-      return o.name===khoa?{...o,status:"archived",archivedAt:nowISO(),academicYear:meta?.label||o.academicYear}:o;
-    })});
-    log(admin.hoten,"Lưu trữ khóa dữ liệu",khoa,`Đã lưu ${students.length} sinh viên · niên khóa ${meta?.label||""}`);
-    show(`Đã lưu trữ ${khoa}.`);
-    setConfirm(null);
+  const archive = (k) => {
+    const students = db.students.filter(s=>s.khoa===k);
+    const evs = db.evidences.filter(e=>students.some(s=>s.mssv===e.mssv));
+    const complaints = db.complaints.filter(c=>students.some(s=>s.mssv===c.mssv));
+    const notifications = db.notifications.filter(n=>students.some(s=>s.mssv===n.mssv));
+    const messages = db.messages.filter(m=>students.some(s=>s.mssv===m.mssv));
+    const snapshot = { khoa:k, nienKhoa:cohortAcademicYear(k), archivedAt:nowISO(), students, evidences:evs, complaints, notifications, messages, status:"archived" };
+    update("cohortArchives", arr=>[snapshot,...(arr||[]).filter(x=>x.khoa!==k)]);
+    update("students", arr=>arr.filter(s=>s.khoa!==k));
+    update("evidences", arr=>arr.filter(e=>!students.some(s=>s.mssv===e.mssv)));
+    update("complaints", arr=>arr.filter(c=>!students.some(s=>s.mssv===c.mssv)));
+    update("notifications", arr=>arr.filter(n=>!students.some(s=>s.mssv===n.mssv)));
+    update("messages", arr=>arr.filter(m=>!students.some(s=>s.mssv===m.mssv)));
+    log(admin.hoten,"Lưu trữ khóa",k,`Đã lưu ${students.length} sinh viên`); show(`Đã lưu trữ ${k}. Dữ liệu đã chuyển vào kho lưu trữ.`);
   };
-
-  const restore=(a)=>{
-    const ids=new Set(db.students.map(s=>s.mssv));
-    const fresh=a.students.filter(s=>!ids.has(s.mssv));
-    update("students",arr=>[...arr,...fresh]);
-    update("evidences",arr=>[...arr,...a.evidences]);
-    update("complaints",arr=>[...arr,...(a.complaints||[])]);
-    update("notifications",arr=>[...arr,...(a.notifications||[])]);
-    update("archives",arr=>arr.filter(x=>x.id!==a.id));
-    update("settings",{...db.settings,cohorts:(db.settings?.cohorts||[]).map(x=>{
-      const o=typeof x==="string"?{name:x}:x;
-      return o.name===a.khoa?{...o,status:"active"}:o;
-    })});
-    log(admin.hoten,"Khôi phục khóa dữ liệu",a.khoa,"Thành công");
-    show(`Đã khôi phục ${a.khoa}.`);
+  const restore = (k) => {
+    const snap = archived.find(a=>a.khoa===k); if(!snap?.students?.length) return show("Không có dữ liệu để khôi phục.");
+    update("students", arr=>[...(arr||[]),...snap.students.filter(s=>!(arr||[]).some(x=>x.mssv===s.mssv))]);
+    update("evidences", arr=>[...(arr||[]),...(snap.evidences||[]).filter(e=>!(arr||[]).some(x=>x.id===e.id))]);
+    update("complaints", arr=>[...(arr||[]),...(snap.complaints||[]).filter(e=>!(arr||[]).some(x=>x.id===e.id))]);
+    update("notifications", arr=>[...(arr||[]),...(snap.notifications||[]).filter(e=>!(arr||[]).some(x=>x.id===e.id))]);
+    update("messages", arr=>[...(arr||[]),...(snap.messages||[]).filter(e=>!(arr||[]).some(x=>x.id===e.id))]);
+    update("cohortArchives", arr=>(arr||[]).map(a=>a.khoa===k?{...a,status:"restored"}:a));
+    log(admin.hoten,"Khôi phục khóa",k,"Thành công"); show(`Đã khôi phục ${k}.`);
   };
-
-  const purge=(a)=>{
-    update("archives",arr=>arr.filter(x=>x.id!==a.id));
-    log(admin.hoten,"Xóa vĩnh viễn dữ liệu khóa cũ",a.khoa,"Đã xóa khỏi hệ thống");
-    show(`Đã xóa vĩnh viễn dữ liệu ${a.khoa}.`);
-    setConfirm(null);
+  const purge = (k) => {
+    if (!window.confirm(`XÓA VĨNH VIỄN toàn bộ dữ liệu khóa ${k}? Thao tác này không thể hoàn tác.`)) return;
+    update("cohortArchives", arr=>(arr||[]).filter(a=>a.khoa!==k));
+    log(admin.hoten,"Xóa vĩnh viễn dữ liệu khóa",k,"Đã xóa khỏi kho lưu trữ"); show(`Đã xóa vĩnh viễn dữ liệu ${k} khỏi kho lưu trữ.`);
   };
-
-  const expired=cohortEntries.filter(c=>c.endYear && now.getFullYear() > c.endYear);
-  return <div>
-    <PageHead title="Quản lý khóa dữ liệu" sub="Niên khóa tự suy ra theo K29 = 2026–2030. Khóa mới và thời hạn lưu trữ được tính tự động." />
-
-    <Card className="p-5 mb-4">
-      <div className="font-bold mb-3" style={{color:C.navy}}>Thêm khóa mới</div>
-      <div className="grid md:grid-cols-2 gap-3">
-        <Field label="Tên khóa" required>
-          <TextInput placeholder="VD: K30" value={newKhoa} onChange={e=>setNewKhoa(e.target.value)} />
-        </Field>
-        <Field label="Niên khóa tự động">
-          <div className="h-10 px-3 rounded-lg border flex items-center text-sm" style={{borderColor:C.line,color:C.gray}}>
-            {cohortAcademicYears(newKhoa.trim().toUpperCase())?.label || "Nhập K30 để hệ thống tự tính"}
-          </div>
-        </Field>
-      </div>
-      <div className="flex items-center justify-between mt-3 gap-3">
-        <div className="text-xs" style={{color:C.gray}}>
-          Không nhập niên khóa thủ công. Ví dụ K29 = 2026–2030 → K28 = 2025–2029 → K27 = 2024–2028 → K26 = 2023–2027.
-        </div>
-        <Btn variant="amber" icon={Plus} onClick={addCohort}>Thêm khóa</Btn>
-      </div>
-    </Card>
-
-    <Card className="p-5 mb-4">
-      <div className="font-bold mb-3" style={{color:C.navy}}>Khóa đang quản lý</div>
-      <div className="text-xs mb-3" style={{color:C.gray}}>
-        Hôm nay: {fmtDT(now.toISOString())}. Quy ước năm học: tháng 8 năm này → tháng 7 năm sau.
-        K26 hiện được suy ra là <b>2023–2027</b> (sinh viên năm 4 theo mốc K29 = 2026–2030).
-      </div>
-      <div className="space-y-2">
-        {cohortEntries.length===0?<Empty title="Chưa có khóa"/>:cohortEntries.map(c=>{
-          const expiredFlag=c.endYear && now.getFullYear()>c.endYear;
-          return <div key={c.name} className="flex flex-wrap items-center gap-3 p-3 rounded-xl border" style={{borderColor:C.line}}>
-            <div className="flex-1">
-              <div className="flex items-center gap-2"><b style={{color:C.navy}}>{c.name}</b><Badge bg={c.status==="archived"?C.grayBg:C.greenBg} fg={c.status==="archived"?C.gray:C.green}>{c.status==="archived"?"Đã lưu trữ":"Đang hoạt động"}</Badge></div>
-              <div className="text-xs" style={{color:C.gray}}>Niên khóa {c.academicYear} · kết thúc {c.endYear || "—"} · {c.count} sinh viên đang hoạt động</div>
-            </div>
-            {c.status!=="archived" && <Btn variant="outline" icon={Archive} onClick={()=>setConfirm({type:"archive",khoa:c.name})}>Lưu trữ</Btn>}
-            {expiredFlag && c.status!=="archived" && <Badge bg={C.redBg} fg={C.red}>Đã quá hạn lưu trữ</Badge>}
-          </div>;
-        })}
-      </div>
-    </Card>
-
-    <Card className="p-5">
-      <div className="font-bold mb-3 flex items-center gap-2" style={{color:C.navy}}><Archive size={16}/> Dữ liệu khóa đã lưu trữ</div>
-      <div className="text-xs mb-3" style={{color:C.gray}}>
-        Dữ liệu lưu trữ vẫn nằm trên Supabase cho đến khi quản trị viên chọn xóa vĩnh viễn.
-        Hệ thống không tự xóa âm thầm để tránh mất dữ liệu ngoài ý muốn; thời hạn xóa được suy ra từ niên khóa.
-      </div>
-      {archives.length===0?<Empty title="Chưa có khóa nào được lưu trữ"/>:<div className="space-y-2">
-        {archives.map(a=><div key={a.id} className="flex flex-wrap items-center gap-3 p-3 rounded-xl border" style={{borderColor:C.line}}>
-          <div className="flex-1">
-            <b style={{color:C.navy}}>{a.khoa}</b>
-            <div className="text-xs" style={{color:C.gray}}>Niên khóa {a.academicYear||cohortAcademicYears(a.khoa)?.label||"—"} · {a.students?.length||0} sinh viên · lưu ngày {fmtDT(a.archivedAt)}</div>
-          </div>
-          <Btn variant="outline" onClick={()=>setConfirm({type:"restore",archive:a})}>Khôi phục</Btn>
-          <Btn variant="danger" onClick={()=>setConfirm({type:"purge",archive:a})}>Xóa vĩnh viễn</Btn>
-        </div>)}
-      </div>}
-    </Card>
-
-    <Modal open={!!confirm} onClose={()=>setConfirm(null)} title={confirm?.type==="archive"?`Lưu trữ ${confirm.khoa}`:confirm?.type==="purge"?`Xóa vĩnh viễn ${confirm.archive.khoa}`:"Khôi phục dữ liệu"}>
-      {confirm?.type==="archive"&&<div className="text-sm">
-        <div className="p-3 rounded-lg mb-4" style={{background:C.blueBg,color:C.blue}}>
-          {confirm.khoa} có niên khóa <b>{cohortAcademicYears(confirm.khoa)?.label||"—"}</b>. Hệ thống sẽ đưa sinh viên, minh chứng, khiếu nại và thông báo của khóa vào kho lưu trữ; hoạt động chung và nhật ký vẫn giữ nguyên.
-        </div>
-        <Btn variant="amber" className="w-full" onClick={()=>doArchive(confirm.khoa)}>Xác nhận lưu trữ</Btn>
-      </div>}
-      {confirm?.type==="restore"&&<div className="text-sm">
-        <div className="p-3 rounded-lg mb-4" style={{background:C.greenBg,color:C.green}}>Khôi phục sẽ đưa dữ liệu của {confirm.archive.khoa} trở lại hệ thống đang hoạt động.</div>
-        <Btn variant="amber" className="w-full" onClick={()=>restore(confirm.archive)}>Xác nhận khôi phục</Btn>
-      </div>}
-      {confirm?.type==="purge"&&<div className="text-sm">
-        <div className="p-3 rounded-lg mb-4" style={{background:C.redBg,color:C.red}}>CẢNH BÁO: dữ liệu của {confirm.archive.khoa} sẽ bị xóa vĩnh viễn khỏi kho lưu trữ và không thể hoàn tác.</div>
-        <Btn variant="danger" className="w-full" onClick={()=>purge(confirm.archive)}>Xác nhận xóa vĩnh viễn</Btn>
-      </div>}
-    </Modal>
+  return <div><PageHead title="Quản lý khóa dữ liệu" sub="K29 = 2026–2030. Niên khóa của các khóa khác được hệ thống tự suy ra." />
+    <Card className="p-5 mb-4"><div className="font-bold mb-3" style={{color:C.navy}}>Thêm khóa mới</div><div className="flex flex-wrap gap-3"><TextInput value={newKhoa} onChange={e=>setNewKhoa(e.target.value.toUpperCase())} placeholder="K30" style={{maxWidth:180}}/><div className="flex items-center text-sm" style={{color:C.gray}}>Niên khóa tự động: <b className="ml-1" style={{color:C.navy}}>{cohortAcademicYear(newKhoa)}</b></div><Btn variant="amber" icon={Plus} onClick={addKhoa}>Thêm khóa</Btn></div></Card>
+    <Card className="overflow-auto"><table className="text-sm"><thead><tr style={{background:C.grayBg}}>{["Khóa","Niên khóa","Trạng thái","Thao tác"].map(h=><th key={h} className="text-left px-4 py-3 text-xs" style={{color:C.gray}}>{h}</th>)}</tr></thead><tbody>{all.slice().reverse().map(k=>{const snap=archived.find(a=>a.khoa===k); const nien=cohortAcademicYear(k); return <tr key={k} className="border-t" style={{borderColor:C.line}}><td className="px-4 py-3 font-bold">{k}</td><td className="px-4 py-3">{nien}</td><td className="px-4 py-3">{snap?.status==="archived"?<Badge bg={C.grayBg} fg={C.gray}>Đã lưu trữ</Badge>:<Badge bg={C.greenBg} fg={C.green}>Đang sử dụng</Badge>}</td><td className="px-4 py-3"><div className="flex flex-wrap gap-2">{snap?.status==="archived"?<Btn variant="outline" onClick={()=>restore(k)}>Khôi phục</Btn>:<Btn variant="outline" onClick={()=>{if(window.confirm(`Lưu trữ ${k} và chuyển toàn bộ dữ liệu của khóa vào kho lưu trữ?`)) archive(k);}}>Lưu trữ</Btn>}{snap && <Btn variant="danger" onClick={()=>purge(k)}>Xóa vĩnh viễn</Btn>}</div></td></tr>})}</tbody></table></Card>
   </div>;
 }
-
 function AdminSettings({ db, update, log, show, admin }) {
   const [pw, setPw] = useState({ cur: "", next: "", confirm: "" }); const [err, setErr] = useState("");
   const s = db.settings;
@@ -4226,7 +3863,7 @@ function AdminSettings({ db, update, log, show, admin }) {
 function BackupRestoreCard({ db, update, log, show, admin }) {
   const fileRef = React.useRef(null);
   const [confirmFile, setConfirmFile] = useState(null);
-  const DATA_KEYS = ["students", "admins", "activities", "evidences", "complaints", "notifications", "auditlog", "settings", "messages", "archives"];
+  const DATA_KEYS = ["students", "admins", "activities", "evidences", "complaints", "notifications", "auditlog", "settings", "messages"];
 
   const doBackup = () => {
     const payload = { exportedAt: nowISO(), exportedBy: admin.hoten, data: {} };
