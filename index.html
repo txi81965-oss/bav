@@ -6,6 +6,7 @@
 <title>Hệ thống Truyền thông · BAV Phú Yên</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
@@ -1380,10 +1381,36 @@ table{border-collapse:separate;border-spacing:0;width:100%}
 .hover\:-translate-y-0\.5:hover{transform:translateY(-2px)}
 .disabled\:opacity-40:disabled{opacity:0.4}
 .disabled\:cursor-not-allowed:disabled{cursor:not-allowed}
+@media print{table{font-size:10px}th,td{white-space:nowrap}}
 </style>
 </head>
 <body>
-<div id="root"></div>
+<div id="root">
+  <div id="boot-fallback" style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#F6F5F1;font-family:Arial,sans-serif;color:#101828;padding:24px;text-align:center">
+    <div>
+      <div style="font-size:18px;font-weight:700;margin-bottom:8px">Hệ thống Truyền thông · BAV Phú Yên</div>
+      <div style="font-size:14px;color:#667085">Đang khởi động hệ thống…</div>
+      <div id="boot-error" style="display:none;margin-top:14px;padding:12px 14px;border-radius:10px;background:#FEF3F2;color:#B42318;font-size:12px;max-width:720px;text-align:left"></div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  window.__bavBootOK=false;
+  window.addEventListener('error',function(e){
+    if(window.__bavBootOK) return;
+    var box=document.getElementById('boot-error');
+    if(box){box.style.display='block';box.textContent='Website gặp lỗi khi khởi động: '+(e.message||'Lỗi JavaScript')+' — '+(e.filename||'')+':'+(e.lineno||'');}
+    console.error(e.error||e.message||e);
+  });
+  window.addEventListener('unhandledrejection',function(e){
+    if(window.__bavBootOK) return;
+    var box=document.getElementById('boot-error');
+    if(box){box.style.display='block';box.textContent='Website gặp lỗi khi tải dữ liệu: '+(e.reason&&e.reason.message?e.reason.message:String(e.reason));}
+    console.error(e.reason||e);
+  });
+})();
+</script>
 <script type="text/babel" data-presets="react">
 const { useState, useEffect, useCallback } = React;
 
@@ -1429,6 +1456,11 @@ const ICON_PATHS = {
   Info: '<circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16"/><circle cx="12" cy="7.5" r="0.6" fill="currentColor"/>',
   Send: '<path d="M22 2L11 13"/><path d="M22 2L15 22l-4-9-9-4 20-7z"/>',
   Sparkles: '<path d="M12 2l1.8 5.2L19 9l-5.2 1.8L12 16l-1.8-5.2L5 9l5.2-1.8L12 2z"/><path d="M19 15l0.7 2 2 0.7-2 0.7-0.7 2-0.7-2-2-0.7 2-0.7z"/>',
+  HelpCircle: '<circle cx="12" cy="12" r="9"/><path d="M9.6 9a2.6 2.6 0 1 1 4.3 2c-.9.7-1.9 1.2-1.9 2.6"/><circle cx="12" cy="17" r="0.7" fill="currentColor"/>',
+  Save: '<path d="M5 3h12l3 3v15H4V3z"/><path d="M8 3v6h8V3"/><path d="M8 21v-7h8v7"/>',
+  Pencil: '<path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/>',
+  Trash2: '<polyline points="3 6 5 6 21 6"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 15H6L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>',
+  UserCheck: '<circle cx="9" cy="8" r="4"/><path d="M2 20c0-3.9 3.1-7 7-7 2 0 3.8.8 5.1 2"/><path d="M16 17l2 2 4-4"/>' ,
 };
 
 function Icon({ name, size = 16, style, className }) {
@@ -1481,6 +1513,11 @@ const UploadCloud = (p) => Icon({ ...p, name: "UploadCloud" });
 const Info = (p) => Icon({ ...p, name: "Info" });
 const Send = (p) => Icon({ ...p, name: "Send" });
 const Sparkles = (p) => Icon({ ...p, name: "Sparkles" });
+const HelpCircle = (p) => Icon({ ...p, name: "HelpCircle" });
+const Save = (p) => Icon({ ...p, name: "Save" });
+const Pencil = (p) => Icon({ ...p, name: "Pencil" });
+const Trash2 = (p) => Icon({ ...p, name: "Trash2" });
+const UserCheck = (p) => Icon({ ...p, name: "UserCheck" });
 
 
 
@@ -1511,7 +1548,7 @@ const C = {
 
 const ACTIVITY_TYPES = [
   { code: "SH", name: "Chia sẻ bài viết", icon: Share2, color: C.amber, rule: "10 lượt chia sẻ hợp lệ = 01 hoạt động. Chỉ tính lượt chia sẻ trong vòng 02 ngày kể từ khi bài viết được đăng." },
-  { code: "QC", name: "Quay / chụp", icon: Camera, color: C.blue, rule: "05 lần tham gia (minh chứng đạt) = 01 hoạt động. Gồm: hoạt động do Ban Truyền thông tổ chức, tham gia cùng CLB, hoặc tự quay/tự chụp." },
+  { code: "QC", name: "Quay / chụp", icon: Camera, color: C.blue, rule: "Tham gia quay/chụp hoạt động do Ban Truyền thông tổ chức. Đủ 5 lần tham gia = 01 hoạt động." },
   { code: "TV", name: "Tư vấn tuyển sinh", icon: Mic, color: C.green, rule: "01 lần tham gia tư vấn tuyển sinh (được điểm danh xác nhận) = 01 hoạt động." },
   { code: "VD", name: "Video", icon: Video, color: C.red, rule: "01 video đạt yêu cầu (tối thiểu 30 giây, đúng nội dung, được thẩm định và đăng tải) = 01 hoạt động." },
   { code: "GT", name: "Giới thiệu người học", icon: UserPlus2, color: C.purple, rule: "01 người học nhập học và hoàn thành học phí kỳ đầu tiên (đã xác minh) = 02 hoạt động." },
@@ -1533,7 +1570,10 @@ const COMPLAINT_STATUS = {
 };
 const CONTACT_NOTE = "Hãy đến phòng Truyền thông – Tuyển sinh tìm Cô Hiền hoặc Thoa để giải quyết.";
 const FANPAGE_URL = "https://www.facebook.com/phanvienphuyen.hvnh";
-const EMOJI_LIST = ["👍", "😊", "😂", "❤️", "🎉", "🙏", "😢", "😮", "🔥", "✅", "❌", "⏰", "📌", "👏", "💪", "🤝", "😅", "🥳", "📷", "🎥"];
+const EMOJI_LIST = [
+  "😀","😃","😄","😁","😆","😅","😂","🤣","😊","🙂","🙃","😉","😌","😍","🥰","😘","😗","😙","😚","😋","😛","😝","😜","🤪","🤨","🧐","🤓","😎","🥳","🤩",
+  "😏","😒","😞","😔","😟","😕","🙁","☹️","😣","😖","😫","😩","🥺","😢","😭","😤","😠","😡","🤬","🤯","😳","🥵","🥶","😱","😨","😰","😥","😓","🤗","🤔","🫡","🤭","🤫","🤥","😶","😐","😑","😬","🙄","😯","😦","😧","😮","😲","🥱","😴","🤤","😪","😵","🤐","🤢","🤮","🤧","😷","🤒","🤕",
+  "👍","👎","👌","✌️","🤞","🤟","🤘","🤙","👋","👏","🙌","🫶","🤝","🙏","💪","🫰","☝️","👆","👇","👉","👈","✍️","💅","🎉","🎊","🎈","🎁","🏆","🥇","🔥","✨","⭐","🌟","💯","✅","❌","⚡","💡","📌","📣","📷","🎥","🎬","🎤","🎧","❤️","🧡","💛","💚","💙","💜","🖤","🤍","🤎","💔","❣️","💕","💞","💓","💗","💖","💘","💝","💟","☀️","🌈","🌸","🌺","🌻","🌼","🍀","🌿","🌱","🌊","☕","🍰","🍕","🍜","🍔","🥤","⚽","🏀","🏐","🎮","🚀","📝","📚","💻","📱","🔔","⏰","🔗","📎","🔒","🔑"] ;
 
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 9);
 const nowISO = () => new Date().toISOString();
@@ -1583,6 +1623,8 @@ const classFormatOk = (s) => /^K\d{2}[A-Za-zÀ-ỹ0-9]{2,12}$/.test((s || "").tr
 // Compute number of hoạt động quy đổi contributed by a set of evidences (dat only) for one activity
 function quyDoiForActivity(activity, evidences) {
   const dat = evidences.filter((e) => e.status === "dat");
+  // Điểm danh thủ công của quản trị viên có độ ưu tiên cao nhất.
+  if (dat.some((e) => e.manualAttendance === true)) return Math.max(1, dat.filter((e) => e.manualAttendance).length);
   if (dat.length === 0) return 0;
   switch (activity.loai) {
     case "SH": {
@@ -1766,106 +1808,152 @@ function FilterChip({ active, onClick, children }) {
 }
 
 /* =========================================================================
-   STORAGE — ĐỒNG BỘ ONLINE GIỮA MỌI THIẾT BỊ
-   =========================================================================
-   Cấu hình Supabase bên dưới. Sau khi tạo project Supabase, điền URL + anon key.
-   Dữ liệu được lưu trên PostgreSQL của Supabase, không còn phụ thuộc máy/browser.
-   Realtime sẽ đồng bộ thay đổi từ thiết bị khác về giao diện đang mở.
-*/
-const SUPABASE_URL = "YOUR_SUPABASE_URL";
-const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
-const SUPABASE_TABLE = "bav_app_data";
-const KEYS = ["students", "admins", "activities", "evidences", "complaints", "notifications", "auditlog", "settings", "messages"];
-const REMOTE_ENABLED = /^https:\/\/.+/.test(SUPABASE_URL) && SUPABASE_ANON_KEY && !SUPABASE_URL.includes("YOUR_");
-const sb = REMOTE_ENABLED ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
-const LS_PREFIX = "BAV_PY_LOCAL_FALLBACK_";
-const localGet = (k) => { try { const x = localStorage.getItem(LS_PREFIX+k); return x ? JSON.parse(x) : null; } catch { return null; } };
-const localSet = (k,v) => { try { localStorage.setItem(LS_PREFIX+k, JSON.stringify(v)); } catch {} };
-function defaultValueForKey(k) { return k === "settings" ? { locked:false, term:"Học kỳ I – Năm học 2026–2027" } : []; }
+   STORAGE · SUPABASE ONLINE + LOCAL FALLBACK
+   ========================================================================= */
+const KEYS = ["students", "admins", "activities", "evidences", "complaints", "notifications", "auditlog", "settings", "messages", "cohortArchives"];
+const DEFAULT_SETTINGS = { locked: false, term: "Học kỳ I – Năm học 2026–2027" };
+const SUPABASE_URL = window.BAV_CONFIG?.SUPABASE_URL || "";
+const SUPABASE_KEY = window.BAV_CONFIG?.SUPABASE_ANON_KEY || "";
+const supabaseClient = (SUPABASE_URL && SUPABASE_KEY && window.supabase)
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+  : null;
 
-async function remoteGet(key) {
-  if (!sb) return null;
-  const { data, error } = await sb.from(SUPABASE_TABLE).select("value").eq("key", key).maybeSingle();
-  if (error) throw error;
-  return data ? data.value : null;
+function getLocal(k) {
+  try { const v = localStorage.getItem(`bav_${k}`); return v ? JSON.parse(v) : null; } catch { return null; }
 }
-async function remoteSet(key, value) {
-  if (!sb) return false;
-  const { error } = await sb.from(SUPABASE_TABLE).upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict:"key" });
-  if (error) throw error;
-  return true;
+function setLocal(k, value) {
+  try { localStorage.setItem(`bav_${k}`, JSON.stringify(value)); } catch {}
+}
+function getPersistent(k) {
+  const local = getLocal(k);
+  if (local !== null) return local;
+  try {
+    const m = document.cookie.match(new RegExp(`(?:^|; )bav_${k}=([^;]*)`));
+    return m ? JSON.parse(decodeURIComponent(m[1])) : null;
+  } catch { return null; }
+}
+function setPersistent(k, value) {
+  setLocal(k, value);
+  try {
+    if (value === null || value === undefined) {
+      document.cookie = `bav_${k}=; Max-Age=0; Path=/; SameSite=Lax`;
+    } else {
+      document.cookie = `bav_${k}=${encodeURIComponent(JSON.stringify(value))}; Max-Age=2592000; Path=/; SameSite=Lax`;
+    }
+  } catch {}
+}
+function clearPersistent(k) {
+  try { localStorage.removeItem(`bav_${k}`); } catch {}
+  try { document.cookie = `bav_${k}=; Max-Age=0; Path=/; SameSite=Lax`; } catch {}
+}
+function purgeExpiredArchivedCohorts(archives) {
+  const nowYear = new Date().getFullYear();
+  const list = Array.isArray(archives) ? archives : [];
+  return list.filter((a) => {
+    const start = cohortStartYear(a.khoa);
+    const end = start ? start + 4 : null;
+    // Keep archived data through the entire graduation year; purge only from Jan 1 of the following year.
+    if (end && nowYear > end) return false;
+    return true;
+  });
 }
 async function loadAll() {
-  const out = {};
-  if (sb) {
-    try {
-      const { data, error } = await sb.from(SUPABASE_TABLE).select("key,value");
-      if (error) throw error;
-      const map = Object.fromEntries((data || []).map(r => [r.key, r.value]));
-      for (const k of KEYS) out[k] = map[k] ?? localGet(k) ?? defaultValueForKey(k);
-      return out;
-    } catch(e) { console.warn("Không tải được dữ liệu online, dùng bộ nhớ cục bộ:", e); }
+  const fallback = {};
+  KEYS.forEach((k) => { fallback[k] = getLocal(k) ?? (k === "settings" ? { ...DEFAULT_SETTINGS } : []); });
+  fallback.cohortArchives = purgeExpiredArchivedCohorts(fallback.cohortArchives);
+  if (!supabaseClient) return { ...fallback, __online: false };
+  try {
+    const { data, error } = await supabaseClient.from("bav_app_state").select("key,value,updated_at");
+    if (error) throw error;
+    const out = {};
+    KEYS.forEach((k) => {
+      const row = data?.find((r) => r.key === k);
+      out[k] = row?.value ?? fallback[k];
+    });
+    const cleanedArchives = purgeExpiredArchivedCohorts(out.cohortArchives);
+    if (JSON.stringify(cleanedArchives) !== JSON.stringify(out.cohortArchives || [])) {
+      out.cohortArchives = cleanedArchives;
+      await saveKey("cohortArchives", cleanedArchives);
+    }
+    // Migrate existing local data only when the online table is empty for that key.
+    for (const k of KEYS) {
+      const hasRemote = data?.some((r) => r.key === k);
+      if (!hasRemote && getLocal(k) !== null) await saveKey(k, out[k]);
+      setLocal(k, out[k]);
+    }
+    return { ...out, __online: true };
+  } catch (e) {
+    console.error("Supabase load failed", e);
+    return { ...fallback, __online: false };
   }
-  for (const k of KEYS) out[k] = localGet(k) ?? defaultValueForKey(k);
-  return out;
 }
-const saveQueues = new Map();
-function saveKey(key, value) {
-  localSet(key, value);
-  if (!sb) return Promise.resolve(true);
-  const previous = saveQueues.get(key) || Promise.resolve();
-  const next = previous.then(() => remoteSet(key, value)).catch(e => console.error("Remote save failed", key, e));
-  saveQueues.set(key, next);
-  return next;
+async function saveKey(key, value) {
+  setLocal(key, value);
+  if (!supabaseClient) return false;
+  try {
+    const { error } = await supabaseClient.from("bav_app_state").upsert({ key, value, updated_at: nowISO() }, { onConflict: "key" });
+    if (error) throw error;
+    return true;
+  } catch (e) { console.error("Supabase save failed", key, e); return false; }
 }
-function subscribeRealtime(onRemoteChange) {
-  if (!sb) return () => {};
-  const channel = sb.channel("bav-app-sync")
-    .on("postgres_changes", { event:"*", schema:"public", table:SUPABASE_TABLE }, payload => {
-      if (payload?.new?.key && KEYS.includes(payload.new.key)) onRemoteChange(payload.new.key, payload.new.value);
-    }).subscribe();
-  return () => { sb.removeChannel(channel); };
-}
-
 /* =========================================================================
    ROOT APP
    ========================================================================= */
 function App() {
   const [loading, setLoading] = useState(true);
   const [db, setDb] = useState(null);
-  const [portal, setPortal] = useState(null);
-  const [session, setSession] = useState(null);
+  const [portalState, setPortalState] = useState(() => getPersistent("ui_portal"));
+  const [sessionState, setSessionState] = useState(() => getPersistent("ui_session"));
   const [toast, setToast] = useState("");
+  const [online, setOnline] = useState(!!supabaseClient);
+  const portal = portalState;
+  const session = sessionState;
+  const setPortal = useCallback((value) => {
+    setPortalState(value);
+    if (value) setPersistent("ui_portal", value);
+    else clearPersistent("ui_portal");
+  }, []);
+  const setSession = useCallback((value) => {
+    setSessionState(value);
+    if (value) setPersistent("ui_session", value);
+    else clearPersistent("ui_session");
+  }, []);
 
   useEffect(() => {
+    let mounted = true;
     loadAll().then(async (out) => {
       if (!out.admins || out.admins.length === 0) {
         out.admins = [{ username: "thoa", hoten: "Nguyễn Thị Mỹ Thoa", password: "Admin@2026", sdt: "", email: "", trangThai: "active", role: "super_admin", createdAt: nowISO() }];
         await saveKey("admins", out.admins);
       }
       out.complaints = (out.complaints || []).map((c) => (c.messages ? c : { ...c, messages: c.noiDung ? [{ id: uid(), sender: "student", senderName: "", text: c.noiDung, createdAt: c.createdAt }] : [], escalated: false }));
-      setDb(out);
-      setLoading(false);
+      if (!mounted) return;
+      setDb(out); setOnline(!!out.__online); setLoading(false);
     });
-  }, []);
-
-  useEffect(() => {
-    const unsubscribe = subscribeRealtime((key, value) => {
-      setDb(prev => prev ? { ...prev, [key]: value } : prev);
-    });
-    return unsubscribe;
+    if (supabaseClient) {
+      const channel = supabaseClient.channel("bav_app_state_realtime")
+        .on("postgres_changes", { event: "*", schema: "public", table: "bav_app_state" }, (payload) => {
+          const row = payload.new || payload.old;
+          if (!row?.key || !KEYS.includes(row.key)) return;
+          setDb((prev) => prev ? { ...prev, [row.key]: row.value } : prev);
+          setLocal(row.key, row.value);
+          setOnline(true);
+        }).subscribe((status) => { if (status === "SUBSCRIBED") setOnline(true); });
+      return () => { mounted = false; supabaseClient.removeChannel(channel); };
+    }
+    return () => { mounted = false; };
   }, []);
 
   const update = useCallback((key, updater) => {
     setDb((prev) => {
-      const next = { ...prev, [key]: typeof updater === "function" ? updater(prev[key]) : updater };
-      saveKey(key, next[key]);
-      return next;
+      const nextValue = typeof updater === "function" ? updater(prev[key]) : updater;
+      saveKey(key, nextValue);
+      return { ...prev, [key]: nextValue };
     });
   }, []);
 
   const notify = (mssv, text) => update("notifications", (arr) => [{ id: uid(), mssv, text, createdAt: nowISO(), read: false }, ...arr]);
-  const log = (actor, action, target, result) => update("auditlog", (arr) => [{ id: uid(), time: nowISO(), actor, action, target, result }, ...arr]);
+  const log = (actor, action, target, result, undo) => update("auditlog", (arr) => [{ id: uid(), time: nowISO(), actor, action, target, result, undo: undo || null }, ...arr]);
   const show = (msg) => setToast(msg);
 
   if (loading || !db) {
@@ -1880,7 +1968,7 @@ function App() {
     );
   }
 
-  const ctx = { db, update, notify, log, show };
+  const ctx = { db, update, notify, log, show, online };
 
   return (
     <div style={{ fontFamily: "'Be Vietnam Pro', sans-serif", background: C.paper, color: C.ink, minHeight: 600 }} className="w-full">
@@ -2094,7 +2182,7 @@ function AdminAuth({ db, onBack, onLogin, show }) {
 /* =========================================================================
    SHELL
    ========================================================================= */
-function Shell({ title, subtitle, tabs, active, onTab, onLogout, children, badgeCounts = {} }) {
+function Shell({ title, subtitle, tabs, active, onTab, onLogout, children, badgeCounts = {}, online = false }) {
   return (
     <div className="flex min-h-[680px]">
       <aside className="w-60 shrink-0 flex flex-col py-5 px-3" style={{ background: C.navy }}>
@@ -2116,7 +2204,14 @@ function Shell({ title, subtitle, tabs, active, onTab, onLogout, children, badge
         </nav>
         <button onClick={onLogout} className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium mt-2" style={{ color: "#C3CBE0" }}><LogOut size={16} /> Đăng xuất</button>
       </aside>
-      <main className="flex-1 min-w-0 p-6 sm:p-8" style={{ background: C.paper }}>{children}</main>
+      <main className="flex-1 min-w-0 p-6 sm:p-8" style={{ background: C.paper }}>
+        <div className="flex justify-end mb-3">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-semibold" style={{ background: online ? C.greenBg : C.grayBg, color: online ? C.green : C.gray }}>
+            <span className="w-2 h-2 rounded-full" style={{ background: online ? C.green : C.gray }} /> {online ? "Đã đồng bộ dữ liệu online" : "Chưa kết nối database online"}
+          </div>
+        </div>
+        {children}
+      </main>
     </div>
   );
 }
@@ -2293,7 +2388,8 @@ function ChatPanel({ mssv, studentName, update, notify, messages, role, currentN
 function StudentApp(props) {
   const { db, mssv, onLogout } = props;
   const student = db.students.find((s) => s.mssv === mssv);
-  const [tab, setTab] = useState("dashboard");
+  const [tab, setTabState] = useState(() => getPersistent(`student_tab_${mssv}`) || "dashboard");
+  const setTab = useCallback((value) => { setTabState(value); setPersistent(`student_tab_${mssv}`, value); }, [mssv]);
   if (!student) return null;
 
   const unread = db.notifications.filter((n) => n.mssv === mssv && !n.read).length;
@@ -2309,10 +2405,11 @@ function StudentApp(props) {
     { key: "notifications", label: "Thông báo", icon: Bell },
     { key: "profile", label: "Hồ sơ", icon: User },
     { key: "rules", label: "Quy định", icon: BookOpen },
+    { key: "help", label: "Hướng dẫn sử dụng", icon: HelpCircle },
   ];
 
   return (
-    <Shell title="CỔNG SINH VIÊN" subtitle={student.hoTen} tabs={tabs} active={tab} onTab={setTab} onLogout={onLogout} badgeCounts={{ notifications: unread, chat: unreadChat }}>
+    <Shell title="CỔNG SINH VIÊN" subtitle={student.hoTen} tabs={tabs} active={tab} onTab={setTab} onLogout={onLogout} badgeCounts={{ notifications: unread, chat: unreadChat }} online={props.online}>
       {tab === "dashboard" && <StudentDashboard {...props} student={student} onTab={setTab} />}
       {tab === "activities" && <StudentActivities {...props} student={student} />}
       {tab === "proactive" && <StudentProactive {...props} student={student} />}
@@ -2322,6 +2419,7 @@ function StudentApp(props) {
       {tab === "notifications" && <StudentNotifications {...props} student={student} />}
       {tab === "profile" && <StudentProfile {...props} student={student} />}
       {tab === "rules" && <RulesPage />}
+      {tab === "help" && <HelpPage role="student" />}
     </Shell>
   );
 }
@@ -2471,25 +2569,28 @@ function ActivityDetailModal({ a, onClose, db, update, log, show, student }) {
     if ((a.loai === "TV" || a.loai === "GT") && mine.some((e) => e.status === "cho_kiem_tra")) return setErr("Bạn đã có minh chứng đang chờ kiểm tra cho hoạt động này.");
     let data = {};
     if (a.loai === "SH") {
-      if (!form.soLuot || !form.thoiGian || !form.link) return setErr("Vui lòng nhập đầy đủ số lượt, thời gian và link minh chứng.");
-      data = { soLuot: Number(form.soLuot), thoiGian: form.thoiGian, link: form.link };
+      if (!form.soLuot || !form.link) return setErr("Vui lòng nhập số lượt chia sẻ và link Facebook cá nhân.");
+      data = { soLuot: Number(form.soLuot), link: form.link, video: form.video || "" };
     } else if (a.loai === "QC") {
-      if (!form.nguon || !form.thoiGian || !form.link) return setErr("Vui lòng nhập đầy đủ thông tin.");
-      if (!isDriveLink(form.link)) return setErr("Link minh chứng phải là link Google Drive.");
-      data = { nguon: form.nguon, thoiGian: form.thoiGian, thucHienCung: form.nguon === "tu_lam" ? "" : (form.thucHienCung || ""), link: form.link, moTa: form.moTa || "" };
+      const slots = (form.ngayBuoi || []).filter(x => x && x.ngay && x.buoi);
+      if (!slots.length) return setErr("Vui lòng chọn ít nhất một ngày và buổi tham gia.");
+      if (!form.image) return setErr("Vui lòng tải ảnh minh chứng có mặt tại nơi quay/chụp.");
+      const startDay = dateOnly(a.batDau), endDay = dateOnly(a.ketThuc);
+      if (slots.some(x => x.ngay < startDay || x.ngay > endDay)) return setErr("Tất cả ngày tham gia phải nằm trong thời gian hoạt động.");
+      data = { nguon: "to_chuc", ngayBuoi: slots, ngayThamGia: slots.map(x=>x.ngay), buoi: [...new Set(slots.map(x=>x.buoi))], image: form.image };
     } else if (a.loai === "TV") {
       if (!form.thoiGian) return setErr("Vui lòng nhập thời gian tham gia tư vấn.");
-      data = { thoiGian: form.thoiGian };
+      data = { thoiGian: form.thoiGian, video: form.video || "" };
     } else if (a.loai === "VD") {
       if (!form.link) return setErr("Vui lòng nhập link Google Drive video.");
       if (!isDriveLink(form.link)) return setErr("Link phải là link Google Drive.");
       data = { link: form.link, moTa: form.moTa || "" };
     } else if (a.loai === "GT") {
       if (!form.hoTen || !form.sdt) return setErr("Vui lòng nhập họ tên và số điện thoại người được giới thiệu.");
-      data = { hoTen: form.hoTen, sdt: form.sdt, ghiChu: form.ghiChu || "" };
+      data = { hoTen: form.hoTen, sdt: form.sdt, ghiChu: form.ghiChu || "", video: form.video || "" };
     } else if (a.loai === "KH") {
       if (!form.moTa) return setErr("Vui lòng mô tả hoạt động đã thực hiện.");
-      data = { moTa: form.moTa, link: form.link || "" };
+      data = { moTa: form.moTa, link: form.link || "", video: form.video || "" };
     }
     const ev = { id: uid(), activityId: a.id, mssv: student.mssv, loai: a.loai, data, status: "cho_kiem_tra", note: "", approvedBy: "", approvedAt: "", submittedAt: nowISO(), camKet: true };
     update("evidences", (arr) => [ev, ...arr]);
@@ -2502,6 +2603,7 @@ function ActivityDetailModal({ a, onClose, db, update, log, show, student }) {
     <Modal open onClose={onClose} title={`${a.ma} · ${a.ten}`} width="max-w-2xl">
       <div className="flex items-center gap-2 mb-3"><RuntimeBadge activity={a} /><Badge bg={C.grayBg} fg={C.gray}>{T.name}</Badge></div>
       <div className="text-sm rounded-xl p-3 mb-4" style={{ background: C.grayBg, color: C.navy2 }}>{T.rule}</div>
+      {a.loai === "VD" && <div className="text-xs p-3 rounded-xl mb-4 flex items-start gap-2" style={{ background: "#FEF3D8", color: C.amber2 }}><Info size={14} className="mt-0.5 shrink-0" /><span><b>Chú ý khi nộp minh chứng:</b> Chủ động quay, biên tập và hoàn thiện video có thời lượng từ 30 giây trở lên, với nội dung phản ánh hoạt động học tập, rèn luyện, đời sống sinh viên hoặc các hoạt động của Phân viện; video được gửi về BTT, được thẩm định đạt yêu cầu và đăng tải trên các nền tảng truyền thông chính thức của Phân viện (01 video đạt yêu cầu được tính là 01 hoạt động).</span></div>}
       <div className="grid grid-cols-2 gap-3 text-xs mb-4">
         <div><span style={{ color: C.gray }}>Bắt đầu:</span> <b>{fmtDT(a.batDau)}</b></div>
         <div><span style={{ color: C.gray }}>Kết thúc:</span> <b>{fmtDT(a.ketThuc)}</b></div>
@@ -2547,43 +2649,53 @@ function ActivityDetailModal({ a, onClose, db, update, log, show, student }) {
 }
 function EvidenceForm({ loai, form, setForm }) {
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
-  if (loai === "SH") return (<>
-    <div className="grid grid-cols-2 gap-3">
-      <Field label="Số lượt chia sẻ" required><TextInput type="number" min="1" value={form.soLuot || ""} onChange={set("soLuot")} /></Field>
-      <Field label="Thời gian chia sẻ" required><TextInput type="datetime-local" value={form.thoiGian || ""} onChange={set("thoiGian")} /></Field>
-    </div>
-    <Field label="Link minh chứng (Facebook/Drive)" required><TextInput value={form.link || ""} onChange={set("link")} placeholder="https://..." /></Field>
-  </>);
+  const VideoField = () => <Field label="Video minh chứng bổ sung (nếu có)" hint="Có thể dùng link Google Drive nếu muốn gửi thêm video để quản trị viên thẩm định."><TextInput value={form.video || ""} onChange={set("video")} placeholder="https://drive.google.com/..." /></Field>;
+  if (loai === "SH") return (<><Field label="Số lượt chia sẻ" required><TextInput type="number" min="1" value={form.soLuot || ""} onChange={set("soLuot")} /></Field><Field label="Link Facebook cá nhân" required hint="Chỉ cần link Facebook cá nhân, không cần link minh chứng riêng."><TextInput value={form.link || ""} onChange={set("link")} placeholder="https://facebook.com/..." /></Field><VideoField /></>);
   if (loai === "QC") return (<>
-    <Field label="Nguồn tham gia" required>
-      <Select value={form.nguon || ""} onChange={set("nguon")}>
-        <option value="">— Chọn —</option>
-        <option value="to_chuc">Do Ban Truyền thông tổ chức</option>
-        <option value="cau_lac_bo">Tham gia cùng CLB Truyền thông</option>
-        <option value="tu_lam">Tự quay / tự chụp</option>
-      </Select>
-    </Field>
-    <Field label="Thời gian thực hiện" required><TextInput type="datetime-local" value={form.thoiGian || ""} onChange={set("thoiGian")} /></Field>
-    {form.nguon === "cau_lac_bo" && <Field label="Thực hiện cùng ai"><TextInput value={form.thucHienCung || ""} onChange={set("thucHienCung")} /></Field>}
-    <Field label="Link Google Drive minh chứng" required hint="Bắt buộc là link drive.google.com"><TextInput value={form.link || ""} onChange={set("link")} placeholder="https://drive.google.com/..." /></Field>
-    <Field label="Mô tả sản phẩm"><TextArea rows={2} value={form.moTa || ""} onChange={set("moTa")} /></Field>
-  </>);
-  if (loai === "TV") return <Field label="Thời gian tham gia tư vấn" required><TextInput type="datetime-local" value={form.thoiGian || ""} onChange={set("thoiGian")} /></Field>;
-  if (loai === "VD") return (<>
-    <Field label="Link Google Drive video" required hint="Bắt buộc là link drive.google.com"><TextInput value={form.link || ""} onChange={set("link")} placeholder="https://drive.google.com/..." /></Field>
-    <Field label="Mô tả nội dung video"><TextArea rows={2} value={form.moTa || ""} onChange={set("moTa")} /></Field>
-  </>);
-  if (loai === "GT") return (<>
-    <div className="grid grid-cols-2 gap-3">
-      <Field label="Họ tên người được giới thiệu" required><TextInput value={form.hoTen || ""} onChange={set("hoTen")} /></Field>
-      <Field label="Số điện thoại" required><TextInput value={form.sdt || ""} onChange={set("sdt")} /></Field>
+    <div className="text-xs p-3 rounded-lg mb-3" style={{ background: C.blueBg, color: C.blue }}>
+      <b>Quy định 2 — Ban Truyền thông tổ chức:</b> Tham gia quay/chụp hoạt động do Ban Truyền thông tổ chức. Không cần tạo sản phẩm riêng. Không cần link Drive; chỉ cần minh chứng theo yêu cầu của hoạt động hoặc được quản trị viên điểm danh. <b>Đủ 5 lần tham gia = 01 hoạt động.</b>
     </div>
-    <Field label="Ghi chú thêm"><TextArea rows={2} value={form.ghiChu || ""} onChange={set("ghiChu")} /></Field>
+    <Field label="Ngày và buổi tham gia" required hint="Mỗi dòng là một ngày. Có thể thêm nhiều ngày và chọn buổi khác nhau cho từng ngày.">
+      <div className="space-y-2">
+        {(form.ngayBuoi || [{ngay:"",buoi:""}]).map((item, i) => (
+          <div key={i} className="grid grid-cols-[1fr_1fr_auto] gap-2 items-end p-2.5 rounded-xl" style={{background:C.grayBg}}>
+            <div>
+              <div className="text-[11px] mb-1" style={{color:C.gray}}>Ngày #{i+1}</div>
+              <TextInput type="date" value={item.ngay || ""} onChange={(e)=>{
+                const next=(form.ngayBuoi||[{ngay:"",buoi:""}]).map((x,j)=>j===i?{...x,ngay:e.target.value}:x);
+                setForm({...form,ngayBuoi:next});
+              }} />
+            </div>
+            <div>
+              <div className="text-[11px] mb-1" style={{color:C.gray}}>Buổi</div>
+              <Select value={item.buoi || ""} onChange={(e)=>{
+                const next=(form.ngayBuoi||[{ngay:"",buoi:""}]).map((x,j)=>j===i?{...x,buoi:e.target.value}:x);
+                setForm({...form,ngayBuoi:next});
+              }}>
+                <option value="">— Chọn buổi —</option>
+                <option value="sang">Buổi sáng</option>
+                <option value="chieu">Buổi chiều</option>
+                <option value="ca_ngay">Cả ngày</option>
+              </Select>
+            </div>
+            <button type="button" className="px-3 py-2 rounded-lg border text-xs" style={{borderColor:C.line}} onClick={()=>{
+              const next=(form.ngayBuoi||[{ngay:"",buoi:""}]).filter((_,j)=>j!==i);
+              setForm({...form,ngayBuoi:next.length?next:[{ngay:"",buoi:""}]});
+            }}>Xóa</button>
+          </div>
+        ))}
+        <button type="button" className="text-xs font-semibold" style={{color:C.blue}} onClick={()=>setForm({...form,ngayBuoi:[...(form.ngayBuoi||[]),{ngay:"",buoi:""}]})}>+ Thêm ngày tham gia</button>
+      </div>
+    </Field>
+    <Field label="Ảnh minh chứng có mặt tại nơi quay/chụp" required hint="Có thể dùng ảnh chụp tại địa điểm hoạt động; ảnh cần thể hiện bạn thực sự có mặt.">
+      <TextInput type="file" accept="image/*" onChange={(e)=>{ const file=e.target.files?.[0]; if(!file)return; const r=new FileReader(); r.onload=()=>setForm({...form,image:r.result}); r.readAsDataURL(file); }} />
+    </Field>
+    {form.image && <img src={form.image} alt="Ảnh minh chứng" className="w-full max-h-56 object-contain rounded-xl border" style={{borderColor:C.line}} />}
   </>);
-  if (loai === "KH") return (<>
-    <Field label="Mô tả hoạt động đã thực hiện" required><TextArea rows={2} value={form.moTa || ""} onChange={set("moTa")} /></Field>
-    <Field label="Link minh chứng (nếu có)"><TextInput value={form.link || ""} onChange={set("link")} /></Field>
-  </>);
+  if (loai === "TV") return <><Field label="Thời gian tham gia tư vấn" required><TextInput type="datetime-local" value={form.thoiGian || ""} onChange={set("thoiGian")} /></Field><VideoField /></>;
+  if (loai === "VD") return (<><Field label="Link Google Drive video" required hint="Video tối thiểu 30 giây và phải đạt yêu cầu thẩm định, đăng tải."><TextInput value={form.link || ""} onChange={set("link")} placeholder="https://drive.google.com/..." /></Field><Field label="Mô tả nội dung video"><TextArea rows={2} value={form.moTa || ""} onChange={set("moTa")} /></Field></>);
+  if (loai === "GT") return (<><div className="grid grid-cols-2 gap-3"><Field label="Họ tên người được giới thiệu" required><TextInput value={form.hoTen || ""} onChange={set("hoTen")} /></Field><Field label="Số điện thoại" required><TextInput value={form.sdt || ""} onChange={set("sdt")} /></Field></div><Field label="Ghi chú thêm"><TextArea rows={2} value={form.ghiChu || ""} onChange={set("ghiChu")} /></Field><VideoField /></>);
+  if (loai === "KH") return (<><Field label="Mô tả hoạt động đã thực hiện" required><TextArea rows={2} value={form.moTa || ""} onChange={set("moTa")} /></Field><Field label="Link minh chứng (nếu có)"><TextInput value={form.link || ""} onChange={set("link")} /></Field><VideoField /></>);
   return null;
 }
 
@@ -2591,13 +2703,15 @@ function EvidenceForm({ loai, form, setForm }) {
 function StudentProactive({ update, log, show, student }) {
   const [openShare, setOpenShare] = useState(false);
   const [openQC, setOpenQC] = useState(false);
+  const [openGT, setOpenGT] = useState(false);
   const cards = [
-    { key: "SH", icon: Share2, title: "Chia sẻ bài viết", desc: "Khai báo số bài đã chia sẻ, link Facebook và thời gian thực hiện trên trang cá nhân.", action: () => setOpenShare(true), color: C.amber },
-    { key: "QC", icon: Camera, title: "Quay / chụp", desc: "Nộp minh chứng cho việc tự quay/chụp hoặc tham gia cùng CLB Truyền thông.", action: () => setOpenQC(true), color: C.blue },
+    { key: "SH", icon: Share2, title: "Chia sẻ bài viết", desc: "Khai báo số bài đã chia sẻ và link Facebook cá nhân.", action: () => setOpenShare(true), color: C.amber },
+    { key: "QC", icon: Video, title: "Video", desc: "Nộp video tự thực hiện theo Quy định 4 hoặc minh chứng tham gia cùng CLB theo Quy định 2.", action: () => setOpenQC(true), color: C.blue },
+    { key: "GT", icon: UserPlus2, title: "Giới thiệu người học", desc: "Khai báo người học bạn giới thiệu và xác nhận tình trạng nhập học, nộp học phí.", action: () => setOpenGT(true), color: C.purple },
   ];
   return (
     <div>
-      <PageHead title="Nộp minh chứng chủ động" sub="Dành cho hoạt động Chia sẻ bài viết và Quay/chụp không thuộc một hoạt động cụ thể do Ban Truyền thông tạo." />
+      <PageHead title="Nộp minh chứng chủ động" sub="Dành cho Chia sẻ bài viết và Video chủ động không thuộc một hoạt động cụ thể do Ban Truyền thông tạo." />
       <div className="text-xs p-3 rounded-xl mb-5 flex items-start gap-2" style={{ background: C.blueBg, color: C.blue }}>
         <Info size={14} className="mt-0.5 shrink-0" />
         Hoạt động do Ban Truyền thông tổ chức (quay/chụp sự kiện, tư vấn tuyển sinh, video theo yêu cầu, giới thiệu người học...) vui lòng vào mục "Hoạt động" để nộp minh chứng đúng hoạt động tương ứng.
@@ -2615,10 +2729,67 @@ function StudentProactive({ update, log, show, student }) {
       <Modal open={openShare} onClose={() => setOpenShare(false)} title="Nộp minh chứng · Chia sẻ bài viết" width="max-w-lg">
         <ProactiveShareForm update={update} log={log} show={show} student={student} onDone={() => setOpenShare(false)} />
       </Modal>
-      <Modal open={openQC} onClose={() => setOpenQC(false)} title="Nộp minh chứng · Quay / chụp" width="max-w-lg">
+      <Modal open={openQC} onClose={() => setOpenQC(false)} title="Nộp minh chứng · Video" width="max-w-lg">
         <ProactiveQCForm update={update} log={log} show={show} student={student} onDone={() => setOpenQC(false)} />
       </Modal>
+      <Modal open={openGT} onClose={() => setOpenGT(false)} title="Nộp minh chứng · Giới thiệu người học" width="max-w-lg">
+        <ProactiveGTForm update={update} log={log} show={show} student={student} onDone={() => setOpenGT(false)} />
+      </Modal>
     </div>
+  );
+}
+function ProactiveGTForm({ update, log, show, student, onDone }) {
+  const [hoTen, setHoTen] = useState("");
+  const [daNhapHoc, setDaNhapHoc] = useState(false);
+  const [daNopHocPhi, setDaNopHocPhi] = useState(false);
+  const [ghiChu, setGhiChu] = useState("");
+  const [camKet, setCamKet] = useState(false);
+  const [err, setErr] = useState("");
+  const submit = (e) => {
+    e.preventDefault(); setErr("");
+    if (!hoTen.trim()) return setErr("Vui lòng nhập họ tên người học được giới thiệu.");
+    if (!daNhapHoc) return setErr("Vui lòng xác nhận người học đã nhập học.");
+    if (!daNopHocPhi) return setErr("Vui lòng xác nhận người học đã nộp học phí.");
+    if (!camKet) return setErr("Vui lòng cam kết thông tin trung thực.");
+    const ev = {
+      id: uid(), activityId: null, mssv: student.mssv, loai: "GT", nguonNop: "chu_dong",
+      data: { hoTen: hoTen.trim(), daNhapHoc: true, daNopHocPhi: true, ghiChu: ghiChu.trim() },
+      status: "cho_kiem_tra", note: "", approvedBy: "", approvedAt: "", submittedAt: nowISO(), camKet: true
+    };
+    update("evidences", (arr) => [ev, ...arr]);
+    log(student.mssv, "Nộp minh chứng chủ động", "GT-CD", "Đã gửi giới thiệu người học, chờ kiểm tra");
+    show("Đã gửi thông tin người học, vui lòng chờ kiểm tra.");
+    setHoTen(""); setDaNhapHoc(false); setDaNopHocPhi(false); setGhiChu(""); setCamKet(false); onDone();
+  };
+  return (
+    <form onSubmit={submit}>
+      <div className="text-xs p-3 rounded-lg mb-4" style={{ background: C.purple + "18", color: C.purple }}>
+        <b>Quy định giới thiệu người học:</b> 01 người học được quản trị viên xác minh đã nhập học và hoàn thành việc nộp học phí kỳ đầu tiên được tính theo quy đổi của hệ thống.
+      </div>
+      <Field label="Họ tên người học được giới thiệu" required>
+        <TextInput value={hoTen} onChange={(e) => setHoTen(e.target.value)} placeholder="Nhập họ và tên" />
+      </Field>
+      <label className="flex items-start gap-2 text-xs mb-3" style={{ color: C.navy2 }}>
+        <input type="checkbox" checked={daNhapHoc} onChange={(e) => setDaNhapHoc(e.target.checked)} className="mt-0.5" />
+        Tôi xác nhận người học trên <b>đã nhập học</b>.
+      </label>
+      <label className="flex items-start gap-2 text-xs mb-3" style={{ color: C.navy2 }}>
+        <input type="checkbox" checked={daNopHocPhi} onChange={(e) => setDaNopHocPhi(e.target.checked)} className="mt-0.5" />
+        Tôi xác nhận người học trên <b>đã nộp học phí kỳ đầu tiên</b>.
+      </label>
+      <Field label="Ghi chú thêm">
+        <TextArea rows={2} value={ghiChu} onChange={(e) => setGhiChu(e.target.value)} placeholder="Thông tin bổ sung nếu cần" />
+      </Field>
+      <div className="text-xs p-3 rounded-lg mb-3" style={{ background: C.blueBg, color: C.blue }}>
+        <b>Lưu ý:</b> Các xác nhận của sinh viên vẫn phải được quản trị viên kiểm tra/xác minh trước khi minh chứng được chuyển sang trạng thái Đạt và cộng điểm.
+      </div>
+      <label className="flex items-start gap-2 text-xs mb-3" style={{ color: C.navy2 }}>
+        <input type="checkbox" checked={camKet} onChange={(e) => setCamKet(e.target.checked)} className="mt-0.5" />
+        Tôi cam kết các thông tin cung cấp là trung thực, chính xác.
+      </label>
+      {err && <div className="text-xs font-medium mb-3" style={{ color: C.red }}>{err}</div>}
+      <Btn type="submit" variant="amber" className="w-full">Gửi minh chứng</Btn>
+    </form>
   );
 }
 function ProactiveShareForm({ update, log, show, student, onDone }) {
@@ -2646,7 +2817,7 @@ function ProactiveShareForm({ update, log, show, student, onDone }) {
       </div>
       <div className="grid grid-cols-2 gap-3">
         <Field label="Số bài đã chia sẻ" required><TextInput type="number" min="1" value={f.soLuot} onChange={set("soLuot")} /></Field>
-        <Field label="Link Facebook" required><TextInput value={f.link} onChange={set("link")} placeholder="https://facebook.com/..." /></Field>
+        <Field label="Link Facebook cá nhân" required hint="Chỉ cần link Facebook cá nhân, không cần link minh chứng riêng."><TextInput value={f.link} onChange={set("link")} placeholder="https://facebook.com/..." /></Field>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <Field label="Từ ngày" required hint="Ngày bạn bắt đầu share bài đầu tiên"><TextInput type="date" value={f.tuNgay} onChange={set("tuNgay")} /></Field>
@@ -2671,79 +2842,85 @@ function ProactiveShareForm({ update, log, show, student, onDone }) {
 function ProactiveQCForm({ update, log, show, student, onDone }) {
   const [nguon, setNguon] = useState("tu_lam");
   const [soLuong, setSoLuong] = useState(1);
-  const [thoiGian, setThoiGian] = useState("");
-  const [items, setItems] = useState([{ link: "", ten: "" }]);
+  const [items, setItems] = useState([{ link: "", ten: "", nguoiMoi: "" }]);
   const [camKet, setCamKet] = useState(false);
   const [err, setErr] = useState("");
   const setCount = (n) => {
     n = Math.max(1, Math.min(20, Number(n) || 1));
     setSoLuong(n);
-    setItems((prev) => { const next = prev.slice(0, n); while (next.length < n) next.push({ link: "", ten: "" }); return next; });
+    setItems((prev) => {
+      const next = prev.slice(0, n);
+      while (next.length < n) next.push({ link: "", ten: "", nguoiMoi: "" });
+      return next;
+    });
   };
-  const setItem = (i, k, v) => setItems((prev) => prev.map((it, idx) => (idx === i ? { ...it, [k]: v } : it)));
+  const setItem = (i, k, v) => setItems((prev) => prev.map((it, idx) => idx === i ? { ...it, [k]: v } : it));
   const submit = (e) => {
     e.preventDefault(); setErr("");
-    if (!thoiGian) return setErr("Vui lòng nhập thời gian thực hiện.");
     for (const it of items) {
-      if (!it.link) return setErr("Vui lòng nhập link Drive cho tất cả sản phẩm.");
-      if (!isDriveLink(it.link)) return setErr("Link minh chứng phải là link Google Drive.");
-      if (nguon === "cau_lac_bo" && !it.ten) return setErr("Vui lòng nhập tên video đã tham gia cùng CLB.");
+      if (nguon === "tu_lam") {
+        if (!it.ten.trim()) return setErr("Vui lòng nhập tên sản phẩm / tên video cho từng video tự thực hiện.");
+        if (!it.link.trim()) return setErr("Vui lòng nhập link Google Drive cho tất cả video tự thực hiện.");
+        if (!isDriveLink(it.link)) return setErr("Link video phải là link Google Drive.");
+      }
+      if (nguon === "cau_lac_bo" && !it.nguoiMoi.trim()) return setErr("Vui lòng nhập tên người giới thiệu (thành viên CLB Truyền thông) cho từng minh chứng.");
     }
     if (!camKet) return setErr("Vui lòng cam kết thông tin trung thực.");
     const batch = items.map((it) => ({
       id: uid(), activityId: null, mssv: student.mssv, loai: "QC", nguonNop: "chu_dong",
-      data: { nguon, thoiGian, link: it.link, ten: it.ten || "", moTa: "" },
-      status: "cho_kiem_tra", note: "", approvedBy: "", approvedAt: "", submittedAt: nowISO(), camKet: true,
+      data: { nguon, ten: it.ten.trim(), nguoiMoi: it.nguoiMoi.trim(), link: nguon === "tu_lam" ? it.link.trim() : "" },
+      status: "cho_kiem_tra", note: "", approvedBy: "", approvedAt: "", submittedAt: nowISO(), camKet: true
     }));
     update("evidences", (arr) => [...batch, ...arr]);
     log(student.mssv, "Nộp minh chứng chủ động", "QC-CD", `Đã gửi ${batch.length} minh chứng, chờ kiểm tra`);
-    show(`Đã gửi ${batch.length} minh chứng quay/chụp.`); onDone();
+    show(`Đã gửi ${batch.length} minh chứng video.`); onDone();
   };
-  return (
-    <form onSubmit={submit}>
-      <Field label="Hình thức tham gia" required>
-        <Select value={nguon} onChange={(e) => setNguon(e.target.value)}>
-          <option value="tu_lam">Tự quay / tự chụp</option>
-          <option value="cau_lac_bo">Tham gia cùng CLB Truyền thông</option>
-        </Select>
-      </Field>
-      {nguon === "cau_lac_bo" && (
-        <div className="text-xs p-2.5 rounded-lg mb-3 flex items-start gap-2" style={{ background: "#FEF3D8", color: C.amber2 }}>
-          <Info size={14} className="mt-0.5 shrink-0" /> Lưu ý: video chỉ được tính khi đã được đăng tải trên nền tảng truyền thông chính thức của trường. Video chưa đăng sẽ chưa được duyệt.
-        </div>
+  return (<form onSubmit={submit}>
+    <Field label="Hình thức tham gia" required>
+      <Select value={nguon} onChange={(e) => setNguon(e.target.value)}>
+        <option value="tu_lam">Tự quay / tự biên tập video — Quy định 4</option>
+        <option value="cau_lac_bo">Tham gia cùng CLB Truyền thông — Quy định 2</option>
+      </Select>
+    </Field>
+    <div className="text-xs p-3 rounded-lg mb-3" style={{ background: "#FEF3D8", color: C.amber2 }}>
+      {nguon === "tu_lam" ? (
+        <><b>Quy định 4:</b> Chủ động quay, biên tập và hoàn thiện video từ 30 giây trở lên; gửi link Google Drive đã mở quyền chia sẻ. <b>01 video đạt = 01 hoạt động.</b></>
+      ) : (
+        <><b>Quy định 2:</b> Tham gia quay/chụp hoạt động do Ban Truyền thông tổ chức. <b>Đủ 5 lần tham gia = 01 hoạt động.</b> Với minh chứng chủ động theo diện CLB, tên người giới thiệu là bắt buộc; tên sản phẩm/video không bắt buộc và <b>không cần link Drive.</b></>
       )}
-      <div className="grid grid-cols-2 gap-3">
-        <Field label="Số lượng sản phẩm" required><TextInput type="number" min="1" max="20" value={soLuong} onChange={(e) => setCount(e.target.value)} /></Field>
-        <Field label="Thời gian thực hiện" required><TextInput type="date" value={thoiGian} onChange={(e) => setThoiGian(e.target.value)} /></Field>
-      </div>
-      <div className="space-y-2 mb-3">
-        {items.map((it, i) => (
-          <div key={i} className="rounded-xl p-3" style={{ background: C.grayBg }}>
-            <div className="text-xs font-semibold mb-2" style={{ color: C.navy2 }}>Sản phẩm #{i + 1}</div>
-            {nguon === "cau_lac_bo" && <TextInput className="mb-2" placeholder="Tên video đã tham gia" value={it.ten} onChange={(e) => setItem(i, "ten", e.target.value)} />}
-            <TextInput placeholder="Link Google Drive minh chứng" value={it.link} onChange={(e) => setItem(i, "link", e.target.value)} />
-          </div>
-        ))}
-      </div>
-      <label className="flex items-start gap-2 text-xs mb-3" style={{ color: C.navy2 }}>
-        <input type="checkbox" checked={camKet} onChange={(e) => setCamKet(e.target.checked)} className="mt-0.5" />
-        Tôi cam kết các thông tin và minh chứng cung cấp là trung thực, chính xác và thuộc về hoạt động tôi thực sự tham gia.
-      </label>
-      {err && <div className="text-xs font-medium mb-3" style={{ color: C.red }}>{err}</div>}
-      <Btn type="submit" variant="amber" className="w-full">Gửi {items.length} minh chứng</Btn>
-    </form>
-  );
+    </div>
+    <Field label="Số lượng minh chứng" required>
+      <TextInput type="number" min="1" max="20" value={soLuong} onChange={(e) => setCount(e.target.value)} />
+    </Field>
+    <div className="space-y-2 mb-3">
+      {items.map((it, i) => (
+        <div key={i} className="rounded-xl p-3" style={{ background: C.grayBg }}>
+          <div className="text-xs font-semibold mb-2" style={{ color: C.navy2 }}>Minh chứng #{i + 1}</div>
+          <TextInput className="mb-2" placeholder={nguon === "tu_lam" ? "Tên sản phẩm / tên video *" : "Tên sản phẩm / tên video (không bắt buộc)"} value={it.ten} onChange={(e) => setItem(i, "ten", e.target.value)} />
+          {nguon === "tu_lam" && <TextInput className="mb-2" placeholder="Link Google Drive video" value={it.link} onChange={(e) => setItem(i, "link", e.target.value)} />}
+          {nguon === "cau_lac_bo" && <TextInput placeholder="Tên người giới thiệu (thành viên CLB Truyền thông) *" value={it.nguoiMoi} onChange={(e) => setItem(i, "nguoiMoi", e.target.value)} />}
+        </div>
+      ))}
+    </div>
+    <div className="text-xs p-3 rounded-lg mb-3" style={{ background: C.blueBg, color: C.blue }}>
+      {nguon === "tu_lam" ? <><b>Chú ý:</b> Video phải từ 30 giây trở lên, được BTT thẩm định đạt yêu cầu và đăng tải trên các nền tảng truyền thông chính thức của Phân viện. Link Drive phải mở quyền chia sẻ để BTT kiểm tra.</> : <><b>Chú ý:</b> Tham gia cùng CLB Truyền thông theo Quy định 2: <b>tên người giới thiệu là bắt buộc</b>, tên sản phẩm/video không bắt buộc và <b>không cần link Drive</b>. Đủ 5 lần tham gia được xác nhận = 01 hoạt động.</>}
+    </div>
+    <label className="flex items-start gap-2 text-xs mb-3" style={{ color: C.navy2 }}><input type="checkbox" checked={camKet} onChange={(e) => setCamKet(e.target.checked)} className="mt-0.5" />Tôi cam kết các thông tin và minh chứng cung cấp là trung thực, chính xác và thuộc về hoạt động tôi thực sự tham gia.</label>
+    {err && <div className="text-xs font-medium mb-3" style={{ color: C.red }}>{err}</div>}
+    <Btn type="submit" variant="amber" className="w-full">Gửi {items.length} minh chứng</Btn>
+  </form>);
 }
 
 function StudentHistory({ db, student }) {
   const rows = db.evidences.filter((e) => e.mssv === student.mssv).sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
+  const [viewEv, setViewEv] = useState(null);
   return (
     <div>
       <PageHead title="Lịch sử hoạt động của tôi" sub="Toàn bộ minh chứng đã nộp và kết quả kiểm tra." />
       <Card className="overflow-hidden">
         {rows.length === 0 ? <Empty title="Chưa có lịch sử nào" /> : (
           <table className="w-full text-sm">
-            <thead><tr style={{ background: C.grayBg }}>{["Mã HĐ", "Loại", "Nộp lúc", "Trạng thái", "Người duyệt", "Ghi chú"].map((h) => <th key={h} className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: C.gray }}>{h}</th>)}</tr></thead>
+            <thead><tr style={{ background: C.grayBg }}>{["Mã HĐ", "Loại", "Nộp lúc", "Trạng thái", "Người duyệt", "Ghi chú", ""].map((h) => <th key={h} className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: C.gray }}>{h}</th>)}</tr></thead>
             <tbody>
               {rows.map((e) => {
                 const act = e.activityId ? db.activities.find((a) => a.id === e.activityId) : null;
@@ -2755,6 +2932,7 @@ function StudentHistory({ db, student }) {
                     <td className="px-4 py-2.5"><StatusBadge status={e.status} /></td>
                     <td className="px-4 py-2.5 text-xs">{e.approvedBy || "—"}</td>
                     <td className="px-4 py-2.5 text-xs" style={{ color: C.gray }}>{e.note || "—"}</td>
+                    <td className="px-4 py-2.5 text-right"><Btn variant="outline" onClick={() => setViewEv(e)}>Xem lại</Btn></td>
                   </tr>
                 );
               })}
@@ -2762,8 +2940,20 @@ function StudentHistory({ db, student }) {
           </table>
         )}
       </Card>
+      {viewEv && <Modal open onClose={() => setViewEv(null)} title="Xem lại minh chứng đã nộp" width="max-w-lg">
+        <EvidenceDataView ev={viewEv} />
+        <div className="text-xs p-3 rounded-lg" style={{ background: C.grayBg, color: C.gray }}>Nộp lúc: <b>{fmtDT(viewEv.submittedAt)}</b> · Người duyệt: <b>{viewEv.approvedBy || "—"}</b></div>
+      </Modal>}
     </div>
   );
+}
+
+function currentSemesterDateRange(dateValue = new Date()) {
+  const d = dateValue instanceof Date ? new Date(dateValue) : new Date(dateValue);
+  const y = d.getFullYear();
+  const m = d.getMonth() + 1;
+  if (m >= 8) return { start: `${y}-08-01`, end: `${y + 1}-01-31`, label: `Học kỳ I ${y}–${y + 1}` };
+  return { start: `${y - 1}-08-01`, end: `${y}-07-31`, label: `Học kỳ II ${y - 1}–${y}` };
 }
 
 function StudentComplaints({ db, update, notify, log, show, student }) {
@@ -2801,8 +2991,9 @@ function StudentComplaints({ db, update, notify, log, show, student }) {
 }
 function ComplaintForm({ db, update, log, show, student, onDone }) {
   const [mode, setMode] = useState("evidence"); // 'evidence' | 'missing'
-  const myEv = db.evidences.filter((e) => e.mssv === student.mssv).sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
-  const allActs = db.activities.slice().sort((a, b) => new Date(b.batDau) - new Date(a.batDau));
+  const currentTerm = currentSemesterDateRange();
+  const myEv = db.evidences.filter((e) => e.mssv === student.mssv && inDateRange(e.submittedAt, currentTerm.start, currentTerm.end)).sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
+  const allActs = db.activities.filter((a) => inDateRange(a.batDau || a.createdAt, currentTerm.start, currentTerm.end)).sort((a, b) => new Date(b.batDau) - new Date(a.batDau));
   const [targetId, setTargetId] = useState("");
   const [noiDung, setNoiDung] = useState("");
   const [err, setErr] = useState("");
@@ -2851,7 +3042,7 @@ function ComplaintForm({ db, update, log, show, student, onDone }) {
           </Field>
         )
       ) : (
-        <Field label="Chọn hoạt động đã diễn ra trong kỳ" required hint="Dùng khi bạn đã tham gia nhưng không thấy tên mình trong kết quả công bố">
+        <Field label="Chọn hoạt động đã diễn ra trong kỳ" required hint="Chỉ hiển thị hoạt động của học kỳ đang tính; sang kỳ sau sẽ không còn hiển thị hoạt động của kỳ này">
           <Select value={targetId} onChange={(e) => setTargetId(e.target.value)} required>
             <option value="">— Chọn hoạt động —</option>
             {allActs.map((a) => <option key={a.id} value={a.id}>{a.ma} · {a.ten} · {fmtD(a.batDau)}</option>)}
@@ -2925,6 +3116,30 @@ function StudentProfile({ update, show, log, student }) {
   );
 }
 
+function HelpPage({ role }) {
+  const studentSteps = [
+    ["1", "Đăng ký / đăng nhập", "Sinh viên đăng ký bằng MSSV, khóa, lớp và mật khẩu; sau đó đăng nhập để sử dụng cổng."],
+    ["2", "Xem hoạt động", "Vào Hoạt động để xem các hoạt động do Ban Truyền thông tạo, thời gian, yêu cầu và trạng thái."],
+    ["3", "Nộp minh chứng", "Chọn đúng hoạt động rồi nộp minh chứng. Chỉ minh chứng được quản trị viên duyệt Đạt mới được tính hoạt động và điểm cộng."],
+    ["4", "Quay / chụp do Ban Truyền thông tổ chức", "Đây là quy định 2: sinh viên chỉ tham gia quay/chụp, không phải tự tạo sản phẩm. Khi nộp cho hoạt động do quản trị viên tạo, chọn một hoặc nhiều ngày tham gia, chọn buổi sáng/chiều/cả ngày và tải ảnh thể hiện bạn có mặt tại nơi quay/chụp. Không cần link Drive."],
+    ["5", "Tự quay / tự chụp tạo sản phẩm", "Đây là quy định 4: sinh viên tự tạo sản phẩm của mình. Khi nộp minh chứng chủ động, nhập tên minh chứng/tên video và link Google Drive. Link Drive phải mở quyền chia sẻ để Ban Truyền thông có thể xem. Video đạt yêu cầu từ 30 giây trở lên và được BTT thẩm định, đăng tải thì 01 video đạt = 01 hoạt động."],
+    ["6", "Chia sẻ bài viết", "Chỉ cần link Facebook cá nhân theo yêu cầu; không cần link minh chứng riêng. Chỉ lượt chia sẻ hợp lệ trong thời gian quy định mới được tính."],
+    ["7", "Theo dõi điểm", "Vào Tổng quan hoặc Lịch sử để xem minh chứng, kết quả duyệt, số hoạt động quy đổi và điểm cộng."],
+    ["8", "Khiếu nại / trò chuyện", "Nếu có sai lệch, gửi khiếu nại hoặc nhắn trực tiếp cho Ban Truyền thông; có thể mở lại Hướng dẫn sử dụng bất cứ lúc nào."]
+  ];
+  const adminSteps = [
+    ["1", "Tạo hoạt động", "Tạo hoạt động theo 1 trong 6 loại và nhập thời gian, quy định, cách quy đổi nếu là Hoạt động khác."],
+    ["2", "Kiểm tra minh chứng", "Mở Kiểm tra minh chứng, xem từng hồ sơ, đối chiếu link/thông tin và chọn Đạt, Không đạt hoặc Yêu cầu bổ sung."],
+    ["3", "Tự động cộng điểm", "Ngay khi minh chứng được duyệt Đạt, hệ thống tính số hoạt động quy đổi và điểm theo quy định."],
+    ["4", "Xem tổng hợp", "Tổng hợp theo lớp chỉ dựa trên minh chứng Đạt; dữ liệu có thể lọc theo khóa."],
+    ["5", "Xuất danh sách", "Bảng xuất có xem trước, chỉnh sửa bản nháp rồi mới xuất Excel/Word/PDF. Các cột hoạt động của BTT và các nhóm chủ động chỉ hiện khi có dữ liệu."],
+    ["6", "Quản lý hoạt động và điểm danh", "Có thể sửa ngày kết thúc sau khi tạo, xóa hoạt động, lọc hoạt động theo ngày/học kỳ/niên khóa và điểm danh thủ công cho sinh viên. Điểm danh của quản trị viên có ưu tiên cao nhất."],
+    ["7", "Sao lưu", "Vào Cài đặt để xuất JSON sao lưu. Database online Supabase là nguồn dữ liệu dùng chung cho nhiều thiết bị."],
+  ];
+  const steps = role === "admin" ? adminSteps : studentSteps;
+  return (<div><PageHead title="Hướng dẫn sử dụng" sub="Có thể mở lại mục này bất cứ lúc nào khi cần xem cách dùng hệ thống." /><Card className="p-5 mb-4" style={{ background: C.blueBg, borderColor: "#D6E4F2" }}><div className="font-bold mb-1 flex items-center gap-2" style={{ color: C.navy }}><HelpCircle size={17} /> Hướng dẫn nhanh cho {role === "admin" ? "quản trị viên" : "sinh viên"}</div><div className="text-xs" style={{ color: C.navy2 }}>Mỗi bước đều có thể thực hiện lại; dữ liệu đã lưu trên database online không bị mất chỉ vì website được cập nhật code.</div></Card><div className="space-y-3">{steps.map(([n,t,d]) => <Card key={n} className="p-4 flex gap-3"><div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 font-bold" style={{ background: C.navy, color: C.gold }}>{n}</div><div><div className="font-bold text-sm" style={{ color: C.navy }}>{t}</div><div className="text-xs mt-1 leading-relaxed" style={{ color: C.gray }}>{d}</div></div></Card>)}</div></div>);
+}
+
 function RulesPage() {
   return (
     <div>
@@ -2961,7 +3176,8 @@ function RulesPage() {
 function AdminApp(props) {
   const { db, username, onLogout } = props;
   const admin = db.admins.find((a) => a.username === username);
-  const [tab, setTab] = useState("dashboard");
+  const [tab, setTabState] = useState(() => getPersistent(`admin_tab_${username}`) || "dashboard");
+  const setTab = useCallback((value) => { setTabState(value); setPersistent(`admin_tab_${username}`, value); }, [username]);
   if (!admin) return null;
   const pendingCount = db.evidences.filter((e) => e.status === "cho_kiem_tra").length;
   const complaintCount = db.complaints.filter((c) => c.trangThai === "cho_xu_ly").length;
@@ -2970,6 +3186,7 @@ function AdminApp(props) {
   const tabs = [
     { key: "dashboard", label: "Tổng quan", icon: LayoutDashboard },
     { key: "students", label: "Sinh viên", icon: Users },
+    { key: "cohorts", label: "Khóa dữ liệu", icon: History },
     { key: "activities", label: "Hoạt động", icon: CalendarDays },
     { key: "review", label: "Kiểm tra minh chứng", icon: ClipboardCheck },
     { key: "complaints", label: "Khiếu nại", icon: MessageSquareWarning },
@@ -2979,12 +3196,14 @@ function AdminApp(props) {
     { key: "admins", label: "Quản trị viên", icon: ShieldCheck },
     { key: "audit", label: "Nhật ký quản trị", icon: History },
     { key: "settings", label: "Cài đặt", icon: Settings },
+    { key: "help", label: "Hướng dẫn sử dụng", icon: HelpCircle },
   ];
 
   return (
-    <Shell title="CỔNG QUẢN TRỊ" subtitle={admin.hoten} tabs={tabs} active={tab} onTab={setTab} onLogout={onLogout} badgeCounts={{ review: pendingCount, complaints: complaintCount, chat: chatCount }}>
+    <Shell title="CỔNG QUẢN TRỊ" subtitle={admin.hoten} tabs={tabs} active={tab} onTab={setTab} onLogout={onLogout} badgeCounts={{ review: pendingCount, complaints: complaintCount, chat: chatCount }} online={props.online}>
       {tab === "dashboard" && <AdminDashboard {...props} onTab={setTab} />}
       {tab === "students" && <AdminStudents {...props} admin={admin} />}
+      {tab === "cohorts" && <AdminCohorts {...props} admin={admin} />}
       {tab === "activities" && <AdminActivities {...props} admin={admin} />}
       {tab === "review" && <AdminReview {...props} admin={admin} />}
       {tab === "complaints" && <AdminComplaints {...props} admin={admin} />}
@@ -2994,6 +3213,7 @@ function AdminApp(props) {
       {tab === "admins" && <AdminManageAdmins {...props} admin={admin} />}
       {tab === "audit" && <AdminAudit {...props} />}
       {tab === "settings" && <AdminSettings {...props} admin={admin} />}
+      {tab === "help" && <HelpPage role="admin" />}
     </Shell>
   );
 }
@@ -3050,61 +3270,28 @@ function AdminDashboard({ db, onTab }) {
 }
 
 function AdminStudents({ db, update, log, show, admin }) {
-  const [q, setQ] = useState(""); const [khoa, setKhoa] = useState(""); const [lop, setLop] = useState(""); const [editing, setEditing] = useState(null);
-  const list = db.students.filter((s) => (!q || s.hoTen.toLowerCase().includes(q.toLowerCase()) || s.mssv.toLowerCase().includes(q.toLowerCase())) && (!khoa || s.khoa === khoa) && (!lop || s.lop === lop));
-  const khoas = [...new Set(db.students.map((s) => s.khoa))];
-  const lops = [...new Set(db.students.filter((s) => !khoa || s.khoa === khoa).map((s) => s.lop))];
-  const toggleLock = (s) => {
-    const next = s.trangThai === "locked" ? "active" : "locked";
-    update("students", (arr) => arr.map((x) => (x.mssv === s.mssv ? { ...x, trangThai: next } : x)));
-    log(admin.hoten, next === "locked" ? "Khóa tài khoản sinh viên" : "Mở tài khoản sinh viên", s.mssv, "Thành công");
-    show(next === "locked" ? `Đã khóa tài khoản ${s.mssv}` : `Đã mở tài khoản ${s.mssv}`);
+  const [q,setQ]=useState(""); const [khoa,setKhoa]=useState(""); const [lop,setLop]=useState(""); const [editing,setEditing]=useState(null); const [openAdd,setOpenAdd]=useState(false);
+  const list=db.students.filter(s=>(!q||s.hoTen.toLowerCase().includes(q.toLowerCase())||s.mssv.toLowerCase().includes(q.toLowerCase()))&&(!khoa||s.khoa===khoa)&&(!lop||s.lop===lop));
+  const khoas=[...new Set(db.students.map(s=>s.khoa).filter(Boolean))]; const lops=[...new Set(db.students.filter(s=>!khoa||s.khoa===khoa).map(s=>s.lop).filter(Boolean))];
+  const toggleLock=s=>{const next=s.trangThai==="locked"?"active":"locked";update("students",arr=>arr.map(x=>x.mssv===s.mssv?{...x,trangThai:next}:x));log(admin.hoten,next==="locked"?"Khóa tài khoản sinh viên":"Mở tài khoản sinh viên",s.mssv,"Thành công");show(next==="locked"?`Đã khóa ${s.mssv}`:`Đã mở ${s.mssv}`)};
+  const remove=s=>{
+    if(!confirm(`Xóa tài khoản sinh viên ${s.mssv} · ${s.hoTen}?\n\nToàn bộ dữ liệu gắn với sinh viên này sẽ bị xóa khỏi hệ thống, gồm: minh chứng, khiếu nại, thông báo, tin nhắn và dữ liệu lưu trữ theo khóa. Thao tác không thể hoàn tác.`)) return;
+    const mssv=s.mssv;
+    update("students",arr=>arr.filter(x=>x.mssv!==mssv));
+    update("evidences",arr=>arr.filter(x=>x.mssv!==mssv));
+    update("complaints",arr=>arr.filter(x=>x.mssv!==mssv));
+    update("notifications",arr=>arr.filter(x=>x.mssv!==mssv));
+    update("messages",arr=>arr.filter(x=>x.mssv!==mssv));
+    update("cohortArchives",arr=>(arr||[]).map(snapshot=>({...snapshot,students:(snapshot.students||[]).filter(x=>x.mssv!==mssv),evidences:(snapshot.evidences||[]).filter(x=>x.mssv!==mssv),complaints:(snapshot.complaints||[]).filter(x=>x.mssv!==mssv),notifications:(snapshot.notifications||[]).filter(x=>x.mssv!==mssv),messages:(snapshot.messages||[]).filter(x=>x.mssv!==mssv)})));
+    log(admin.hoten,"Xóa toàn bộ dữ liệu sinh viên",mssv,"Đã xóa tài khoản và toàn bộ dữ liệu liên quan");
+    show(`Đã xóa ${s.hoTen} và toàn bộ dữ liệu liên quan.`);
   };
-  return (
-    <div>
-      <PageHead title="Quản lý sinh viên" sub={`${db.students.length} sinh viên trong hệ thống`} />
-      <div className="flex flex-wrap gap-2 mb-4">
-        <div className="relative flex-1 min-w-[200px]"><Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: C.gray }} /><TextInput className="pl-9" placeholder="Tìm theo tên hoặc MSSV..." value={q} onChange={(e) => setQ(e.target.value)} /></div>
-        <Select style={{ width: 140 }} value={khoa} onChange={(e) => { setKhoa(e.target.value); setLop(""); }}><option value="">Tất cả khóa</option>{khoas.map((k) => <option key={k} value={k}>{k}</option>)}</Select>
-        <Select style={{ width: 160 }} value={lop} onChange={(e) => setLop(e.target.value)}><option value="">Tất cả lớp</option>{lops.map((l) => <option key={l} value={l}>{l}</option>)}</Select>
-      </div>
-      <Card className="overflow-x-auto">
-        {list.length === 0 ? <Empty title="Không tìm thấy sinh viên" /> : (
-          <table className="w-full text-sm">
-            <thead><tr style={{ background: C.grayBg }}>{["MSSV", "Họ tên", "Khóa", "Lớp", "SĐT", "Email", "Trạng thái", ""].map((h) => <th key={h} className="text-left px-4 py-2.5 text-xs font-semibold whitespace-nowrap" style={{ color: C.gray }}>{h}</th>)}</tr></thead>
-            <tbody>
-              {list.map((s) => (
-                <tr key={s.mssv} className="border-t" style={{ borderColor: C.line }}>
-                  <td className="px-4 py-2.5 font-mono text-xs">{s.mssv}</td>
-                  <td className="px-4 py-2.5 font-medium" style={{ color: C.navy }}>{s.hoTen}</td>
-                  <td className="px-4 py-2.5">{s.khoa}</td>
-                  <td className="px-4 py-2.5">{s.lop}</td>
-                  <td className="px-4 py-2.5 text-xs">{s.sdt}</td>
-                  <td className="px-4 py-2.5 text-xs">{s.email}</td>
-                  <td className="px-4 py-2.5">{s.trangThai === "locked" ? <Badge bg={C.redBg} fg={C.red}>Đã khóa</Badge> : <Badge bg={C.greenBg} fg={C.green}>Hoạt động</Badge>}</td>
-                  <td className="px-4 py-2.5 flex gap-1.5 justify-end">
-                    <button onClick={() => setEditing(s)} className="p-1.5 rounded-lg hover:bg-gray-100" title="Xem chi tiết"><Eye size={15} style={{ color: C.gray }} /></button>
-                    <button onClick={() => toggleLock(s)} className="p-1.5 rounded-lg hover:bg-gray-100" title={s.trangThai === "locked" ? "Mở khóa" : "Khóa"}>{s.trangThai === "locked" ? <Unlock size={15} style={{ color: C.green }} /> : <Lock size={15} style={{ color: C.red }} />}</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </Card>
-      {editing && (
-        <Modal open onClose={() => setEditing(null)} title={`Hồ sơ · ${editing.mssv}`}>
-          <div className="space-y-2 text-sm mb-4">
-            {[["Họ tên", editing.hoTen], ["Khóa", editing.khoa], ["Lớp", editing.lop], ["SĐT", editing.sdt], ["Zalo", editing.zalo], ["Email", editing.email], ["Facebook", editing.facebook], ["Ngày đăng ký", fmtDT(editing.createdAt)]].map(([l, v]) => (
-              <div key={l} className="flex justify-between py-1.5 border-b last:border-0" style={{ borderColor: C.line }}><span style={{ color: C.gray }}>{l}</span><span className="font-medium">{v || "—"}</span></div>
-            ))}
-            {(() => { const { total, points } = computeStudentTotals(db, editing.mssv); return <div className="flex justify-between py-1.5"><span style={{ color: C.gray }}>Hoạt động / Điểm</span><b>{total} hoạt động · {points} điểm</b></div>; })()}
-          </div>
-          <ResetStudentPasswordForm student={editing} update={update} log={log} show={show} notify={undefined} admin={admin} />
-        </Modal>
-      )}
-    </div>
-  );
+  return <div><PageHead title="Quản lý sinh viên" sub={`${db.students.length} sinh viên trong hệ thống`} right={<Btn variant="amber" icon={Plus} onClick={()=>setOpenAdd(true)}>Thêm sinh viên</Btn>}/><div className="flex flex-wrap gap-2 mb-4"><div className="relative flex-1 min-w-[200px]"><Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{color:C.gray}}/><TextInput className="pl-9" placeholder="Tìm theo tên hoặc MSSV..." value={q} onChange={e=>setQ(e.target.value)}/></div><Select style={{width:140}} value={khoa} onChange={e=>{setKhoa(e.target.value);setLop("")}}><option value="">Tất cả khóa</option>{khoas.map(k=><option key={k}>{k}</option>)}</Select><Select style={{width:160}} value={lop} onChange={e=>setLop(e.target.value)}><option value="">Tất cả lớp</option>{lops.map(l=><option key={l}>{l}</option>)}</Select></div><Card className="overflow-x-auto"><table className="w-full text-sm"><thead><tr style={{background:C.grayBg}}>{["MSSV","Họ tên","Khóa","Lớp","SĐT","Email","Trạng thái",""].map(h=><th key={h} className="text-left px-4 py-2.5 text-xs font-semibold whitespace-nowrap" style={{color:C.gray}}>{h}</th>)}</tr></thead><tbody>{list.map(s=><tr key={s.mssv} className="border-t" style={{borderColor:C.line}}><td className="px-4 py-2.5 font-mono text-xs">{s.mssv}</td><td className="px-4 py-2.5 font-medium" style={{color:C.navy}}>{s.hoTen}</td><td className="px-4 py-2.5">{s.khoa}</td><td className="px-4 py-2.5">{s.lop}</td><td className="px-4 py-2.5 text-xs">{s.sdt}</td><td className="px-4 py-2.5 text-xs">{s.email}</td><td className="px-4 py-2.5">{s.trangThai==="locked"?<Badge bg={C.redBg} fg={C.red}>Đã khóa</Badge>:<Badge bg={C.greenBg} fg={C.green}>Hoạt động</Badge>}</td><td className="px-4 py-2.5"><div className="flex gap-1.5 justify-end"><button onClick={()=>setEditing(s)} className="p-1.5 rounded-lg hover:bg-gray-100" title="Xem"><Eye size={15}/></button><button onClick={()=>toggleLock(s)} className="p-1.5 rounded-lg hover:bg-gray-100" title="Khóa/mở">{s.trangThai==="locked"?<Unlock size={15} style={{color:C.green}}/>:<Lock size={15} style={{color:C.red}}/>}</button><button onClick={()=>remove(s)} className="p-1.5 rounded-lg hover:bg-gray-100" title="Xóa"><Trash2 size={15} style={{color:C.red}}/></button></div></td></tr>)}</tbody></table></Card>{editing&&<Modal open onClose={()=>setEditing(null)} title={`Hồ sơ · ${editing.mssv}`}><div className="space-y-2 text-sm mb-4">{[["Họ tên",editing.hoTen],["Khóa",editing.khoa],["Niên khóa",cohortAcademicYear(editing.khoa)],["Năm học hiện tại",`Năm ${currentStudentYear(editing.khoa)}`],["Lớp",editing.lop],["SĐT",editing.sdt],["Email",editing.email],["Facebook",editing.facebook]].map(([l,v])=><div key={l} className="flex justify-between py-1.5 border-b" style={{borderColor:C.line}}><span style={{color:C.gray}}>{l}</span><span className="font-medium">{v||"—"}</span></div>)}</div><ResetStudentPasswordForm student={editing} update={update} log={log} show={show} admin={admin}/></Modal>}<Modal open={openAdd} onClose={()=>setOpenAdd(false)} title="Thêm tài khoản sinh viên"><AddStudentForm db={db} update={update} log={log} show={show} admin={admin} onDone={()=>setOpenAdd(false)}/></Modal></div>;
+}
+function AddStudentForm({ db, update, log, show, admin, onDone }) {
+  const [f,setF]=useState({mssv:"",hoTen:"",khoa:"K29",lop:"",password:"",sdt:"",email:"",facebook:"",zalo:""}); const [err,setErr]=useState(""); const set=k=>e=>setF({...f,[k]:e.target.value});
+  const submit=e=>{e.preventDefault();setErr(""); if(!f.mssv||!f.hoTen||!f.khoa||!f.lop||!f.password)return setErr("Vui lòng nhập đủ thông tin bắt buộc."); if(f.password.length<8)return setErr("Mật khẩu tối thiểu 8 ký tự."); if(db.students.some(s=>s.mssv.toLowerCase()===f.mssv.trim().toLowerCase()))return setErr("MSSV đã tồn tại."); const rec={...f,mssv:f.mssv.trim().toUpperCase(),hoTen:f.hoTen.trim(),trangThai:"active",createdAt:nowISO()}; update("students",arr=>[rec,...arr]);log(admin.hoten,"Thêm tài khoản sinh viên",rec.mssv,"Thành công",{key:"students",value:db.students});show(`Đã thêm ${rec.mssv}.`);onDone();};
+  return <form onSubmit={submit}><div className="grid grid-cols-2 gap-3"><Field label="MSSV" required><TextInput value={f.mssv} onChange={set("mssv")}/></Field><Field label="Họ và tên" required><TextInput value={f.hoTen} onChange={set("hoTen")}/></Field><Field label="Khóa" required><TextInput value={f.khoa} onChange={set("khoa")}/></Field><Field label="Lớp" required><TextInput value={f.lop} onChange={set("lop")}/></Field><Field label="Mật khẩu" required><TextInput type="password" value={f.password} onChange={set("password")}/></Field><Field label="SĐT"><TextInput value={f.sdt} onChange={set("sdt")}/></Field><Field label="Email"><TextInput value={f.email} onChange={set("email")}/></Field><Field label="Facebook"><TextInput value={f.facebook} onChange={set("facebook")}/></Field></div>{err&&<div className="text-xs font-medium my-3" style={{color:C.red}}>{err}</div>}<Btn type="submit" variant="amber" className="w-full">Lưu tài khoản sinh viên</Btn></form>;
 }
 function ResetStudentPasswordForm({ student, update, log, show, admin }) {
   const [pw, setPw] = useState(""); const [confirm, setConfirm] = useState(""); const [err, setErr] = useState("");
@@ -3131,46 +3318,54 @@ function ResetStudentPasswordForm({ student, update, log, show, admin }) {
 }
 
 function AdminActivities({ db, update, log, show, admin }) {
-  const [openCreate, setOpenCreate] = useState(false); const [filterType, setFilterType] = useState("");
-  const list = db.activities.filter((a) => !filterType || a.loai === filterType).sort((a, b) => new Date(b.batDau) - new Date(a.batDau));
-  const toggle = (a) => {
-    const next = a.trangThai === "closed" ? "active" : "closed";
-    update("activities", (arr) => arr.map((x) => (x.id === a.id ? { ...x, trangThai: next } : x)));
-    log(admin.hoten, next === "closed" ? "Đóng hoạt động" : "Mở hoạt động", a.ma, "Thành công");
-    show(next === "closed" ? `Đã đóng ${a.ma}` : `Đã mở lại ${a.ma}`);
+  const [openCreate, setOpenCreate] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [filterType, setFilterType] = useState("");
+  const [from, setFrom] = useState(""); const [to, setTo] = useState("");
+  const [semester, setSemester] = useState(""); const [year, setYear] = useState("");
+  const list = db.activities.filter((a) => {
+    if (filterType && a.loai !== filterType) return false;
+    if (from && dateOnly(a.batDau) < from && dateOnly(a.ketThuc) < from) return false;
+    if (to && dateOnly(a.batDau) > to && dateOnly(a.ketThuc) > to) return false;
+    if (semester && semesterForDate(a.batDau) !== semester) return false;
+    if (year && academicYearForDate(a.batDau) !== year) return false;
+    return true;
+  }).sort((a,b)=>new Date(b.batDau)-new Date(a.batDau));
+  const years = [...new Set(db.activities.map(a=>academicYearForDate(a.batDau)).filter(Boolean))];
+  const editActivity = (a) => setEditing(a);
+  const saveActivity = (next) => {
+    if (!next.ten || !next.batDau || !next.ketThuc) return show("Vui lòng nhập đủ tên và thời gian.");
+    if (new Date(next.ketThuc) <= new Date(next.batDau)) return show("Ngày kết thúc phải sau ngày bắt đầu.");
+    update("activities", arr=>arr.map(x=>x.id===next.id?{...x,...next}:x));
+    const before = db.activities.find(x=>x.id===next.id);
+    log(admin.hoten,"Chỉnh sửa hoạt động",next.ma,"Đã cập nhật",{key:"activities",value:db.activities}); show(`Đã cập nhật ${next.ma}.`); setEditing(null);
   };
-  return (
-    <div>
-      <PageHead title="Quản lý hoạt động" sub={`${db.activities.length} hoạt động đã tạo`} right={<Btn variant="amber" icon={Plus} onClick={() => setOpenCreate(true)}>Tạo hoạt động</Btn>} />
-      <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
-        <FilterChip active={!filterType} onClick={() => setFilterType("")}>Tất cả</FilterChip>
-        {ACTIVITY_TYPES.map((t) => <FilterChip key={t.code} active={filterType === t.code} onClick={() => setFilterType(t.code)}>{t.name}</FilterChip>)}
+  const removeActivity = (a) => {
+    if (!window.confirm(`Xóa hoạt động ${a.ma} · ${a.ten}? Minh chứng đã nộp sẽ được giữ lại nhưng không còn gắn với hoạt động.`)) return;
+    update("activities",arr=>arr.filter(x=>x.id!==a.id));
+    log(admin.hoten,"Xóa hoạt động",a.ma,"Đã xóa hoạt động",{key:"activities",value:db.activities}); show(`Đã xóa ${a.ma}.`);
+  };
+  return (<div>
+    <PageHead title="Quản lý hoạt động" sub={`${db.activities.length} hoạt động đã tạo`} right={<Btn variant="amber" icon={Plus} onClick={()=>setOpenCreate(true)}>Tạo hoạt động</Btn>} />
+    <Card className="p-4 mb-4">
+      <div className="font-bold text-sm mb-3" style={{color:C.navy}}>Bộ lọc hoạt động</div>
+      <div className="grid md:grid-cols-5 gap-2">
+        <Field label="Loại"><Select value={filterType} onChange={e=>setFilterType(e.target.value)}><option value="">Tất cả</option>{ACTIVITY_TYPES.map(t=><option key={t.code} value={t.code}>{t.name}</option>)}</Select></Field>
+        <Field label="Từ ngày"><TextInput type="date" value={from} onChange={e=>setFrom(e.target.value)} /></Field>
+        <Field label="Đến ngày"><TextInput type="date" value={to} onChange={e=>setTo(e.target.value)} /></Field>
+        <Field label="Học kỳ"><Select value={semester} onChange={e=>setSemester(e.target.value)}><option value="">Tất cả học kỳ</option><option>Học kỳ I</option><option>Học kỳ II</option><option>Học kỳ hè</option></Select></Field>
+        <Field label="Niên khóa"><Select value={year} onChange={e=>setYear(e.target.value)}><option value="">Tất cả niên khóa</option>{years.map(y=><option key={y}>{y}</option>)}</Select></Field>
       </div>
-      <Card className="overflow-x-auto">
-        {list.length === 0 ? <Empty title="Chưa có hoạt động nào" /> : (
-          <table className="w-full text-sm">
-            <thead><tr style={{ background: C.grayBg }}>{["Mã", "Tên", "Loại", "Bắt đầu", "Kết thúc", "Trạng thái", ""].map((h) => <th key={h} className="text-left px-4 py-2.5 text-xs font-semibold whitespace-nowrap" style={{ color: C.gray }}>{h}</th>)}</tr></thead>
-            <tbody>
-              {list.map((a) => (
-                <tr key={a.id} className="border-t" style={{ borderColor: C.line }}>
-                  <td className="px-4 py-2.5 font-mono text-xs" style={{ color: C.amber2 }}>{a.ma}</td>
-                  <td className="px-4 py-2.5 font-medium max-w-[220px] truncate" style={{ color: C.navy }}>{a.ten}</td>
-                  <td className="px-4 py-2.5 text-xs">{typeOf(a.loai)?.name}</td>
-                  <td className="px-4 py-2.5 text-xs">{fmtDT(a.batDau)}</td>
-                  <td className="px-4 py-2.5 text-xs">{fmtDT(a.ketThuc)}</td>
-                  <td className="px-4 py-2.5"><RuntimeBadge activity={a} /></td>
-                  <td className="px-4 py-2.5 text-right"><button onClick={() => toggle(a)} className="p-1.5 rounded-lg hover:bg-gray-100">{a.trangThai === "closed" ? <Unlock size={15} style={{ color: C.green }} /> : <Lock size={15} style={{ color: C.red }} />}</button></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </Card>
-      <Modal open={openCreate} onClose={() => setOpenCreate(false)} title="Tạo hoạt động mới" width="max-w-2xl">
-        <CreateActivityForm db={db} update={update} log={log} show={show} admin={admin} onDone={() => setOpenCreate(false)} />
-      </Modal>
-    </div>
-  );
+    </Card>
+    <div className="flex gap-2 mb-4 overflow-x-auto pb-1"><FilterChip active={!filterType} onClick={()=>setFilterType("")}>Tất cả</FilterChip>{ACTIVITY_TYPES.map(t=><FilterChip key={t.code} active={filterType===t.code} onClick={()=>setFilterType(t.code)}>{t.name}</FilterChip>)}</div>
+    <Card className="overflow-x-auto">{list.length===0?<Empty title="Chưa có hoạt động nào phù hợp"/>:<table className="w-full text-sm"><thead><tr style={{background:C.grayBg}}>{["Mã","Tên","Loại","Bắt đầu","Kết thúc","Trạng thái","Thao tác"].map(h=><th key={h} className="text-left px-4 py-2.5 text-xs font-semibold whitespace-nowrap" style={{color:C.gray}}>{h}</th>)}</tr></thead><tbody>{list.map(a=><tr key={a.id} className="border-t" style={{borderColor:C.line}}><td className="px-4 py-2.5 font-mono text-xs" style={{color:C.amber2}}>{a.ma}</td><td className="px-4 py-2.5 font-medium" style={{color:C.navy}}>{a.ten}</td><td className="px-4 py-2.5 text-xs">{typeOf(a.loai)?.name}</td><td className="px-4 py-2.5 text-xs">{fmtDT(a.batDau)}</td><td className="px-4 py-2.5 text-xs">{fmtDT(a.ketThuc)}</td><td className="px-4 py-2.5"><RuntimeBadge activity={a}/></td><td className="px-4 py-2.5"><div className="flex gap-1.5 justify-end"><button title="Chỉnh sửa" onClick={()=>editActivity(a)} className="p-1.5 rounded-lg hover:bg-gray-100"><Pencil size={15} style={{color:C.blue}}/></button><button title="Xóa hoạt động" onClick={()=>removeActivity(a)} className="p-1.5 rounded-lg hover:bg-gray-100"><Trash2 size={15} style={{color:C.red}}/></button></div></td></tr>)}</tbody></table>}</Card>
+    <Modal open={openCreate} onClose={()=>setOpenCreate(false)} title="Tạo hoạt động mới" width="max-w-2xl"><CreateActivityForm db={db} update={update} log={log} show={show} admin={admin} onDone={()=>setOpenCreate(false)}/></Modal>
+    {editing && <Modal open onClose={()=>setEditing(null)} title={`Chỉnh sửa · ${editing.ma}`} width="max-w-2xl"><EditActivityForm activity={editing} onSave={saveActivity} onClose={()=>setEditing(null)}/></Modal>}
+  </div>);
+}
+function EditActivityForm({ activity, onSave, onClose }) {
+  const [f,setF]=useState({...activity}); const set=k=>e=>setF({...f,[k]:e.target.value});
+  return <form onSubmit={e=>{e.preventDefault();onSave(f)}}><Field label="Tên hoạt động" required><TextInput value={f.ten||""} onChange={set("ten")}/></Field><div className="grid grid-cols-2 gap-3"><Field label="Thời gian bắt đầu" required><TextInput type="datetime-local" value={f.batDau||""} onChange={set("batDau")}/></Field><Field label="Thời gian kết thúc" required><TextInput type="datetime-local" value={f.ketThuc||""} onChange={set("ketThuc")}/></Field></div><Field label="Quy định thêm"><TextArea rows={3} value={f.quyDinh||""} onChange={set("quyDinh")}/></Field><Field label="Ghi chú"><TextArea rows={2} value={f.ghiChu||""} onChange={set("ghiChu")}/></Field><div className="flex gap-2"><Btn type="button" variant="outline" className="flex-1" onClick={onClose}>Hủy</Btn><Btn type="submit" variant="amber" className="flex-1">Lưu thay đổi</Btn></div></form>;
 }
 function CreateActivityForm({ db, update, log, show, admin, onDone }) {
   const [loai, setLoai] = useState("");
@@ -3185,7 +3380,7 @@ function CreateActivityForm({ db, update, log, show, admin, onDone }) {
     const ma = genCode(loai, db.activities);
     const rec = { id: uid(), ma, loai, ten: f.ten, batDau: f.batDau, ketThuc: f.ketThuc, quyDinh: f.quyDinh, ghiChu: f.ghiChu, trangThai: "active", createdBy: admin.hoten, createdAt: nowISO(), soLuongCanDat: Number(f.soLuongCanDat) || 1, quyDoiHoatDong: Number(f.quyDoiHoatDong) || 1 };
     update("activities", (arr) => [rec, ...arr]);
-    log(admin.hoten, "Tạo hoạt động", ma, "Thành công");
+    log(admin.hoten, "Tạo hoạt động", ma, "Thành công", {key:"activities", value:db.activities});
     show(`Đã tạo hoạt động ${ma}`); onDone();
   };
   return (
@@ -3226,50 +3421,16 @@ function CreateActivityForm({ db, update, log, show, admin, onDone }) {
 }
 
 function AdminReview({ db, update, notify, log, show, admin }) {
-  const [filterType, setFilterType] = useState(""); const [filterStatus, setFilterStatus] = useState("cho_kiem_tra"); const [modalEv, setModalEv] = useState(null);
+  const [filterType, setFilterType] = useState(""); const [filterStatus, setFilterStatus] = useState("cho_kiem_tra"); const [modalEv, setModalEv] = useState(null); const [manual, setManual] = useState(false);
   const list = db.evidences.filter((e) => (!filterType || e.loai === filterType) && (!filterStatus || e.status === filterStatus)).sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
-  const decide = (ev, status, note) => {
-    update("evidences", (arr) => arr.map((x) => (x.id === ev.id ? { ...x, status, note, approvedBy: admin.hoten, approvedAt: nowISO() } : x)));
-    const act = ev.activityId ? db.activities.find((a) => a.id === ev.activityId) : null;
-    const label = act ? act.ma : `${ev.loai}-CD`;
-    log(admin.hoten, "Kiểm tra minh chứng", `${label} · ${ev.mssv}`, STATUS_META[status].label);
-    notify(ev.mssv, `Minh chứng ${label} của bạn: ${STATUS_META[status].label}${note ? " — " + note : ""}`);
-    show("Đã cập nhật kết quả kiểm tra."); setModalEv(null);
-  };
-  return (
-    <div>
-      <PageHead title="Kiểm tra minh chứng" sub="Duyệt từng minh chứng riêng biệt — không duyệt gộp." />
-      <div className="flex flex-wrap gap-2 mb-4">
-        <Select style={{ width: 200 }} value={filterType} onChange={(e) => setFilterType(e.target.value)}><option value="">Tất cả loại</option>{ACTIVITY_TYPES.map((t) => <option key={t.code} value={t.code}>{t.name}</option>)}</Select>
-        <Select style={{ width: 200 }} value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}><option value="">Tất cả trạng thái</option>{Object.entries(STATUS_META).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}</Select>
-      </div>
-      <Card className="overflow-x-auto">
-        {list.length === 0 ? <Empty icon={ClipboardCheck} title="Không có minh chứng nào phù hợp" /> : (
-          <table className="w-full text-sm">
-            <thead><tr style={{ background: C.grayBg }}>{["Sinh viên", "Hoạt động", "Loại", "Nộp lúc", "Trạng thái", "Người duyệt", ""].map((h) => <th key={h} className="text-left px-4 py-2.5 text-xs font-semibold whitespace-nowrap" style={{ color: C.gray }}>{h}</th>)}</tr></thead>
-            <tbody>
-              {list.map((ev) => {
-                const st = db.students.find((s) => s.mssv === ev.mssv);
-                const act = ev.activityId ? db.activities.find((a) => a.id === ev.activityId) : null;
-                return (
-                  <tr key={ev.id} className="border-t" style={{ borderColor: C.line }}>
-                    <td className="px-4 py-2.5"><div className="font-medium" style={{ color: C.navy }}>{st?.hoTen || ev.mssv}</div><div className="text-xs" style={{ color: C.gray }}>{ev.mssv} · {st?.lop}</div></td>
-                    <td className="px-4 py-2.5 text-xs font-mono" style={{ color: C.amber2 }}>{act ? act.ma : `${ev.loai}-CD`}</td>
-                    <td className="px-4 py-2.5 text-xs">{typeOf(ev.loai)?.name}</td>
-                    <td className="px-4 py-2.5 text-xs">{fmtDT(ev.submittedAt)}</td>
-                    <td className="px-4 py-2.5"><StatusBadge status={ev.status} /></td>
-                    <td className="px-4 py-2.5 text-xs">{ev.approvedBy || "—"}</td>
-                    <td className="px-4 py-2.5 text-right"><Btn variant="outline" onClick={() => setModalEv(ev)}>Xem &amp; duyệt</Btn></td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        )}
-      </Card>
-      {modalEv && <ReviewModal ev={modalEv} db={db} onClose={() => setModalEv(null)} onDecide={decide} />}
-    </div>
-  );
+  const decide = (ev, status, note) => { update("evidences", arr=>arr.map(x=>x.id===ev.id?{...x,status,note,approvedBy:admin.hoten,approvedAt:nowISO()}:x)); const act=ev.activityId?db.activities.find(a=>a.id===ev.activityId):null; const label=act?act.ma:`${ev.loai}-CD`; log(admin.hoten,"Kiểm tra minh chứng",`${label} · ${ev.mssv}`,STATUS_META[status].label); notify(ev.mssv,`Minh chứng ${label} của bạn: ${STATUS_META[status].label}${note?" — "+note:""}`); show("Đã cập nhật kết quả kiểm tra."); setModalEv(null); };
+  const manualAttendance = (mssv, activityId) => { const st=db.students.find(s=>s.mssv===mssv), a=db.activities.find(x=>x.id===activityId); if(!st||!a)return; const existing=db.evidences.find(e=>e.mssv===mssv&&e.activityId===activityId&&e.manualAttendance); if(existing){show("Sinh viên này đã được điểm danh thủ công.");return;} const ev={id:uid(),activityId,mssv,loai:a.loai,data:{nguon:"to_chuc",manual:true},status:"dat",manualAttendance:true,note:"Điểm danh thủ công bởi quản trị viên",approvedBy:admin.hoten,approvedAt:nowISO(),submittedAt:nowISO(),camKet:true}; update("evidences",arr=>[ev,...arr]); log(admin.hoten,"Điểm danh thủ công",`${a.ma} · ${mssv}`,"Đạt — ưu tiên cao nhất"); notify(mssv,`Bạn đã được quản trị viên điểm danh trong hoạt động ${a.ma}.`); show(`Đã điểm danh ${st.hoTen} trong ${a.ma}.`); setManual(false); };
+  return <div><PageHead title="Kiểm tra minh chứng" sub="Duyệt từng minh chứng. Điểm danh thủ công của quản trị viên có ưu tiên cao nhất." right={<Btn variant="amber" icon={UserCheck} onClick={()=>setManual(true)}>Điểm danh thủ công</Btn>}/><div className="flex flex-wrap gap-2 mb-4"><Select style={{width:200}} value={filterType} onChange={e=>setFilterType(e.target.value)}><option value="">Tất cả loại</option>{ACTIVITY_TYPES.map(t=><option key={t.code} value={t.code}>{t.name}</option>)}</Select><Select style={{width:200}} value={filterStatus} onChange={e=>setFilterStatus(e.target.value)}><option value="">Tất cả trạng thái</option>{Object.entries(STATUS_META).map(([k,v])=><option key={k} value={k}>{v.label}</option>)}</Select><Btn variant="outline" onClick={()=>setFilterStatus("dat")}>Xem lại minh chứng Đạt</Btn></div><Card className="overflow-x-auto">{list.length===0?<Empty icon={ClipboardCheck} title="Không có minh chứng nào phù hợp"/>:<table className="w-full text-sm"><thead><tr style={{background:C.grayBg}}>{["Sinh viên","Hoạt động","Loại","Nộp lúc","Trạng thái","Người duyệt",""].map(h=><th key={h} className="text-left px-4 py-2.5 text-xs font-semibold whitespace-nowrap" style={{color:C.gray}}>{h}</th>)}</tr></thead><tbody>{list.map(ev=>{const st=db.students.find(s=>s.mssv===ev.mssv), act=ev.activityId?db.activities.find(a=>a.id===ev.activityId):null;return <tr key={ev.id} className="border-t" style={{borderColor:C.line}}><td className="px-4 py-2.5"><div className="font-medium" style={{color:C.navy}}>{st?.hoTen||ev.mssv}</div><div className="text-xs" style={{color:C.gray}}>{ev.mssv} · {st?.lop}</div></td><td className="px-4 py-2.5 text-xs font-mono" style={{color:C.amber2}}>{act?act.ma:`${ev.loai}-CD`}</td><td className="px-4 py-2.5 text-xs">{typeOf(ev.loai)?.name}</td><td className="px-4 py-2.5 text-xs">{fmtDT(ev.submittedAt)}</td><td className="px-4 py-2.5"><StatusBadge status={ev.status}/></td><td className="px-4 py-2.5 text-xs">{ev.approvedBy||"—"}</td><td className="px-4 py-2.5 text-right"><Btn variant="outline" onClick={()=>setModalEv(ev)}>Xem &amp; duyệt</Btn></td></tr>})}</tbody></table>}</Card>{modalEv&&<ReviewModal ev={modalEv} db={db} onClose={()=>setModalEv(null)} onDecide={decide}/>} {manual&&<ManualAttendanceModal db={db} onClose={()=>setManual(false)} onSubmit={manualAttendance}/>}</div>;
+}
+function ManualAttendanceModal({ db, onClose, onSubmit }) {
+  const [q,setQ]=useState(""); const [mssv,setMssv]=useState(""); const [activityId,setActivityId]=useState("");
+  const students=db.students.filter(s=>!q||`${s.mssv} ${s.hoTen} ${s.lop}`.toLowerCase().includes(q.toLowerCase())).slice(0,20);
+  return <Modal open onClose={onClose} title="Điểm danh thủ công" width="max-w-lg"><div className="text-xs p-3 rounded-lg mb-3" style={{background:C.blueBg,color:C.blue}}>Điểm danh thủ công của quản trị viên được tính là minh chứng Đạt và có ưu tiên cao nhất, không cần sinh viên nộp thêm minh chứng.</div><Field label="Tìm sinh viên" required><TextInput value={q} onChange={e=>setQ(e.target.value)} placeholder="MSSV, họ tên hoặc lớp..."/></Field><Field label="Sinh viên" required><Select value={mssv} onChange={e=>setMssv(e.target.value)}><option value="">— Chọn sinh viên —</option>{students.map(s=><option key={s.mssv} value={s.mssv}>{s.hoTen} · {s.mssv} · {s.lop}</option>)}</Select></Field><Field label="Hoạt động" required><Select value={activityId} onChange={e=>setActivityId(e.target.value)}><option value="">— Chọn hoạt động —</option>{db.activities.slice().sort((a,b)=>new Date(b.batDau)-new Date(a.batDau)).map(a=><option key={a.id} value={a.id}>{a.ma} · {a.ten}</option>)}</Select></Field><Btn variant="amber" className="w-full" disabled={!mssv||!activityId} onClick={()=>onSubmit(mssv,activityId)}>Xác nhận điểm danh</Btn></Modal>;
 }
 function EvidenceDataView({ ev }) {
   const d = ev.data || {};
@@ -3281,29 +3442,31 @@ function EvidenceDataView({ ev }) {
       d.tuNgay && ["Từ ngày (trang cá nhân)", fmtD(d.tuNgay)],
       d.denNgay && ["Đến ngày", fmtD(d.denNgay)],
       d.xacNhan2Ngay !== undefined && ["SV tự xác nhận trong hạn 2 ngày", d.xacNhan2Ngay ? "Có" : "Không"],
-      ["Link minh chứng", d.link],
+      ["Link Facebook cá nhân", d.link],
+      d.video && ["Video bổ sung", d.video],
     ].filter(Boolean);
   } else if (ev.loai === "QC") {
     rows = [
-      ["Hình thức", { to_chuc: "Ban Truyền thông tổ chức", cau_lac_bo: "Tham gia CLB Truyền thông", tu_lam: "Tự quay/chụp" }[d.nguon] || d.nguon],
-      d.ten && ["Tên video", d.ten],
-      ["Thời gian", fmtFlex(d.thoiGian)],
-      d.thucHienCung && ["Thực hiện cùng", d.thucHienCung],
-      ["Link Drive", d.link],
-      d.moTa && ["Mô tả", d.moTa],
+      ["Hình thức", d.nguon === "to_chuc" ? "Ban Truyền thông tổ chức" : ({ cau_lac_bo: "Tham gia CLB Truyền thông", tu_lam: "Tự quay / tự biên tập video" }[d.nguon] || d.nguon)],
+      d.ngayThamGia?.length && ["Ngày tham gia", d.ngayThamGia.join(", ")],
+      d.buoi && ["Buổi tham gia", {sang:"Buổi sáng", chieu:"Buổi chiều", ca_ngay:"Cả ngày"}[d.buoi] || d.buoi],
+      d.ten && ["Tên sản phẩm / video", d.ten],
+      d.nguoiMoi && ["Người giới thiệu", d.nguoiMoi],
+      d.link && ["Link Drive", d.link],
     ].filter(Boolean);
   } else if (ev.loai === "TV") {
     rows = [["Thời gian tham gia", fmtDT(d.thoiGian)]];
   } else if (ev.loai === "VD") {
     rows = [["Link Drive", d.link], ["Mô tả", d.moTa || "—"]];
   } else if (ev.loai === "GT") {
-    rows = [["Người giới thiệu", d.hoTen], ["SĐT", d.sdt], ["Ghi chú", d.ghiChu || "—"]];
+    rows = [["Người học được giới thiệu", d.hoTen], d.daNhapHoc !== undefined && ["Xác nhận đã nhập học", d.daNhapHoc ? "Có" : "Không"], d.daNopHocPhi !== undefined && ["Xác nhận đã nộp học phí", d.daNopHocPhi ? "Có" : "Không"], ["SĐT", d.sdt || "—"], ["Ghi chú", d.ghiChu || "—"]].filter(Boolean);
   } else if (ev.loai === "KH") {
     rows = [["Mô tả", d.moTa], ["Link", d.link || "—"]];
   }
   return (
     <div className="space-y-1.5 text-sm mb-4">
       {ev.nguonNop === "chu_dong" && <Badge bg={C.blueBg} fg={C.blue}>Nộp chủ động</Badge>}
+      {d.image && ev.loai === "QC" && <div className="mb-3"><div className="text-xs mb-1" style={{color:C.gray}}>Ảnh minh chứng</div><img src={d.image} alt="Ảnh minh chứng" className="w-full max-h-72 object-contain rounded-xl border" style={{borderColor:C.line}} /></div>}
       {rows.map(([l, v], i) => (
         <div key={i} className="flex justify-between gap-3 py-1 border-b last:border-0" style={{ borderColor: C.line }}>
           <span style={{ color: C.gray }} className="shrink-0">{l}</span>
@@ -3468,59 +3631,176 @@ function objRowsToTable(heading, rows) {
   const columns = rows.length ? Object.keys(rows[0]) : [];
   return { heading, columns, rows: rows.map((r) => columns.map((c) => r[c])) };
 }
-function AdminExport({ db, log, admin, show }) {
-  const buildDetailRows = () => db.evidences.map((e) => {
-    const st = db.students.find((s) => s.mssv === e.mssv);
-    const act = e.activityId ? db.activities.find((a) => a.id === e.activityId) : null;
-    return { MSSV: e.mssv, "Họ tên": st?.hoTen || "", Lớp: st?.lop || "", "Mã HĐ": act ? act.ma : `${e.loai}-CD`, "Tên HĐ": act ? act.ten : `${typeOf(e.loai)?.name} (chủ động)`,
-      "Loại": typeOf(e.loai)?.name || "", "Trạng thái": STATUS_META[e.status]?.label || "", "Người duyệt": e.approvedBy || "", "Thời gian duyệt": e.approvedAt ? fmtDT(e.approvedAt) : "", "Nộp lúc": fmtDT(e.submittedAt), "Ghi chú": e.note || "" };
+function academicYearForDate(dateValue) {
+  const d = dateValue ? new Date(dateValue) : new Date();
+  const y = d.getFullYear();
+  const m = d.getMonth() + 1;
+  const start = m >= 8 ? y : y - 1;
+  return `${start}–${start + 1}`;
+}
+function semesterForDate(dateValue) {
+  const d = dateValue ? new Date(dateValue) : new Date();
+  const m = d.getMonth() + 1;
+  return m >= 8 && m <= 12 ? "Học kỳ I" : "Học kỳ II";
+}
+function cohortStartYear(khoa) {
+  const n = Number(String(khoa || "").replace(/\D/g, ""));
+  return Number.isFinite(n) && n ? 2026 + (n - 29) : null;
+}
+function cohortAcademicYear(khoa) {
+  const y = cohortStartYear(khoa);
+  return y ? `${y}–${y + 4}` : "";
+}
+function currentStudentYear(khoa, dateValue = new Date()) {
+  const start = cohortStartYear(khoa);
+  if (!start) return "";
+  const d = dateValue instanceof Date ? dateValue : new Date(dateValue);
+  const academicStart = d.getMonth() + 1 >= 8 ? d.getFullYear() : d.getFullYear() - 1;
+  return Math.min(4, Math.max(1, academicStart - start + 1));
+}
+function dateOnly(value) {
+  if (!value) return "";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toISOString().slice(0,10);
+}
+function inDateRange(value, from, to) {
+  const d = dateOnly(value);
+  return (!from || d >= from) && (!to || d <= to);
+}
+function buildExportSummaryRowsFiltered(db, opts = {}) {
+  const from = opts.from || "";
+  const to = opts.to || "";
+  const selectedKhoa = opts.khoa || "";
+  const selectedLop = opts.lop || "";
+  const approved = db.evidences.filter((e) => e.status === "dat" && inDateRange(e.submittedAt, from, to));
+  const studentIds = new Set(approved.map((e) => e.mssv));
+  const students = db.students.filter((s) => studentIds.has(s.mssv) && (!selectedKhoa || s.khoa === selectedKhoa) && (!selectedLop || s.lop === selectedLop));
+  const acts = db.activities.filter((a) => inDateRange(a.batDau || a.createdAt, from, to) || approved.some((e) => e.activityId === a.id));
+  const columns = ["STT", "MSSV", "Họ tên", "Khóa", "Lớp"];
+  acts.forEach((a) => columns.push(`${a.ma} · ${a.ten}`));
+  const hasSelf = approved.some((e) => !e.activityId && e.loai === "QC" && e.data?.nguon === "tu_lam");
+  const hasClub = approved.some((e) => !e.activityId && e.loai === "QC" && e.data?.nguon === "cau_lac_bo");
+  const hasShare = approved.some((e) => !e.activityId && e.loai === "SH");
+  if (hasSelf) columns.push("Video tự thực hiện");
+  if (hasClub) columns.push("Tham gia cùng CLB Truyền thông");
+  if (hasShare) columns.push("Chia sẻ bài viết");
+  columns.push("Tổng hoạt động", "Điểm cộng");
+  const rows = students.map((st, idx) => {
+    const out = { STT: idx + 1, MSSV: st.mssv, "Họ tên": st.hoTen, Khóa: st.khoa, Lớp: st.lop };
+    let total = 0;
+    acts.forEach((a) => {
+      const evs = approved.filter((e) => e.mssv === st.mssv && e.activityId === a.id);
+      const q = quyDoiForActivity(a, evs);
+      out[`${a.ma} · ${a.ten}`] = q || "";
+      total += q;
+    });
+    if (hasSelf) { const q = approved.filter((e) => e.mssv === st.mssv && !e.activityId && e.loai === "QC" && e.data?.nguon === "tu_lam").length; out["Video tự thực hiện"] = q || ""; total += q; }
+    if (hasClub) { const q = Math.floor(approved.filter((e) => e.mssv === st.mssv && !e.activityId && e.loai === "QC" && e.data?.nguon === "cau_lac_bo").length / 5); out["Tham gia cùng CLB Truyền thông"] = q || ""; total += q; }
+    if (hasShare) { const q = Math.floor(approved.filter((e) => e.mssv === st.mssv && !e.activityId && e.loai === "SH").reduce((n,e)=>n+(Number(e.data?.soLuot)||0),0) / 10); out["Chia sẻ bài viết"] = q || ""; total += q; }
+    out["Tổng hoạt động"] = total;
+    out["Điểm cộng"] = calcPoints(total);
+    return out;
+  }).filter((r) => Number(r["Điểm cộng"]) > 0);
+  rows.forEach((r, i) => { r.STT = i + 1; });
+  return { columns, rows };
+}
+function buildExportSummaryRows(db) {
+  const bttActs = db.activities.slice().sort((a,b) => new Date(a.batDau) - new Date(b.batDau));
+  const approved = db.evidences.filter((e) => e.status === "dat");
+  const hasSelf = approved.some((e) => e.activityId === null && e.loai === "QC" && e.data?.nguon === "tu_lam");
+  const hasClub = approved.some((e) => e.activityId === null && e.loai === "QC" && e.data?.nguon === "cau_lac_bo");
+  const hasShare = approved.some((e) => e.activityId === null && e.loai === "SH");
+  const columns = ["STT", "MSSV", "Họ tên", "Khóa", "Lớp"];
+  bttActs.forEach((a) => columns.push(`${a.ma} · ${a.ten}`));
+  if (hasSelf) columns.push("Video tự thực hiện");
+  if (hasClub) columns.push("Tham gia cùng CLB Truyền thông");
+  if (hasShare) columns.push("Chia sẻ bài viết");
+  columns.push("Tổng hoạt động", "Điểm cộng");
+  const rows = db.students.map((s, idx) => {
+    const out = { STT: idx + 1, MSSV: s.mssv, "Họ tên": s.hoTen, Khóa: s.khoa, Lớp: s.lop };
+    let total = 0;
+    bttActs.forEach((a) => { const q = quyDoiForActivity(a, db.evidences.filter((e) => e.mssv === s.mssv && e.activityId === a.id)); out[`${a.ma} · ${a.ten}`] = q; total += q; });
+    if (hasSelf) { const q = db.evidences.filter((e) => e.mssv === s.mssv && e.status === "dat" && !e.activityId && e.loai === "QC" && e.data?.nguon === "tu_lam").length; out["Video tự thực hiện"] = q; total += q; }
+    if (hasClub) { const q = Math.floor(db.evidences.filter((e) => e.mssv === s.mssv && e.status === "dat" && !e.activityId && e.loai === "QC" && e.data?.nguon === "cau_lac_bo").length / 5); out["Tham gia cùng CLB Truyền thông"] = q; total += q; }
+    if (hasShare) { const q = Math.floor(db.evidences.filter((e) => e.mssv === s.mssv && e.status === "dat" && !e.activityId && e.loai === "SH").reduce((n,e)=>n+(Number(e.data?.soLuot)||0),0) / 10); out["Chia sẻ bài viết"] = q; total += q; }
+    out["Tổng hoạt động"] = total; out["Điểm cộng"] = calcPoints(total);
+    return out;
   });
-  const buildSummaryRows = () => db.students.map((s) => { const { total, points } = computeStudentTotals(db, s.mssv); return { MSSV: s.mssv, "Họ tên": s.hoTen, Khóa: s.khoa, Lớp: s.lop, "Tổng hoạt động": total, "Điểm cộng": points }; });
-  const buildClassSheets = () => {
-    const classes = [...new Set(db.students.map((s) => s.lop))];
-    return classes.map((lop) => ({ name: lop, rows: db.students.filter((s) => s.lop === lop).map((s) => { const { total, points } = computeStudentTotals(db, s.mssv); return { MSSV: s.mssv, "Họ tên": s.hoTen, Khóa: s.khoa, "Tổng hoạt động": total, "Điểm cộng": points }; }) }));
+  return { columns, rows };
+}
+function AdminExport({ db, update, log, admin, show }) {
+  const now = new Date();
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const [scope, setScope] = useState("all");
+  const [khoa, setKhoa] = useState("");
+  const [lop, setLop] = useState("");
+  const [draft, setDraft] = useState(() => getPersistent("export_preview_draft") || { columns: [], rows: [] });
+  const [showAdd, setShowAdd] = useState(false);
+  // Lưu bảng xem trước vào localStorage để không mất khi tải lại trang.
+  const savePreview = () => {
+    setPersistent("export_preview_draft", draft);
+    show("Đã lưu bảng xem trước trên thiết bị này.");
   };
+  const [searchAdd, setSearchAdd] = useState("");
+  const [period, setPeriod] = useState(academicYearForDate(now));
+  const semester = from ? semesterForDate(from) : semesterForDate(now);
+  const khoas = [...new Set(db.students.map((s) => s.khoa).filter(Boolean))].sort((a,b)=>Number(a.replace(/\D/g,''))-Number(b.replace(/\D/g,'')));
+  const lops = [...new Set(db.students.filter((s)=>!khoa || s.khoa===khoa).map((s)=>s.lop).filter(Boolean))].sort();
 
-  const doExport = (format, kind) => {
-    let title, sheets;
-    if (kind === "detail") { title = "Danh sách chi tiết"; sheets = [{ name: "Chi tiết", rows: buildDetailRows() }]; }
-    else if (kind === "summary") { title = "Bảng tổng hợp"; sheets = [{ name: "Tổng hợp", rows: buildSummaryRows() }]; }
-    else if (kind === "byclass") { title = "Báo cáo theo lớp"; sheets = buildClassSheets(); }
-    else { title = "Danh sách chốt điểm cuối cùng"; sheets = [{ name: "Chốt điểm", rows: buildSummaryRows() }]; }
-    if (!sheets.length) sheets = [{ name: "Trống", rows: [] }];
-    const base = kind === "detail" ? "danh-sach-chi-tiet" : kind === "summary" ? "bang-tong-hop" : kind === "byclass" ? "bao-cao-theo-lop" : "chot-diem";
-    if (format === "excel") downloadXlsx(`${base}.xlsx`, sheets.map((s) => ({ name: s.name.slice(0, 31), rows: s.rows })));
-    if (format === "word") exportWordFromTables(`${base}.doc`, title, sheets.map((s) => objRowsToTable(s.name, s.rows)));
-    if (format === "pdf") exportPdfFromTables(title, sheets.map((s) => objRowsToTable(s.name, s.rows)));
-    log(admin.hoten, `Xuất ${format === "excel" ? "Excel" : format === "word" ? "Word" : "PDF"}`, title, "Thành công");
-    show(format === "pdf" ? "Đang mở cửa sổ in — chọn 'Lưu dưới dạng PDF'." : "Đã tải file xuống.");
+  const buildPreview = () => {
+    const selectedLop = scope === "class" ? lop : "";
+    const data = buildExportSummaryRowsFiltered(db, { from, to, khoa, lop: selectedLop });
+    setDraft(data);
+    setPeriod(from ? academicYearForDate(from) : academicYearForDate(now));
+    show(`Đã tạo bảng xem trước: ${data.rows.length} sinh viên có minh chứng Đạt.`);
   };
-
-  const cards = [
-    { icon: ClipboardList, title: "Danh sách chi tiết", desc: "Mỗi dòng: sinh viên + hoạt động + minh chứng + trạng thái + người duyệt.", kind: "detail" },
-    { icon: BarChart3, title: "Bảng tổng hợp", desc: "MSSV, họ tên, các hoạt động, tổng hoạt động, điểm — toàn bộ sinh viên.", kind: "summary" },
-    { icon: Layers, title: "Báo cáo theo lớp", desc: "Một bảng riêng cho từng lớp: khóa → lớp → sinh viên → tổng hoạt động → điểm.", kind: "byclass" },
-    { icon: ShieldCheck, title: "Danh sách chốt điểm cuối cùng", desc: "Chỉ lấy hoạt động đã xác nhận — không lấy chờ duyệt / không đạt / đã hủy.", kind: "final" },
-  ];
-  return (
-    <div>
-      <PageHead title="Xuất dữ liệu" sub="Chọn định dạng: Excel, Word hoặc PDF." />
-      <div className="grid sm:grid-cols-2 gap-4">
-        {cards.map((c) => (
-          <Card key={c.title} className="p-5">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3" style={{ background: C.grayBg }}><c.icon size={18} style={{ color: C.navy }} /></div>
-            <div className="font-bold mb-1" style={{ color: C.navy }}>{c.title}</div>
-            <div className="text-xs mb-4" style={{ color: C.gray }}>{c.desc}</div>
-            <div className="flex gap-2">
-              <Btn variant="outline" icon={Download} onClick={() => doExport("excel", c.kind)}>Excel</Btn>
-              <Btn variant="outline" icon={Download} onClick={() => doExport("word", c.kind)}>Word</Btn>
-              <Btn variant="outline" icon={Download} onClick={() => doExport("pdf", c.kind)}>PDF</Btn>
-            </div>
-          </Card>
-        ))}
+  const setCell = (rowIndex, col, value) => setDraft((d) => ({ ...d, rows: d.rows.map((r,i)=>i===rowIndex ? { ...r, [col]: value } : r) }));
+  const addStudent = (st) => {
+    if (draft.rows.some((r)=>r.MSSV===st.mssv)) return;
+    const row = { STT: draft.rows.length + 1, MSSV: st.mssv, "Họ tên": st.hoTen, Khóa: st.khoa, Lớp: st.lop };
+    draft.columns.forEach((c)=>{ if (!(c in row)) row[c] = ""; });
+    setDraft((d)=>({ ...d, rows:[...d.rows, row] }));
+    setShowAdd(false); setSearchAdd("");
+  };
+  const candidates = db.students.filter((s)=>
+    (!khoa || s.khoa===khoa) && (!lop || s.lop===lop) &&
+    (!searchAdd || `${s.mssv} ${s.hoTen} ${s.lop}`.toLowerCase().includes(searchAdd.toLowerCase())) &&
+    !draft.rows.some((r)=>r.MSSV===s.mssv)
+  ).slice(0,30);
+  const exportNow = (format) => {
+    if (!draft.rows.length) return show("Hãy tạo bảng xem trước trước khi xuất.");
+    const title = `Tổng kết điểm cộng truyền thông ${semester} ${period}`;
+    const filenameBase = `Tổng kết điểm cộng truyền thông ${semester} ${period}`;
+    const sheet = [{ name: "Tổng kết".slice(0,31), rows: draft.rows }];
+    if (format === "excel") downloadXlsx(`${filenameBase}.xlsx`, sheet);
+    if (format === "word") exportWordFromTables(`${filenameBase}.doc`, title, [objRowsToTable("Tổng kết", draft.rows)]);
+    if (format === "pdf") exportPdfFromTables(title, [objRowsToTable("Tổng kết", draft.rows)]);
+    log(admin.hoten, `Xuất ${format}`, title, scope === "class" ? `Theo lớp ${lop}` : `Toàn khóa ${khoa || "tất cả khóa"}`);
+    show(`Đã xuất ${filenameBase}.`);
+  };
+  return (<div>
+    <PageHead title="Xuất tổng kết điểm cộng" sub="Chọn thời gian → chọn phạm vi → xem trước → chỉnh sửa → xuất file. Chỉ sinh viên có minh chứng Đạt được đưa vào bảng mặc định." />
+    <Card className="p-5 mb-4">
+      <div className="font-bold mb-4" style={{color:C.navy}}>Phạm vi và thời gian tổng kết</div>
+      <div className="grid md:grid-cols-4 gap-3">
+        <Field label="Từ ngày"><TextInput type="date" value={from} onChange={(e)=>setFrom(e.target.value)} /></Field>
+        <Field label="Đến ngày"><TextInput type="date" value={to} onChange={(e)=>setTo(e.target.value)} /></Field>
+        <Field label="Học kỳ (tự động)"><TextInput value={semester} readOnly /></Field>
+        <Field label="Niên khóa (tự động)"><TextInput value={period} readOnly /></Field>
       </div>
-    </div>
-  );
+      <div className="grid md:grid-cols-3 gap-3 mt-3">
+        <Field label="Phạm vi"><Select value={scope} onChange={(e)=>{setScope(e.target.value); if(e.target.value==='all')setLop("");}}><option value="all">Toàn khóa</option><option value="class">Theo lớp</option></Select></Field>
+        <Field label="Khóa"><Select value={khoa} onChange={(e)=>{setKhoa(e.target.value);setLop("");}}><option value="">Tất cả khóa</option>{khoas.map(k=><option key={k} value={k}>{k} · {cohortAcademicYear(k)}</option>)}</Select></Field>
+        {scope === "class" ? <Field label="Lớp"><Select value={lop} onChange={(e)=>setLop(e.target.value)}><option value="">Chọn lớp</option>{lops.map(l=><option key={l} value={l}>{l}</option>)}</Select></Field> : <div className="flex items-end text-xs" style={{color:C.gray}}>Toàn khóa = tất cả lớp thuộc khóa đã chọn.</div>}
+      </div>
+      <div className="flex flex-wrap gap-2 mt-4"><Btn variant="amber" icon={Eye} onClick={buildPreview}>Tạo bảng xem trước</Btn><Btn variant="outline" icon={Plus} onClick={()=>setShowAdd(true)}>Thêm sinh viên bị thiếu</Btn></div>
+    </Card>
+    <Card className="p-4 mb-4"><div className="flex flex-wrap items-center justify-between gap-3"><div><div className="font-bold flex items-center gap-2" style={{color:C.navy}}><FileSpreadsheet size={16}/> Bảng xem trước</div><div className="text-xs mt-1" style={{color:C.gray}}>Thứ tự: thông tin sinh viên → tên từng hoạt động → nhóm chủ động nếu có → Tổng hoạt động → Điểm cộng.</div></div><div className="flex gap-2"><Btn variant="outline" icon={Save} onClick={savePreview}>Lưu dữ liệu</Btn><Btn variant="outline" icon={Download} onClick={()=>exportNow("excel")}>Xuất Excel</Btn><Btn variant="outline" icon={Download} onClick={()=>exportNow("word")}>Xuất Word</Btn><Btn variant="amber" icon={Download} onClick={()=>exportNow("pdf")}>Xuất PDF</Btn></div></div></Card>
+    <Card className="overflow-auto"><table className="text-xs" style={{minWidth:Math.max(1100,draft.columns.length*145)}}><thead><tr style={{background:C.grayBg}}>{draft.columns.map(c=><th key={c} className="text-left px-3 py-2.5 font-semibold whitespace-nowrap" style={{color:C.gray}}>{c}</th>)}</tr></thead><tbody>{draft.rows.length ? draft.rows.map((r,i)=><tr key={i} className="border-t" style={{borderColor:C.line}}>{draft.columns.map(c=><td key={c} className="px-2 py-2 align-top"><input value={r[c] ?? ""} onChange={e=>setCell(i,c,e.target.value)} className="w-full min-w-[85px] rounded-lg px-2 py-1 border" style={{borderColor:C.line,color:C.navy}} /></td>)}</tr>) : <tr><td colSpan={draft.columns.length||1} className="p-8 text-center" style={{color:C.gray}}>Chưa có bảng xem trước. Chọn thời gian/phạm vi rồi bấm “Tạo bảng xem trước”.</td></tr>}</tbody></table></Card>
+    {showAdd && <Modal open onClose={()=>setShowAdd(false)} title="Thêm sinh viên vào bảng xem trước"><div className="mb-3"><TextInput placeholder="Tìm MSSV, họ tên hoặc lớp..." value={searchAdd} onChange={(e)=>setSearchAdd(e.target.value)} /></div><div className="max-h-80 overflow-auto space-y-2">{candidates.length ? candidates.map(st=><div key={st.mssv} className="flex items-center justify-between gap-3 p-3 rounded-xl border" style={{borderColor:C.line}}><div><div className="font-semibold text-sm" style={{color:C.navy}}>{st.hoTen}</div><div className="text-xs" style={{color:C.gray}}>{st.mssv} · {st.khoa} · {st.lop}</div></div><Btn variant="outline" onClick={()=>addStudent(st)}>Thêm</Btn></div>) : <div className="text-xs p-4 text-center" style={{color:C.gray}}>Không tìm thấy sinh viên phù hợp.</div>}</div></Modal>}
+  </div>);
 }
 
 function AdminManageAdmins({ db, update, log, show, admin }) {
@@ -3593,34 +3873,70 @@ function AddAdminForm({ db, update, log, show, admin, onDone }) {
   );
 }
 
-function AdminAudit({ db }) {
-  const [q, setQ] = useState(""); const list = db.auditlog.filter((l) => !q || JSON.stringify(l).toLowerCase().includes(q.toLowerCase()));
-  return (
-    <div>
-      <PageHead title="Nhật ký quản trị" sub="Không thể xóa nhật ký — mọi thao tác đều được lưu lại." />
-      <div className="relative mb-4 max-w-sm"><Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: C.gray }} /><TextInput className="pl-9" placeholder="Tìm theo người, hành động, đối tượng..." value={q} onChange={(e) => setQ(e.target.value)} /></div>
-      <Card className="overflow-x-auto">
-        {list.length === 0 ? <Empty icon={History} title="Chưa có nhật ký nào" /> : (
-          <table className="w-full text-sm">
-            <thead><tr style={{ background: C.grayBg }}>{["Thời gian", "Người thao tác", "Hành động", "Đối tượng", "Kết quả"].map((h) => <th key={h} className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: C.gray }}>{h}</th>)}</tr></thead>
-            <tbody>
-              {list.map((l) => (
-                <tr key={l.id} className="border-t" style={{ borderColor: C.line }}>
-                  <td className="px-4 py-2.5 text-xs whitespace-nowrap">{fmtDT(l.time)}</td>
-                  <td className="px-4 py-2.5 font-medium" style={{ color: C.navy }}>{l.actor}</td>
-                  <td className="px-4 py-2.5 text-xs">{l.action}</td>
-                  <td className="px-4 py-2.5 text-xs font-mono">{l.target}</td>
-                  <td className="px-4 py-2.5 text-xs">{l.result}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </Card>
-    </div>
-  );
+function AdminAudit({ db, update, log, show, admin }) {
+  const [q,setQ]=useState(""); const list=db.auditlog.filter(l=>!q||JSON.stringify(l).toLowerCase().includes(q.toLowerCase()));
+  const undoEntry=(l)=>{ if(!l.undo)return show("Thao tác này chưa có dữ liệu hoàn tác."); if(!confirm(`Hoàn tác: ${l.action} · ${l.target}?`))return; const u=l.undo; update(u.key,u.value); log(admin?.hoten||"Quản trị viên","Hoàn tác thao tác",l.target,`Hoàn tác ${l.action}`); show("Đã hoàn tác thao tác."); };
+  return <div><PageHead title="Nhật ký quản trị" sub="Theo dõi thao tác quản trị và hoàn tác các thao tác đã được lưu trạng thái."/><div className="relative mb-4 max-w-sm"><Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{color:C.gray}}/><TextInput className="pl-9" placeholder="Tìm theo người, hành động, đối tượng..." value={q} onChange={e=>setQ(e.target.value)}/></div><Card className="overflow-x-auto">{list.length===0?<Empty icon={History} title="Chưa có nhật ký nào"/>:<table className="w-full text-sm"><thead><tr style={{background:C.grayBg}}>{["Thời gian","Người thực hiện","Hành động","Đối tượng","Kết quả",""].map(h=><th key={h} className="text-left px-4 py-2.5 text-xs font-semibold" style={{color:C.gray}}>{h}</th>)}</tr></thead><tbody>{list.map(l=><tr key={l.id} className="border-t" style={{borderColor:C.line}}><td className="px-4 py-2.5 text-xs">{fmtDT(l.time)}</td><td className="px-4 py-2.5">{l.actor}</td><td className="px-4 py-2.5">{l.action}</td><td className="px-4 py-2.5 text-xs">{l.target}</td><td className="px-4 py-2.5 text-xs">{l.result}</td><td className="px-4 py-2.5 text-right">{l.undo&&<Btn variant="outline" onClick={()=>undoEntry(l)}>Hoàn tác</Btn>}</td></tr>)}</tbody></table>}</Card></div>;
 }
-
+function AdminCohorts({ db, update, log, show, admin }) {
+  useEffect(() => {
+    const currentYear = new Date().getFullYear();
+    (db.cohortArchives || []).forEach(snap => {
+      const start = cohortStartYear(snap.khoa); const end = start ? start + 4 : null;
+      if (end && currentYear > end && snap.status !== "purged") {
+        update("cohortArchives", arr => (arr || []).filter(x => x.khoa !== snap.khoa));
+        log(admin.hoten, "Tự động xóa dữ liệu khóa hết hạn", snap.khoa, `Đã quá năm tốt nghiệp ${end}`);
+      }
+    });
+  }, [db.cohortArchives?.length]);
+  const [newKhoa, setNewKhoa] = useState("K30");
+  const [selected, setSelected] = useState("");
+  const activeKhoas = [...new Set(db.students.map(s=>s.khoa).filter(Boolean))].sort((a,b)=>Number(a.replace(/\D/g,''))-Number(b.replace(/\D/g,'')));
+  const archived = db.cohortArchives || [];
+  const all = [...new Set([...activeKhoas, ...archived.map(a=>a.khoa)])].sort((a,b)=>Number(a.replace(/\D/g,''))-Number(b.replace(/\D/g,'')));
+  const addKhoa = () => {
+    const k = newKhoa.trim().toUpperCase();
+    if (!/^K\d{2}$/.test(k)) return show("Khóa phải có dạng K29, K30...");
+    if (all.includes(k)) return show("Khóa này đã tồn tại.");
+    const record = { khoa:k, nienKhoa:cohortAcademicYear(k), createdAt:nowISO(), status:"active" };
+    update("cohortArchives", arr=>[record,...(arr||[])]);
+    log(admin.hoten,"Thêm khóa",k,`Niên khóa ${record.nienKhoa}`); show(`Đã thêm ${k} · niên khóa ${record.nienKhoa}.`);
+  };
+  const archive = (k) => {
+    const students = db.students.filter(s=>s.khoa===k);
+    const evs = db.evidences.filter(e=>students.some(s=>s.mssv===e.mssv));
+    const complaints = db.complaints.filter(c=>students.some(s=>s.mssv===c.mssv));
+    const notifications = db.notifications.filter(n=>students.some(s=>s.mssv===n.mssv));
+    const messages = db.messages.filter(m=>students.some(s=>s.mssv===m.mssv));
+    const snapshot = { khoa:k, nienKhoa:cohortAcademicYear(k), archivedAt:nowISO(), students, evidences:evs, complaints, notifications, messages, status:"archived" };
+    update("cohortArchives", arr=>[snapshot,...(arr||[]).filter(x=>x.khoa!==k)]);
+    update("students", arr=>arr.filter(s=>s.khoa!==k));
+    update("evidences", arr=>arr.filter(e=>!students.some(s=>s.mssv===e.mssv)));
+    update("complaints", arr=>arr.filter(c=>!students.some(s=>s.mssv===c.mssv)));
+    update("notifications", arr=>arr.filter(n=>!students.some(s=>s.mssv===n.mssv)));
+    update("messages", arr=>arr.filter(m=>!students.some(s=>s.mssv===m.mssv)));
+    log(admin.hoten,"Lưu trữ khóa",k,`Đã lưu ${students.length} sinh viên`); show(`Đã lưu trữ ${k}. Dữ liệu đã chuyển vào kho lưu trữ.`);
+  };
+  const restore = (k) => {
+    const snap = archived.find(a=>a.khoa===k); if(!snap?.students?.length) return show("Không có dữ liệu để khôi phục.");
+    update("students", arr=>[...(arr||[]),...snap.students.filter(s=>!(arr||[]).some(x=>x.mssv===s.mssv))]);
+    update("evidences", arr=>[...(arr||[]),...(snap.evidences||[]).filter(e=>!(arr||[]).some(x=>x.id===e.id))]);
+    update("complaints", arr=>[...(arr||[]),...(snap.complaints||[]).filter(e=>!(arr||[]).some(x=>x.id===e.id))]);
+    update("notifications", arr=>[...(arr||[]),...(snap.notifications||[]).filter(e=>!(arr||[]).some(x=>x.id===e.id))]);
+    update("messages", arr=>[...(arr||[]),...(snap.messages||[]).filter(e=>!(arr||[]).some(x=>x.id===e.id))]);
+    update("cohortArchives", arr=>(arr||[]).map(a=>a.khoa===k?{...a,status:"restored"}:a));
+    log(admin.hoten,"Khôi phục khóa",k,"Thành công"); show(`Đã khôi phục ${k}.`);
+  };
+  const purge = (k) => {
+    if (!window.confirm(`XÓA VĨNH VIỄN toàn bộ dữ liệu khóa ${k}? Thao tác này không thể hoàn tác.`)) return;
+    update("cohortArchives", arr=>(arr||[]).filter(a=>a.khoa!==k));
+    log(admin.hoten,"Xóa vĩnh viễn dữ liệu khóa",k,"Đã xóa khỏi kho lưu trữ"); show(`Đã xóa vĩnh viễn dữ liệu ${k} khỏi kho lưu trữ.`);
+  };
+  return <div><PageHead title="Quản lý khóa dữ liệu" sub="K29 = 2026–2030. Niên khóa của các khóa khác được hệ thống tự suy ra." />
+    <Card className="p-5 mb-4"><div className="font-bold mb-3" style={{color:C.navy}}>Thêm khóa mới</div><div className="flex flex-wrap gap-3"><TextInput value={newKhoa} onChange={e=>setNewKhoa(e.target.value.toUpperCase())} placeholder="K30" style={{maxWidth:180}}/><div className="flex items-center text-sm" style={{color:C.gray}}>Niên khóa tự động: <b className="ml-1" style={{color:C.navy}}>{cohortAcademicYear(newKhoa)}</b></div><Btn variant="amber" icon={Plus} onClick={addKhoa}>Thêm khóa</Btn></div></Card>
+    <Card className="overflow-auto"><table className="text-sm"><thead><tr style={{background:C.grayBg}}>{["Khóa","Niên khóa","Trạng thái","Thao tác"].map(h=><th key={h} className="text-left px-4 py-3 text-xs" style={{color:C.gray}}>{h}</th>)}</tr></thead><tbody>{all.slice().reverse().map(k=>{const snap=archived.find(a=>a.khoa===k); const nien=cohortAcademicYear(k); return <tr key={k} className="border-t" style={{borderColor:C.line}}><td className="px-4 py-3 font-bold">{k}</td><td className="px-4 py-3">{nien}</td><td className="px-4 py-3">{snap?.status==="archived"?<Badge bg={C.grayBg} fg={C.gray}>Đã lưu trữ</Badge>:<Badge bg={C.greenBg} fg={C.green}>Đang sử dụng</Badge>}</td><td className="px-4 py-3"><div className="flex flex-wrap gap-2">{snap?.status==="archived"?<Btn variant="outline" onClick={()=>restore(k)}>Khôi phục</Btn>:<Btn variant="outline" onClick={()=>{if(window.confirm(`Lưu trữ ${k} và chuyển toàn bộ dữ liệu của khóa vào kho lưu trữ?`)) archive(k);}}>Lưu trữ</Btn>}{snap && <Btn variant="danger" onClick={()=>purge(k)}>Xóa vĩnh viễn</Btn>}</div></td></tr>})}</tbody></table></Card>
+  </div>;
+}
 function AdminSettings({ db, update, log, show, admin }) {
   const [pw, setPw] = useState({ cur: "", next: "", confirm: "" }); const [err, setErr] = useState("");
   const s = db.settings;
@@ -3734,6 +4050,7 @@ function BackupRestoreCard({ db, update, log, show, admin }) {
 
 const rtRoot = ReactDOM.createRoot(document.getElementById('root'));
 rtRoot.render(<App />);
+setTimeout(() => { window.__bavBootOK = true; }, 1500);
 </script>
 </body>
 </html>
