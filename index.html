@@ -2547,13 +2547,12 @@ function ActivityDetailModal({ a, onClose, db, update, log, show, student }) {
       if (!form.soLuot || !form.link) return setErr("Vui lòng nhập số lượt chia sẻ và link Facebook cá nhân.");
       data = { soLuot: Number(form.soLuot), link: form.link, video: form.video || "" };
     } else if (a.loai === "QC") {
-      const days = (form.ngayThamGia || []).filter(Boolean);
-      if (!days.length) return setErr("Vui lòng chọn ít nhất một ngày tham gia.");
-      if (!form.buoi) return setErr("Vui lòng chọn buổi tham gia.");
+      const slots = (form.ngayBuoi || []).filter(x => x && x.ngay && x.buoi);
+      if (!slots.length) return setErr("Vui lòng chọn ít nhất một ngày và buổi tham gia.");
       if (!form.image) return setErr("Vui lòng tải ảnh minh chứng có mặt tại nơi quay/chụp.");
       const startDay = dateOnly(a.batDau), endDay = dateOnly(a.ketThuc);
-      if (days.some(d => d < startDay || d > endDay)) return setErr("Ngày tham gia phải nằm trong thời gian hoạt động.");
-      data = { nguon: "to_chuc", ngayThamGia: days, buoi: form.buoi, image: form.image };
+      if (slots.some(x => x.ngay < startDay || x.ngay > endDay)) return setErr("Tất cả ngày tham gia phải nằm trong thời gian hoạt động.");
+      data = { nguon: "to_chuc", ngayBuoi: slots, ngayThamGia: slots.map(x=>x.ngay), buoi: [...new Set(slots.map(x=>x.buoi))], image: form.image };
     } else if (a.loai === "TV") {
       if (!form.thoiGian) return setErr("Vui lòng nhập thời gian tham gia tư vấn.");
       data = { thoiGian: form.thoiGian, video: form.video || "" };
@@ -2628,15 +2627,44 @@ function EvidenceForm({ loai, form, setForm }) {
   const VideoField = () => <Field label="Video minh chứng bổ sung (nếu có)" hint="Có thể dùng link Google Drive nếu muốn gửi thêm video để quản trị viên thẩm định."><TextInput value={form.video || ""} onChange={set("video")} placeholder="https://drive.google.com/..." /></Field>;
   if (loai === "SH") return (<><Field label="Số lượt chia sẻ" required><TextInput type="number" min="1" value={form.soLuot || ""} onChange={set("soLuot")} /></Field><Field label="Link Facebook cá nhân" required hint="Chỉ cần link Facebook cá nhân, không cần link minh chứng riêng."><TextInput value={form.link || ""} onChange={set("link")} placeholder="https://facebook.com/..." /></Field><VideoField /></>);
   if (loai === "QC") return (<>
-    <div className="text-xs p-3 rounded-lg mb-3" style={{ background: C.blueBg, color: C.blue }}><b>Quy định 2:</b> Đây là hoạt động tham gia quay/chụp do Ban Truyền thông tổ chức. Sinh viên không cần tạo sản phẩm riêng và không cần link Drive. Chỉ cần chọn ngày/buổi tham gia và tải ảnh minh chứng có mặt tại nơi quay/chụp.</div>
-    <Field label="Các ngày tham gia" required>
+    <div className="text-xs p-3 rounded-lg mb-3" style={{ background: C.blueBg, color: C.blue }}>
+      <b>Quy định 2 — Ban Truyền thông tổ chức:</b> Sinh viên chỉ tham gia quay/chụp, không phải tự tạo sản phẩm. Hoạt động có thể kéo dài nhiều ngày. Mỗi ngày bạn có thể chọn riêng buổi sáng, buổi chiều hoặc cả ngày. Không cần link Drive; chỉ cần ảnh minh chứng có mặt tại nơi quay/chụp.
+    </div>
+    <Field label="Ngày và buổi tham gia" required hint="Mỗi dòng là một ngày. Có thể thêm nhiều ngày và chọn buổi khác nhau cho từng ngày.">
       <div className="space-y-2">
-        {(form.ngayThamGia || [""]).map((day, i) => <div key={i} className="flex gap-2"><TextInput type="date" value={day} onChange={(e)=>setForm({ ...form, ngayThamGia:(form.ngayThamGia||[""]).map((x,j)=>j===i?e.target.value:x) })} /><button type="button" className="px-3 rounded-lg border text-xs" style={{borderColor:C.line}} onClick={()=>setForm({ ...form, ngayThamGia:(form.ngayThamGia||[""]).filter((_,j)=>j!==i) })}>Xóa</button></div>)}
-        <button type="button" className="text-xs font-semibold" style={{color:C.blue}} onClick={()=>setForm({ ...form, ngayThamGia:[...(form.ngayThamGia||[]), ""] })}>+ Thêm ngày</button>
+        {(form.ngayBuoi || [{ngay:"",buoi:""}]).map((item, i) => (
+          <div key={i} className="grid grid-cols-[1fr_1fr_auto] gap-2 items-end p-2.5 rounded-xl" style={{background:C.grayBg}}>
+            <div>
+              <div className="text-[11px] mb-1" style={{color:C.gray}}>Ngày #{i+1}</div>
+              <TextInput type="date" value={item.ngay || ""} onChange={(e)=>{
+                const next=(form.ngayBuoi||[{ngay:"",buoi:""}]).map((x,j)=>j===i?{...x,ngay:e.target.value}:x);
+                setForm({...form,ngayBuoi:next});
+              }} />
+            </div>
+            <div>
+              <div className="text-[11px] mb-1" style={{color:C.gray}}>Buổi</div>
+              <Select value={item.buoi || ""} onChange={(e)=>{
+                const next=(form.ngayBuoi||[{ngay:"",buoi:""}]).map((x,j)=>j===i?{...x,buoi:e.target.value}:x);
+                setForm({...form,ngayBuoi:next});
+              }}>
+                <option value="">— Chọn buổi —</option>
+                <option value="sang">Buổi sáng</option>
+                <option value="chieu">Buổi chiều</option>
+                <option value="ca_ngay">Cả ngày</option>
+              </Select>
+            </div>
+            <button type="button" className="px-3 py-2 rounded-lg border text-xs" style={{borderColor:C.line}} onClick={()=>{
+              const next=(form.ngayBuoi||[{ngay:"",buoi:""}]).filter((_,j)=>j!==i);
+              setForm({...form,ngayBuoi:next.length?next:[{ngay:"",buoi:""}]});
+            }}>Xóa</button>
+          </div>
+        ))}
+        <button type="button" className="text-xs font-semibold" style={{color:C.blue}} onClick={()=>setForm({...form,ngayBuoi:[...(form.ngayBuoi||[]),{ngay:"",buoi:""}]})}>+ Thêm ngày tham gia</button>
       </div>
     </Field>
-    <Field label="Buổi tham gia" required><Select value={form.buoi || ""} onChange={set("buoi")}><option value="">— Chọn buổi —</option><option value="sang">Buổi sáng</option><option value="chieu">Buổi chiều</option><option value="ca_ngay">Cả ngày</option></Select></Field>
-    <Field label="Ảnh minh chứng có mặt tại nơi quay/chụp" required hint="Ảnh cần thể hiện bạn có mặt tại địa điểm hoạt động."><TextInput type="file" accept="image/*" onChange={(e)=>{ const file=e.target.files?.[0]; if(!file)return; const r=new FileReader(); r.onload=()=>setForm({ ...form, image:r.result }); r.readAsDataURL(file); }} /></Field>
+    <Field label="Ảnh minh chứng có mặt tại nơi quay/chụp" required hint="Có thể dùng ảnh chụp tại địa điểm hoạt động; ảnh cần thể hiện bạn thực sự có mặt.">
+      <TextInput type="file" accept="image/*" onChange={(e)=>{ const file=e.target.files?.[0]; if(!file)return; const r=new FileReader(); r.onload=()=>setForm({...form,image:r.result}); r.readAsDataURL(file); }} />
+    </Field>
     {form.image && <img src={form.image} alt="Ảnh minh chứng" className="w-full max-h-56 object-contain rounded-xl border" style={{borderColor:C.line}} />}
   </>);
   if (loai === "TV") return <><Field label="Thời gian tham gia tư vấn" required><TextInput type="datetime-local" value={form.thoiGian || ""} onChange={set("thoiGian")} /></Field><VideoField /></>;
