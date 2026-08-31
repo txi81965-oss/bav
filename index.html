@@ -1825,10 +1825,26 @@ async function saveKey(key, value) {
 function App() {
   const [loading, setLoading] = useState(true);
   const [db, setDb] = useState(null);
-  const [portal, setPortal] = useState(null);
-  const [session, setSession] = useState(null);
+  // Giữ trạng thái đăng nhập/cổng đang dùng sau khi F5 hoặc mở lại trình duyệt.
+  // Dữ liệu nghiệp vụ vẫn nằm ở Supabase; đây chỉ là trạng thái giao diện.
+  const [portal, setPortal] = useState(() => getLocal("ui_portal") || null);
+  const [session, setSession] = useState(() => getLocal("ui_session") || null);
   const [toast, setToast] = useState("");
   const [online, setOnline] = useState(!!supabaseClient);
+
+  useEffect(() => {
+    if (portal) setLocal("ui_portal", portal);
+    else {
+      try { localStorage.removeItem("bav_ui_portal"); } catch {}
+    }
+  }, [portal]);
+
+  useEffect(() => {
+    if (session) setLocal("ui_session", session);
+    else {
+      try { localStorage.removeItem("bav_ui_session"); } catch {}
+    }
+  }, [session]);
 
   useEffect(() => {
     let mounted = true;
@@ -2299,7 +2315,9 @@ function ChatPanel({ mssv, studentName, update, notify, messages, role, currentN
 function StudentApp(props) {
   const { db, mssv, onLogout } = props;
   const student = db.students.find((s) => s.mssv === mssv);
-  const [tab, setTab] = useState("dashboard");
+  const studentTabKey = `ui_student_tab_${mssv}`;
+  const [tab, setTab] = useState(() => getLocal(studentTabKey) || "dashboard");
+  useEffect(() => { setLocal(studentTabKey, tab); }, [studentTabKey, tab]);
   if (!student) return null;
 
   const unread = db.notifications.filter((n) => n.mssv === mssv && !n.read).length;
@@ -2929,7 +2947,9 @@ function RulesPage() {
 function AdminApp(props) {
   const { db, username, onLogout } = props;
   const admin = db.admins.find((a) => a.username === username);
-  const [tab, setTab] = useState("dashboard");
+  const adminTabKey = `ui_admin_tab_${username}`;
+  const [tab, setTab] = useState(() => getLocal(adminTabKey) || "dashboard");
+  useEffect(() => { setLocal(adminTabKey, tab); }, [adminTabKey, tab]);
   if (!admin) return null;
   const pendingCount = db.evidences.filter((e) => e.status === "cho_kiem_tra").length;
   const complaintCount = db.complaints.filter((c) => c.trangThai === "cho_xu_ly").length;
