@@ -3378,9 +3378,39 @@ function AdminActivities({ db, update, log, show, admin }) {
     log(admin.hoten,"Chỉnh sửa hoạt động",next.ma,"Đã cập nhật",{key:"activities",value:db.activities}); show(`Đã cập nhật ${next.ma}.`); setEditing(null);
   };
   const removeActivity = (a) => {
-    if (!window.confirm(`Xóa hoạt động ${a.ma} · ${a.ten}? Minh chứng đã nộp sẽ được giữ lại nhưng không còn gắn với hoạt động.`)) return;
-    update("activities",arr=>arr.filter(x=>x.id!==a.id));
-    log(admin.hoten,"Xóa hoạt động",a.ma,"Đã xóa hoạt động",{key:"activities",value:db.activities}); show(`Đã xóa ${a.ma}.`);
+    if (!window.confirm(
+      `Xóa hoạt động ${a.ma} · ${a.ten}?\\n\\n` +
+      `Toàn bộ dữ liệu liên quan đến hoạt động này cũng sẽ bị xóa, gồm: ` +
+      `minh chứng, khiếu nại và các dữ liệu lưu theo hoạt động.\\n` +
+      `Thao tác này không thể hoàn tác.`
+    )) return;
+
+    const activityId = a.id;
+
+    // Lưu lại các bản ghi liên quan để nhật ký biết phạm vi dữ liệu đã xóa.
+    const relatedEvidence = (db.evidences || []).filter(e => e.activityId === activityId);
+    const relatedComplaints = (db.complaints || []).filter(c => c.activityId === activityId);
+
+    // Xóa hoạt động và toàn bộ dữ liệu phụ thuộc vào hoạt động đó.
+    update("activities", arr => arr.filter(x => x.id !== activityId));
+    update("evidences", arr => arr.filter(x => x.activityId !== activityId));
+    update("complaints", arr => arr.filter(x => x.activityId !== activityId));
+
+    // Xóa các thông báo trực tiếp được tạo từ minh chứng của hoạt động.
+    const evidenceIds = new Set(relatedEvidence.map(e => e.id));
+    update("notifications", arr => (arr || []).filter(n => {
+      if (n.evidenceId && evidenceIds.has(n.evidenceId)) return false;
+      if (n.activityId === activityId) return false;
+      return true;
+    }));
+
+    log(
+      admin.hoten,
+      "Xóa hoạt động và dữ liệu liên quan",
+      `${a.ma} · ${a.ten}`,
+      `Đã xóa hoạt động, ${relatedEvidence.length} minh chứng, ${relatedComplaints.length} khiếu nại và dữ liệu phụ thuộc`
+    );
+    show(`Đã xóa ${a.ma} và toàn bộ dữ liệu liên quan.`);
   };
   return (<div>
     <PageHead title="Quản lý hoạt động" sub={`${db.activities.length} hoạt động đã tạo`} right={<Btn variant="amber" icon={Plus} onClick={()=>setOpenCreate(true)}>Tạo hoạt động</Btn>} />
@@ -3929,6 +3959,11 @@ function AdminAudit({ db, update, log, show, admin }) {
   const undoEntry=(l)=>{ if(!l.undo)return show("Thao tác này chưa có dữ liệu hoàn tác."); if(!confirm(`Hoàn tác: ${l.action} · ${l.target}?`))return; const u=l.undo; update(u.key,u.value); log(admin?.hoten||"Quản trị viên","Hoàn tác thao tác",l.target,`Hoàn tác ${l.action}`); show("Đã hoàn tác thao tác."); };
   return <div><PageHead title="Nhật ký quản trị" sub="Theo dõi thao tác quản trị và hoàn tác các thao tác đã được lưu trạng thái."/><div className="relative mb-4 max-w-sm"><Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{color:C.gray}}/><TextInput className="pl-9" placeholder="Tìm theo người, hành động, đối tượng..." value={q} onChange={e=>setQ(e.target.value)}/></div><Card className="overflow-x-auto">{list.length===0?<Empty icon={History} title="Chưa có nhật ký nào"/>:<table className="w-full text-sm"><thead><tr style={{background:C.grayBg}}>{["Thời gian","Người thực hiện","Hành động","Đối tượng","Kết quả",""].map(h=><th key={h} className="text-left px-4 py-2.5 text-xs font-semibold" style={{color:C.gray}}>{h}</th>)}</tr></thead><tbody>{list.map(l=><tr key={l.id} className="border-t" style={{borderColor:C.line}}><td className="px-4 py-2.5 text-xs">{fmtDT(l.time)}</td><td className="px-4 py-2.5">{l.actor}</td><td className="px-4 py-2.5">{l.action}</td><td className="px-4 py-2.5 text-xs">{l.target}</td><td className="px-4 py-2.5 text-xs">{l.result}</td><td className="px-4 py-2.5 text-right">{l.undo&&<Btn variant="outline" onClick={()=>undoEntry(l)}>Hoàn tác</Btn>}</td></tr>)}</tbody></table>}</Card></div>;
 }
+/* CASCADE DELETE POLICY:
+   - Xóa sinh viên: xóa account + evidences + complaints + notifications + messages + archived copies.
+   - Xóa hoạt động: xóa activity + evidences + complaints + notifications liên quan.
+   - Xóa khóa khỏi kho lưu trữ: xóa toàn bộ snapshot của khóa.
+*/
 function AdminCohorts({ db, update, log, show, admin }) {
   useEffect(() => {
     const currentYear = new Date().getFullYear();
