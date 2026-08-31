@@ -1397,6 +1397,7 @@ const ICON_PATHS = {
   FileSpreadsheet: '<rect x="4" y="3" width="16" height="18" rx="2"/><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="14" x2="20" y2="14"/><line x1="10" y1="9" x2="10" y2="21"/>',
   ShieldCheck: '<path d="M12 3l7 3v6c0 5-3.4 8.4-7 9-3.6-.6-7-4-7-9V6l7-3z"/><path d="M9 12l2 2 4-4"/>',
   History: '<path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 8v4l3 2"/>',
+  Archive: '<path d="M3 7h18v13H3z"/><path d="M3 7l2-4h14l2 4"/><line x1="9" y1="12" x2="15" y2="12"/>',
   Bell: '<path d="M6 10a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 20a2 2 0 0 0 4 0"/>',
   User: '<circle cx="12" cy="8" r="4"/><path d="M4 20c0-4.4 3.6-8 8-8s8 3.6 8 8"/>',
   BookOpen: '<path d="M12 5c-2-1.3-5-2-8-1v13c3-1 6-0.3 8 1 2-1.3 5-2 8-1V4c-3-1-6-0.3-8 1z"/><line x1="12" y1="5" x2="12" y2="18"/>',
@@ -1430,7 +1431,6 @@ const ICON_PATHS = {
   Info: '<circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16"/><circle cx="12" cy="7.5" r="0.6" fill="currentColor"/>',
   Send: '<path d="M22 2L11 13"/><path d="M22 2L15 22l-4-9-9-4 20-7z"/>',
   Sparkles: '<path d="M12 2l1.8 5.2L19 9l-5.2 1.8L12 16l-1.8-5.2L5 9l5.2-1.8L12 2z"/><path d="M19 15l0.7 2 2 0.7-2 0.7-0.7 2-0.7-2-2-0.7 2-0.7z"/>',
-  HelpCircle: '<circle cx="12" cy="12" r="9"/><path d="M9.6 9a2.6 2.6 0 1 1 4.3 2c-.9.7-1.9 1.2-1.9 2.6"/><circle cx="12" cy="17" r="0.7" fill="currentColor"/>',
 };
 
 function Icon({ name, size = 16, style, className }) {
@@ -1450,6 +1450,7 @@ const MessageSquareWarning = (p) => Icon({ ...p, name: "MessageSquareWarning" })
 const FileSpreadsheet = (p) => Icon({ ...p, name: "FileSpreadsheet" });
 const ShieldCheck = (p) => Icon({ ...p, name: "ShieldCheck" });
 const History = (p) => Icon({ ...p, name: "History" });
+const Archive = (p) => Icon({ ...p, name: "Archive" });
 const Bell = (p) => Icon({ ...p, name: "Bell" });
 const User = (p) => Icon({ ...p, name: "User" });
 const BookOpen = (p) => Icon({ ...p, name: "BookOpen" });
@@ -1483,7 +1484,6 @@ const UploadCloud = (p) => Icon({ ...p, name: "UploadCloud" });
 const Info = (p) => Icon({ ...p, name: "Info" });
 const Send = (p) => Icon({ ...p, name: "Send" });
 const Sparkles = (p) => Icon({ ...p, name: "Sparkles" });
-const HelpCircle = (p) => Icon({ ...p, name: "HelpCircle" });
 
 
 
@@ -1514,7 +1514,7 @@ const C = {
 
 const ACTIVITY_TYPES = [
   { code: "SH", name: "Chia sẻ bài viết", icon: Share2, color: C.amber, rule: "10 lượt chia sẻ hợp lệ = 01 hoạt động. Chỉ tính lượt chia sẻ trong vòng 02 ngày kể từ khi bài viết được đăng." },
-  { code: "QC", name: "Quay / chụp", icon: Camera, color: C.blue, rule: "05 minh chứng đạt = 01 hoạt động. Có thể là hoạt động do Ban Truyền thông tổ chức, tham gia cùng CLB Truyền thông hoặc tự quay/tự chụp." },
+  { code: "QC", name: "Quay / chụp", icon: Camera, color: C.blue, rule: "05 lần tham gia (minh chứng đạt) = 01 hoạt động. Gồm: hoạt động do Ban Truyền thông tổ chức, tham gia cùng CLB, hoặc tự quay/tự chụp." },
   { code: "TV", name: "Tư vấn tuyển sinh", icon: Mic, color: C.green, rule: "01 lần tham gia tư vấn tuyển sinh (được điểm danh xác nhận) = 01 hoạt động." },
   { code: "VD", name: "Video", icon: Video, color: C.red, rule: "01 video đạt yêu cầu (tối thiểu 30 giây, đúng nội dung, được thẩm định và đăng tải) = 01 hoạt động." },
   { code: "GT", name: "Giới thiệu người học", icon: UserPlus2, color: C.purple, rule: "01 người học nhập học và hoàn thành học phí kỳ đầu tiên (đã xác minh) = 02 hoạt động." },
@@ -1536,10 +1536,7 @@ const COMPLAINT_STATUS = {
 };
 const CONTACT_NOTE = "Hãy đến phòng Truyền thông – Tuyển sinh tìm Cô Hiền hoặc Thoa để giải quyết.";
 const FANPAGE_URL = "https://www.facebook.com/phanvienphuyen.hvnh";
-const EMOJI_LIST = [
-  "😀","😃","😄","😁","😆","😅","😂","🤣","😊","🙂","🙃","😉","😌","😍","🥰","😘","😗","😙","😚","😋","😛","😝","😜","🤪","🤨","🧐","🤓","😎","🥳","🤩",
-  "😏","😒","😞","😔","😟","😕","🙁","☹️","😣","😖","😫","😩","🥺","😢","😭","😤","😠","😡","🤬","🤯","😳","🥵","🥶","😱","😨","😰","😥","😓","🤗","🤔","🫡","🤭","🤫","🤥","😶","😐","😑","😬","🙄","😯","😦","😧","😮","😲","🥱","😴","🤤","😪","😵","🤐","🤢","🤮","🤧","😷","🤒","🤕",
-  "👍","👎","👌","✌️","🤞","🤟","🤘","🤙","👋","👏","🙌","🫶","🤝","🙏","💪","🫰","☝️","👆","👇","👉","👈","✍️","💅","🎉","🎊","🎈","🎁","🏆","🥇","🔥","✨","⭐","🌟","💯","✅","❌","⚡","💡","📌","📣","📷","🎥","🎬","🎤","🎧","❤️","🧡","💛","💚","💙","💜","🖤","🤍","🤎","💔","❣️","💕","💞","💓","💗","💖","💘","💝","💟","☀️","🌈","🌸","🌺","🌻","🌼","🍀","🌿","🌱","🌊","☕","🍰","🍕","🍜","🍔","🥤","⚽","🏀","🏐","🎮","🚀","📝","📚","💻","📱","🔔","⏰","🔗","📎","🔒","🔑"] ;
+const EMOJI_LIST = ["👍", "😊", "😂", "❤️", "🎉", "🙏", "😢", "😮", "🔥", "✅", "❌", "⏰", "📌", "👏", "💪", "🤝", "😅", "🥳", "📷", "🎥"];
 
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 9);
 const nowISO = () => new Date().toISOString();
@@ -1772,77 +1769,93 @@ function FilterChip({ active, onClick, children }) {
 }
 
 /* =========================================================================
-   STORAGE · SUPABASE ONLINE + LOCAL FALLBACK
-   ========================================================================= */
-const KEYS = ["students", "admins", "activities", "evidences", "complaints", "notifications", "auditlog", "settings", "messages"];
-const DEFAULT_SETTINGS = { locked: false, term: "Học kỳ I – Năm học 2026–2027" };
+   STORAGE — DATABASE ONLINE + REALTIME
+   =========================================================================
+   Dữ liệu chính nằm trên Supabase nên mọi thiết bị dùng cùng website sẽ
+   đọc/ghi cùng một nguồn dữ liệu. IndexedDB/localStorage chỉ là bộ nhớ đệm
+   dự phòng khi mạng tạm thời mất.
+*/
+const KEYS = ["students", "admins", "activities", "evidences", "complaints", "notifications", "auditlog", "settings", "messages", "archives"];
+const LOCAL_PREFIX = "BAV_PY_CACHE_";
 const SUPABASE_URL = window.BAV_CONFIG?.SUPABASE_URL || "";
-const SUPABASE_KEY = window.BAV_CONFIG?.SUPABASE_ANON_KEY || "";
-const supabaseClient = (SUPABASE_URL && SUPABASE_KEY && window.supabase)
-  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
-  : null;
+const SUPABASE_ANON_KEY = window.BAV_CONFIG?.SUPABASE_ANON_KEY || "";
+const CLOUD_READY = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase?.createClient);
+const sb = CLOUD_READY ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+let realtimeChannel = null;
+const saveQueues = new Map();
 
-function getLocal(k) {
-  try { const v = localStorage.getItem(`bav_${k}`); return v ? JSON.parse(v) : null; } catch { return null; }
+function defaultValueForKey(k) {
+  if (k === "settings") return { locked: false, term: "Học kỳ I – Năm học 2026–2027", semester: "Học kỳ I", academicYear: "2026–2027" };
+  return [];
 }
-function setLocal(k, value) {
-  try { localStorage.setItem(`bav_${k}`, JSON.stringify(value)); } catch {}
+function cacheGet(key) {
+  try { const raw = localStorage.getItem(LOCAL_PREFIX + key); return raw === null ? null : JSON.parse(raw); } catch { return null; }
 }
-function getPersistent(k) {
-  const local = getLocal(k);
-  if (local !== null) return local;
-  try {
-    const m = document.cookie.match(new RegExp(`(?:^|; )bav_${k}=([^;]*)`));
-    return m ? JSON.parse(decodeURIComponent(m[1])) : null;
-  } catch { return null; }
+function cacheSet(key, value) {
+  try { localStorage.setItem(LOCAL_PREFIX + key, JSON.stringify(value)); return true; } catch { return false; }
 }
-function setPersistent(k, value) {
-  setLocal(k, value);
-  try {
-    if (value === null || value === undefined) {
-      document.cookie = `bav_${k}=; Max-Age=0; Path=/; SameSite=Lax`;
-    } else {
-      document.cookie = `bav_${k}=${encodeURIComponent(JSON.stringify(value))}; Max-Age=2592000; Path=/; SameSite=Lax`;
-    }
-  } catch {}
+
+async function cloudGet(key) {
+  if (!CLOUD_READY) return null;
+  const { data, error } = await sb.from("bav_app_state").select("key,value,updated_at").eq("key", key).maybeSingle();
+  if (error) throw error;
+  return data ? data.value : null;
 }
-function clearPersistent(k) {
-  try { localStorage.removeItem(`bav_${k}`); } catch {}
-  try { document.cookie = `bav_${k}=; Max-Age=0; Path=/; SameSite=Lax`; } catch {}
+async function cloudSet(key, value) {
+  if (!CLOUD_READY) throw new Error("Chưa cấu hình database online.");
+  const { error } = await sb.from("bav_app_state").upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: "key" });
+  if (error) throw error;
 }
+
 async function loadAll() {
-  const fallback = {};
-  KEYS.forEach((k) => { fallback[k] = getLocal(k) ?? (k === "settings" ? { ...DEFAULT_SETTINGS } : []); });
-  if (!supabaseClient) return { ...fallback, __online: false };
-  try {
-    const { data, error } = await supabaseClient.from("bav_app_state").select("key,value,updated_at");
-    if (error) throw error;
-    const out = {};
-    KEYS.forEach((k) => {
-      const row = data?.find((r) => r.key === k);
-      out[k] = row?.value ?? fallback[k];
-    });
-    // Migrate existing local data only when the online table is empty for that key.
+  const out = {};
+  if (CLOUD_READY) {
     for (const k of KEYS) {
-      const hasRemote = data?.some((r) => r.key === k);
-      if (!hasRemote && getLocal(k) !== null) await saveKey(k, out[k]);
-      setLocal(k, out[k]);
+      try {
+        const cloudValue = await cloudGet(k);
+        if (cloudValue !== null && cloudValue !== undefined) {
+          out[k] = cloudValue;
+          cacheSet(k, cloudValue);
+        } else {
+          const localValue = cacheGet(k);
+          out[k] = localValue === null ? defaultValueForKey(k) : localValue;
+          if (localValue !== null) await cloudSet(k, localValue);
+        }
+      } catch (e) {
+        console.warn("Cloud read failed", k, e);
+        const localValue = cacheGet(k);
+        out[k] = localValue === null ? defaultValueForKey(k) : localValue;
+      }
     }
-    return { ...out, __online: true };
-  } catch (e) {
-    console.error("Supabase load failed", e);
-    return { ...fallback, __online: false };
+  } else {
+    for (const k of KEYS) {
+      const localValue = cacheGet(k);
+      out[k] = localValue === null ? defaultValueForKey(k) : localValue;
+    }
   }
+  return out;
 }
-async function saveKey(key, value) {
-  setLocal(key, value);
-  if (!supabaseClient) return false;
-  try {
-    const { error } = await supabaseClient.from("bav_app_state").upsert({ key, value, updated_at: nowISO() }, { onConflict: "key" });
-    if (error) throw error;
-    return true;
-  } catch (e) { console.error("Supabase save failed", key, e); return false; }
+
+function saveKey(key, value) {
+  cacheSet(key, value);
+  const previous = saveQueues.get(key) || Promise.resolve();
+  const next = previous.then(async () => {
+    if (!CLOUD_READY) return;
+    try { await cloudSet(key, value); }
+    catch (e) { console.error("Cloud save failed", key, e); }
+  }).catch(e => console.error("save queue failed", key, e));
+  saveQueues.set(key, next);
+  return next;
 }
+
+function subscribeRealtime(onRemoteChange) {
+  if (!CLOUD_READY || realtimeChannel) return;
+  realtimeChannel = sb.channel("bav-app-state-sync")
+    .on("postgres_changes", { event: "INSERT", schema: "public", table: "bav_app_state" }, payload => onRemoteChange(payload.new))
+    .on("postgres_changes", { event: "UPDATE", schema: "public", table: "bav_app_state" }, payload => onRemoteChange(payload.new))
+    .subscribe((status) => console.log("BAV realtime:", status));
+}
+
 /* =========================================================================
    ROOT APP
    ========================================================================= */
@@ -1852,48 +1865,29 @@ function App() {
   const [portal, setPortal] = useState(null);
   const [session, setSession] = useState(null);
   const [toast, setToast] = useState("");
-  const [online, setOnline] = useState(!!supabaseClient);
-  const setPortal = useCallback((value) => {
-    setPortalState(value);
-    if (value) setPersistent("ui_portal", value);
-    else clearPersistent("ui_portal");
-  }, []);
-  const setSession = useCallback((value) => {
-    setSessionState(value);
-    if (value) setPersistent("ui_session", value);
-    else clearPersistent("ui_session");
-  }, []);
 
   useEffect(() => {
-    let mounted = true;
     loadAll().then(async (out) => {
       if (!out.admins || out.admins.length === 0) {
         out.admins = [{ username: "thoa", hoten: "Nguyễn Thị Mỹ Thoa", password: "Admin@2026", sdt: "", email: "", trangThai: "active", role: "super_admin", createdAt: nowISO() }];
         await saveKey("admins", out.admins);
       }
       out.complaints = (out.complaints || []).map((c) => (c.messages ? c : { ...c, messages: c.noiDung ? [{ id: uid(), sender: "student", senderName: "", text: c.noiDung, createdAt: c.createdAt }] : [], escalated: false }));
-      if (!mounted) return;
-      setDb(out); setOnline(!!out.__online); setLoading(false);
+      setDb(out);
+      setLoading(false);
+      subscribeRealtime((remote) => {
+        if (!remote || !KEYS.includes(remote.key)) return;
+        setDb((current) => current ? { ...current, [remote.key]: remote.value } : current);
+        cacheSet(remote.key, remote.value);
+      });
     });
-    if (supabaseClient) {
-      const channel = supabaseClient.channel("bav_app_state_realtime")
-        .on("postgres_changes", { event: "*", schema: "public", table: "bav_app_state" }, (payload) => {
-          const row = payload.new || payload.old;
-          if (!row?.key || !KEYS.includes(row.key)) return;
-          setDb((prev) => prev ? { ...prev, [row.key]: row.value } : prev);
-          setLocal(row.key, row.value);
-          setOnline(true);
-        }).subscribe((status) => { if (status === "SUBSCRIBED") setOnline(true); });
-      return () => { mounted = false; supabaseClient.removeChannel(channel); };
-    }
-    return () => { mounted = false; };
   }, []);
 
   const update = useCallback((key, updater) => {
     setDb((prev) => {
-      const nextValue = typeof updater === "function" ? updater(prev[key]) : updater;
-      saveKey(key, nextValue);
-      return { ...prev, [key]: nextValue };
+      const next = { ...prev, [key]: typeof updater === "function" ? updater(prev[key]) : updater };
+      saveKey(key, next[key]);
+      return next;
     });
   }, []);
 
@@ -1913,7 +1907,7 @@ function App() {
     );
   }
 
-  const ctx = { db, update, notify, log, show, online };
+  const ctx = { db, update, notify, log, show };
 
   return (
     <div style={{ fontFamily: "'Be Vietnam Pro', sans-serif", background: C.paper, color: C.ink, minHeight: 600 }} className="w-full">
@@ -1926,6 +1920,9 @@ function App() {
         .line-clamp-2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
       `}</style>
       <Toast msg={toast} onDone={() => setToast("")} />
+      <div className="fixed top-3 right-3 z-[70] px-3 py-1.5 rounded-full text-[11px] font-semibold shadow" style={{ background: CLOUD_READY ? "#E9F7EF" : "#FFF3E0", color: CLOUD_READY ? "#18794E" : "#9A5B00", border: `1px solid ${C.line}` }}>
+        {CLOUD_READY ? "● Đã đồng bộ dữ liệu online" : "● Chưa kết nối database online"}
+      </div>
       {!session && !portal && <Landing db={db} onPick={setPortal} />}
       {!session && portal === "student" && (
         <StudentAuth db={db} update={update} onBack={() => setPortal(null)} onLogin={(mssv) => setSession({ type: "student", id: mssv })} show={show} log={log} />
@@ -2127,7 +2124,7 @@ function AdminAuth({ db, onBack, onLogin, show }) {
 /* =========================================================================
    SHELL
    ========================================================================= */
-function Shell({ title, subtitle, tabs, active, onTab, onLogout, children, badgeCounts = {}, online = false }) {
+function Shell({ title, subtitle, tabs, active, onTab, onLogout, children, badgeCounts = {} }) {
   return (
     <div className="flex min-h-[680px]">
       <aside className="w-60 shrink-0 flex flex-col py-5 px-3" style={{ background: C.navy }}>
@@ -2149,14 +2146,7 @@ function Shell({ title, subtitle, tabs, active, onTab, onLogout, children, badge
         </nav>
         <button onClick={onLogout} className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium mt-2" style={{ color: "#C3CBE0" }}><LogOut size={16} /> Đăng xuất</button>
       </aside>
-      <main className="flex-1 min-w-0 p-6 sm:p-8" style={{ background: C.paper }}>
-        <div className="flex justify-end mb-3">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-semibold" style={{ background: online ? C.greenBg : C.grayBg, color: online ? C.green : C.gray }}>
-            <span className="w-2 h-2 rounded-full" style={{ background: online ? C.green : C.gray }} /> {online ? "Đã đồng bộ dữ liệu online" : "Chưa kết nối database online"}
-          </div>
-        </div>
-        {children}
-      </main>
+      <main className="flex-1 min-w-0 p-6 sm:p-8" style={{ background: C.paper }}>{children}</main>
     </div>
   );
 }
@@ -2349,11 +2339,10 @@ function StudentApp(props) {
     { key: "notifications", label: "Thông báo", icon: Bell },
     { key: "profile", label: "Hồ sơ", icon: User },
     { key: "rules", label: "Quy định", icon: BookOpen },
-    { key: "help", label: "Hướng dẫn sử dụng", icon: HelpCircle },
   ];
 
   return (
-    <Shell title="CỔNG SINH VIÊN" subtitle={student.hoTen} tabs={tabs} active={tab} onTab={setTab} onLogout={onLogout} badgeCounts={{ notifications: unread, chat: unreadChat }} online={props.online}>
+    <Shell title="CỔNG SINH VIÊN" subtitle={student.hoTen} tabs={tabs} active={tab} onTab={setTab} onLogout={onLogout} badgeCounts={{ notifications: unread, chat: unreadChat }}>
       {tab === "dashboard" && <StudentDashboard {...props} student={student} onTab={setTab} />}
       {tab === "activities" && <StudentActivities {...props} student={student} />}
       {tab === "proactive" && <StudentProactive {...props} student={student} />}
@@ -2363,7 +2352,6 @@ function StudentApp(props) {
       {tab === "notifications" && <StudentNotifications {...props} student={student} />}
       {tab === "profile" && <StudentProfile {...props} student={student} />}
       {tab === "rules" && <RulesPage />}
-      {tab === "help" && <HelpPage role="student" />}
     </Shell>
   );
 }
@@ -2513,27 +2501,25 @@ function ActivityDetailModal({ a, onClose, db, update, log, show, student }) {
     if ((a.loai === "TV" || a.loai === "GT") && mine.some((e) => e.status === "cho_kiem_tra")) return setErr("Bạn đã có minh chứng đang chờ kiểm tra cho hoạt động này.");
     let data = {};
     if (a.loai === "SH") {
-      if (!form.soLuot || !form.link) return setErr("Vui lòng nhập số lượt chia sẻ và link Facebook cá nhân.");
-      data = { soLuot: Number(form.soLuot), link: form.link, video: form.video || "" };
+      if (!form.soLuot || !form.thoiGian || !form.link) return setErr("Vui lòng nhập đầy đủ số lượt, thời gian và link minh chứng.");
+      data = { soLuot: Number(form.soLuot), thoiGian: form.thoiGian, link: form.link };
     } else if (a.loai === "QC") {
-      if (!form.nguon || !form.link) return setErr("Vui lòng nhập đầy đủ thông tin.");
-      if (!isDriveLink(form.link)) return setErr("Link video/minh chứng phải là link Google Drive.");
-      if (form.nguon === "tu_lam" && !form.ten) return setErr("Vui lòng nhập tên minh chứng / tên video.");
-      if (form.nguon === "cau_lac_bo" && !form.nguoiMoi) return setErr("Vui lòng nhập tên thành viên CLB đã mời bạn tham gia.");
-      data = { nguon: form.nguon, ten: form.ten || "", nguoiMoi: form.nguoiMoi || "", link: form.link, video: form.video || "" };
+      if (!form.nguon || !form.thoiGian || !form.link) return setErr("Vui lòng nhập đầy đủ thông tin.");
+      if (!isDriveLink(form.link)) return setErr("Link minh chứng phải là link Google Drive.");
+      data = { nguon: form.nguon, thoiGian: form.thoiGian, thucHienCung: form.nguon === "tu_lam" ? "" : (form.thucHienCung || ""), link: form.link, moTa: form.moTa || "" };
     } else if (a.loai === "TV") {
       if (!form.thoiGian) return setErr("Vui lòng nhập thời gian tham gia tư vấn.");
-      data = { thoiGian: form.thoiGian, video: form.video || "" };
+      data = { thoiGian: form.thoiGian };
     } else if (a.loai === "VD") {
       if (!form.link) return setErr("Vui lòng nhập link Google Drive video.");
       if (!isDriveLink(form.link)) return setErr("Link phải là link Google Drive.");
       data = { link: form.link, moTa: form.moTa || "" };
     } else if (a.loai === "GT") {
       if (!form.hoTen || !form.sdt) return setErr("Vui lòng nhập họ tên và số điện thoại người được giới thiệu.");
-      data = { hoTen: form.hoTen, sdt: form.sdt, ghiChu: form.ghiChu || "", video: form.video || "" };
+      data = { hoTen: form.hoTen, sdt: form.sdt, ghiChu: form.ghiChu || "" };
     } else if (a.loai === "KH") {
       if (!form.moTa) return setErr("Vui lòng mô tả hoạt động đã thực hiện.");
-      data = { moTa: form.moTa, link: form.link || "", video: form.video || "" };
+      data = { moTa: form.moTa, link: form.link || "" };
     }
     const ev = { id: uid(), activityId: a.id, mssv: student.mssv, loai: a.loai, data, status: "cho_kiem_tra", note: "", approvedBy: "", approvedAt: "", submittedAt: nowISO(), camKet: true };
     update("evidences", (arr) => [ev, ...arr]);
@@ -2546,7 +2532,6 @@ function ActivityDetailModal({ a, onClose, db, update, log, show, student }) {
     <Modal open onClose={onClose} title={`${a.ma} · ${a.ten}`} width="max-w-2xl">
       <div className="flex items-center gap-2 mb-3"><RuntimeBadge activity={a} /><Badge bg={C.grayBg} fg={C.gray}>{T.name}</Badge></div>
       <div className="text-sm rounded-xl p-3 mb-4" style={{ background: C.grayBg, color: C.navy2 }}>{T.rule}</div>
-      {a.loai === "VD" && <div className="text-xs p-3 rounded-xl mb-4 flex items-start gap-2" style={{ background: "#FEF3D8", color: C.amber2 }}><Info size={14} className="mt-0.5 shrink-0" /><span><b>Chú ý khi nộp minh chứng:</b> Chủ động quay, biên tập và hoàn thiện video có thời lượng từ 30 giây trở lên, với nội dung phản ánh hoạt động học tập, rèn luyện, đời sống sinh viên hoặc các hoạt động của Phân viện; video được gửi về BTT, được thẩm định đạt yêu cầu và đăng tải trên các nền tảng truyền thông chính thức của Phân viện (01 video đạt yêu cầu được tính là 01 hoạt động).</span></div>}
       <div className="grid grid-cols-2 gap-3 text-xs mb-4">
         <div><span style={{ color: C.gray }}>Bắt đầu:</span> <b>{fmtDT(a.batDau)}</b></div>
         <div><span style={{ color: C.gray }}>Kết thúc:</span> <b>{fmtDT(a.ketThuc)}</b></div>
@@ -2592,13 +2577,43 @@ function ActivityDetailModal({ a, onClose, db, update, log, show, student }) {
 }
 function EvidenceForm({ loai, form, setForm }) {
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
-  const VideoField = () => <Field label="Video minh chứng bổ sung (nếu có)" hint="Có thể dùng link Google Drive nếu muốn gửi thêm video để quản trị viên thẩm định."><TextInput value={form.video || ""} onChange={set("video")} placeholder="https://drive.google.com/..." /></Field>;
-  if (loai === "SH") return (<><Field label="Số lượt chia sẻ" required><TextInput type="number" min="1" value={form.soLuot || ""} onChange={set("soLuot")} /></Field><Field label="Link Facebook cá nhân" required hint="Chỉ cần link Facebook cá nhân, không cần link minh chứng riêng."><TextInput value={form.link || ""} onChange={set("link")} placeholder="https://facebook.com/..." /></Field><VideoField /></>);
-  if (loai === "QC") return (<><Field label="Nguồn tham gia" required><Select value={form.nguon || ""} onChange={set("nguon")}><option value="">— Chọn —</option><option value="to_chuc">Do Ban Truyền thông tổ chức</option><option value="cau_lac_bo">Tham gia cùng CLB Truyền thông</option><option value="tu_lam">Tự quay / tự chụp</option></Select></Field>{form.nguon === "tu_lam" && <Field label="Tên minh chứng / tên video" required><TextInput value={form.ten || ""} onChange={set("ten")} placeholder="Ví dụ: Video hoạt động ngoại khóa..." /></Field>}{form.nguon === "cau_lac_bo" && <Field label="Tên thành viên CLB đã mời bạn tham gia" required><TextInput value={form.nguoiMoi || ""} onChange={set("nguoiMoi")} placeholder="Họ và tên thành viên CLB" /></Field>}<Field label="Link Google Drive video/minh chứng" required hint="Ưu tiên video hoặc tệp minh chứng trên Google Drive."><TextInput value={form.link || ""} onChange={set("link")} placeholder="https://drive.google.com/..." /></Field><VideoField /></>);
-  if (loai === "TV") return <><Field label="Thời gian tham gia tư vấn" required><TextInput type="datetime-local" value={form.thoiGian || ""} onChange={set("thoiGian")} /></Field><VideoField /></>;
-  if (loai === "VD") return (<><Field label="Link Google Drive video" required hint="Video tối thiểu 30 giây và phải đạt yêu cầu thẩm định, đăng tải."><TextInput value={form.link || ""} onChange={set("link")} placeholder="https://drive.google.com/..." /></Field><Field label="Mô tả nội dung video"><TextArea rows={2} value={form.moTa || ""} onChange={set("moTa")} /></Field></>);
-  if (loai === "GT") return (<><div className="grid grid-cols-2 gap-3"><Field label="Họ tên người được giới thiệu" required><TextInput value={form.hoTen || ""} onChange={set("hoTen")} /></Field><Field label="Số điện thoại" required><TextInput value={form.sdt || ""} onChange={set("sdt")} /></Field></div><Field label="Ghi chú thêm"><TextArea rows={2} value={form.ghiChu || ""} onChange={set("ghiChu")} /></Field><VideoField /></>);
-  if (loai === "KH") return (<><Field label="Mô tả hoạt động đã thực hiện" required><TextArea rows={2} value={form.moTa || ""} onChange={set("moTa")} /></Field><Field label="Link minh chứng (nếu có)"><TextInput value={form.link || ""} onChange={set("link")} /></Field><VideoField /></>);
+  if (loai === "SH") return (<>
+    <div className="grid grid-cols-2 gap-3">
+      <Field label="Số lượt chia sẻ" required><TextInput type="number" min="1" value={form.soLuot || ""} onChange={set("soLuot")} /></Field>
+      <Field label="Thời gian chia sẻ" required><TextInput type="datetime-local" value={form.thoiGian || ""} onChange={set("thoiGian")} /></Field>
+    </div>
+    <Field label="Link minh chứng (Facebook/Drive)" required><TextInput value={form.link || ""} onChange={set("link")} placeholder="https://..." /></Field>
+  </>);
+  if (loai === "QC") return (<>
+    <Field label="Nguồn tham gia" required>
+      <Select value={form.nguon || ""} onChange={set("nguon")}>
+        <option value="">— Chọn —</option>
+        <option value="to_chuc">Do Ban Truyền thông tổ chức</option>
+        <option value="cau_lac_bo">Tham gia cùng CLB Truyền thông</option>
+        <option value="tu_lam">Tự quay / tự chụp</option>
+      </Select>
+    </Field>
+    <Field label="Thời gian thực hiện" required><TextInput type="datetime-local" value={form.thoiGian || ""} onChange={set("thoiGian")} /></Field>
+    {form.nguon === "cau_lac_bo" && <Field label="Thực hiện cùng ai"><TextInput value={form.thucHienCung || ""} onChange={set("thucHienCung")} /></Field>}
+    <Field label="Link Google Drive minh chứng" required hint="Bắt buộc là link drive.google.com"><TextInput value={form.link || ""} onChange={set("link")} placeholder="https://drive.google.com/..." /></Field>
+    <Field label="Mô tả sản phẩm"><TextArea rows={2} value={form.moTa || ""} onChange={set("moTa")} /></Field>
+  </>);
+  if (loai === "TV") return <Field label="Thời gian tham gia tư vấn" required><TextInput type="datetime-local" value={form.thoiGian || ""} onChange={set("thoiGian")} /></Field>;
+  if (loai === "VD") return (<>
+    <Field label="Link Google Drive video" required hint="Bắt buộc là link drive.google.com"><TextInput value={form.link || ""} onChange={set("link")} placeholder="https://drive.google.com/..." /></Field>
+    <Field label="Mô tả nội dung video"><TextArea rows={2} value={form.moTa || ""} onChange={set("moTa")} /></Field>
+  </>);
+  if (loai === "GT") return (<>
+    <div className="grid grid-cols-2 gap-3">
+      <Field label="Họ tên người được giới thiệu" required><TextInput value={form.hoTen || ""} onChange={set("hoTen")} /></Field>
+      <Field label="Số điện thoại" required><TextInput value={form.sdt || ""} onChange={set("sdt")} /></Field>
+    </div>
+    <Field label="Ghi chú thêm"><TextArea rows={2} value={form.ghiChu || ""} onChange={set("ghiChu")} /></Field>
+  </>);
+  if (loai === "KH") return (<>
+    <Field label="Mô tả hoạt động đã thực hiện" required><TextArea rows={2} value={form.moTa || ""} onChange={set("moTa")} /></Field>
+    <Field label="Link minh chứng (nếu có)"><TextInput value={form.link || ""} onChange={set("link")} /></Field>
+  </>);
   return null;
 }
 
@@ -2661,7 +2676,7 @@ function ProactiveShareForm({ update, log, show, student, onDone }) {
       </div>
       <div className="grid grid-cols-2 gap-3">
         <Field label="Số bài đã chia sẻ" required><TextInput type="number" min="1" value={f.soLuot} onChange={set("soLuot")} /></Field>
-        <Field label="Link Facebook cá nhân" required hint="Chỉ cần link Facebook cá nhân, không cần link minh chứng riêng."><TextInput value={f.link} onChange={set("link")} placeholder="https://facebook.com/..." /></Field>
+        <Field label="Link Facebook" required><TextInput value={f.link} onChange={set("link")} placeholder="https://facebook.com/..." /></Field>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <Field label="Từ ngày" required hint="Ngày bạn bắt đầu share bài đầu tiên"><TextInput type="date" value={f.tuNgay} onChange={set("tuNgay")} /></Field>
@@ -2686,34 +2701,68 @@ function ProactiveShareForm({ update, log, show, student, onDone }) {
 function ProactiveQCForm({ update, log, show, student, onDone }) {
   const [nguon, setNguon] = useState("tu_lam");
   const [soLuong, setSoLuong] = useState(1);
-  const [items, setItems] = useState([{ link: "", ten: "", nguoiMoi: "" }]);
+  const [thoiGian, setThoiGian] = useState("");
+  const [items, setItems] = useState([{ link: "", ten: "" }]);
   const [camKet, setCamKet] = useState(false);
   const [err, setErr] = useState("");
-  const setCount = (n) => { n = Math.max(1, Math.min(20, Number(n) || 1)); setSoLuong(n); setItems((prev) => { const next = prev.slice(0, n); while (next.length < n) next.push({ link: "", ten: "", nguoiMoi: "" }); return next; }); };
-  const setItem = (i, k, v) => setItems((prev) => prev.map((it, idx) => idx === i ? { ...it, [k]: v } : it));
+  const setCount = (n) => {
+    n = Math.max(1, Math.min(20, Number(n) || 1));
+    setSoLuong(n);
+    setItems((prev) => { const next = prev.slice(0, n); while (next.length < n) next.push({ link: "", ten: "" }); return next; });
+  };
+  const setItem = (i, k, v) => setItems((prev) => prev.map((it, idx) => (idx === i ? { ...it, [k]: v } : it)));
   const submit = (e) => {
     e.preventDefault(); setErr("");
+    if (!thoiGian) return setErr("Vui lòng nhập thời gian thực hiện.");
     for (const it of items) {
-      if (!it.link) return setErr("Vui lòng nhập link Drive cho tất cả minh chứng.");
-      if (!isDriveLink(it.link)) return setErr("Link video/minh chứng phải là link Google Drive.");
-      if (nguon === "tu_lam" && !it.ten) return setErr("Vui lòng nhập tên minh chứng / tên video cho từng sản phẩm.");
-      if (nguon === "cau_lac_bo" && !it.nguoiMoi) return setErr("Vui lòng nhập tên thành viên CLB đã mời bạn tham gia cho từng minh chứng.");
+      if (!it.link) return setErr("Vui lòng nhập link Drive cho tất cả sản phẩm.");
+      if (!isDriveLink(it.link)) return setErr("Link minh chứng phải là link Google Drive.");
+      if (nguon === "cau_lac_bo" && !it.ten) return setErr("Vui lòng nhập tên video đã tham gia cùng CLB.");
     }
     if (!camKet) return setErr("Vui lòng cam kết thông tin trung thực.");
-    const batch = items.map((it) => ({ id: uid(), activityId: null, mssv: student.mssv, loai: "QC", nguonNop: "chu_dong", data: { nguon, ten: it.ten || "", nguoiMoi: it.nguoiMoi || "", link: it.link }, status: "cho_kiem_tra", note: "", approvedBy: "", approvedAt: "", submittedAt: nowISO(), camKet: true }));
+    const batch = items.map((it) => ({
+      id: uid(), activityId: null, mssv: student.mssv, loai: "QC", nguonNop: "chu_dong",
+      data: { nguon, thoiGian, link: it.link, ten: it.ten || "", moTa: "" },
+      status: "cho_kiem_tra", note: "", approvedBy: "", approvedAt: "", submittedAt: nowISO(), camKet: true,
+    }));
     update("evidences", (arr) => [...batch, ...arr]);
     log(student.mssv, "Nộp minh chứng chủ động", "QC-CD", `Đã gửi ${batch.length} minh chứng, chờ kiểm tra`);
     show(`Đã gửi ${batch.length} minh chứng quay/chụp.`); onDone();
   };
-  return (<form onSubmit={submit}>
-    <Field label="Hình thức tham gia" required><Select value={nguon} onChange={(e) => setNguon(e.target.value)}><option value="tu_lam">Tự quay / tự chụp</option><option value="cau_lac_bo">Tham gia cùng CLB Truyền thông</option></Select></Field>
-    <div className="text-xs p-3 rounded-lg mb-3 flex items-start gap-2" style={{ background: "#FEF3D8", color: C.amber2 }}><Info size={14} className="mt-0.5 shrink-0" /><span><b>Không cần nhập ngày thực hiện.</b> Mỗi minh chứng cần có tên/link phù hợp. Với CLB Truyền thông, phải ghi đúng tên thành viên CLB đã mời bạn tham gia.</span></div>
-    <Field label="Số lượng minh chứng" required><TextInput type="number" min="1" max="20" value={soLuong} onChange={(e) => setCount(e.target.value)} /></Field>
-    <div className="space-y-2 mb-3">{items.map((it, i) => (<div key={i} className="rounded-xl p-3" style={{ background: C.grayBg }}><div className="text-xs font-semibold mb-2" style={{ color: C.navy2 }}>Minh chứng #{i + 1}</div>{nguon === "tu_lam" && <TextInput className="mb-2" placeholder="Tên minh chứng / tên video" value={it.ten} onChange={(e) => setItem(i, "ten", e.target.value)} />}{nguon === "cau_lac_bo" && <TextInput className="mb-2" placeholder="Tên thành viên CLB đã mời bạn tham gia" value={it.nguoiMoi} onChange={(e) => setItem(i, "nguoiMoi", e.target.value)} />}<TextInput placeholder="Link Google Drive video/minh chứng" value={it.link} onChange={(e) => setItem(i, "link", e.target.value)} /></div>))}</div>
-    <div className="text-xs p-3 rounded-lg mb-3" style={{ background: C.blueBg, color: C.blue }}><b>Chú ý:</b> Chủ động quay, biên tập và hoàn thiện video có thời lượng từ 30 giây trở lên, với nội dung phản ánh hoạt động học tập, rèn luyện, đời sống sinh viên hoặc các hoạt động của Phân viện; video được gửi về BTT, được thẩm định đạt yêu cầu và đăng tải trên các nền tảng truyền thông chính thức của Phân viện (01 video đạt yêu cầu được tính là 01 hoạt động).</div>
-    <label className="flex items-start gap-2 text-xs mb-3" style={{ color: C.navy2 }}><input type="checkbox" checked={camKet} onChange={(e) => setCamKet(e.target.checked)} className="mt-0.5" />Tôi cam kết các thông tin và minh chứng cung cấp là trung thực, chính xác và thuộc về hoạt động tôi thực sự tham gia.</label>
-    {err && <div className="text-xs font-medium mb-3" style={{ color: C.red }}>{err}</div>}<Btn type="submit" variant="amber" className="w-full">Gửi {items.length} minh chứng</Btn>
-  </form>);
+  return (
+    <form onSubmit={submit}>
+      <Field label="Hình thức tham gia" required>
+        <Select value={nguon} onChange={(e) => setNguon(e.target.value)}>
+          <option value="tu_lam">Tự quay / tự chụp</option>
+          <option value="cau_lac_bo">Tham gia cùng CLB Truyền thông</option>
+        </Select>
+      </Field>
+      {nguon === "cau_lac_bo" && (
+        <div className="text-xs p-2.5 rounded-lg mb-3 flex items-start gap-2" style={{ background: "#FEF3D8", color: C.amber2 }}>
+          <Info size={14} className="mt-0.5 shrink-0" /> Lưu ý: video chỉ được tính khi đã được đăng tải trên nền tảng truyền thông chính thức của trường. Video chưa đăng sẽ chưa được duyệt.
+        </div>
+      )}
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Số lượng sản phẩm" required><TextInput type="number" min="1" max="20" value={soLuong} onChange={(e) => setCount(e.target.value)} /></Field>
+        <Field label="Thời gian thực hiện" required><TextInput type="date" value={thoiGian} onChange={(e) => setThoiGian(e.target.value)} /></Field>
+      </div>
+      <div className="space-y-2 mb-3">
+        {items.map((it, i) => (
+          <div key={i} className="rounded-xl p-3" style={{ background: C.grayBg }}>
+            <div className="text-xs font-semibold mb-2" style={{ color: C.navy2 }}>Sản phẩm #{i + 1}</div>
+            {nguon === "cau_lac_bo" && <TextInput className="mb-2" placeholder="Tên video đã tham gia" value={it.ten} onChange={(e) => setItem(i, "ten", e.target.value)} />}
+            <TextInput placeholder="Link Google Drive minh chứng" value={it.link} onChange={(e) => setItem(i, "link", e.target.value)} />
+          </div>
+        ))}
+      </div>
+      <label className="flex items-start gap-2 text-xs mb-3" style={{ color: C.navy2 }}>
+        <input type="checkbox" checked={camKet} onChange={(e) => setCamKet(e.target.checked)} className="mt-0.5" />
+        Tôi cam kết các thông tin và minh chứng cung cấp là trung thực, chính xác và thuộc về hoạt động tôi thực sự tham gia.
+      </label>
+      {err && <div className="text-xs font-medium mb-3" style={{ color: C.red }}>{err}</div>}
+      <Btn type="submit" variant="amber" className="w-full">Gửi {items.length} minh chứng</Btn>
+    </form>
+  );
 }
 
 function StudentHistory({ db, student }) {
@@ -2906,27 +2955,6 @@ function StudentProfile({ update, show, log, student }) {
   );
 }
 
-function HelpPage({ role }) {
-  const studentSteps = [
-    ["1", "Đăng ký / đăng nhập", "Sinh viên đăng ký bằng MSSV, khóa, lớp và mật khẩu; sau đó đăng nhập để sử dụng cổng."],
-    ["2", "Xem hoạt động", "Vào Hoạt động để xem các hoạt động do Ban Truyền thông tạo, quy định và trạng thái."],
-    ["3", "Nộp minh chứng", "Chọn đúng hoạt động rồi nộp minh chứng. Chỉ minh chứng được quản trị viên duyệt Đạt mới được tính."],
-    ["4", "Nộp minh chứng chủ động", "Dùng cho Share bài hoặc Quay/chụp không gắn với một hoạt động cụ thể. Share cần link Facebook cá nhân; Quay/chụp không cần ngày thực hiện."],
-    ["5", "Theo dõi điểm", "Vào Tổng quan hoặc Lịch sử để xem minh chứng, kết quả duyệt, số hoạt động quy đổi và điểm cộng."],
-    ["6", "Khiếu nại / trò chuyện", "Nếu có sai lệch, gửi khiếu nại hoặc nhắn trực tiếp cho Ban Truyền thông; có bộ icon phong phú trong khung chat."],
-  ];
-  const adminSteps = [
-    ["1", "Tạo hoạt động", "Tạo hoạt động theo 1 trong 6 loại và nhập thời gian, quy định, cách quy đổi nếu là Hoạt động khác."],
-    ["2", "Kiểm tra minh chứng", "Mở Kiểm tra minh chứng, xem từng hồ sơ, đối chiếu link/thông tin và chọn Đạt, Không đạt hoặc Yêu cầu bổ sung."],
-    ["3", "Tự động cộng điểm", "Ngay khi minh chứng được duyệt Đạt, hệ thống tính số hoạt động quy đổi và điểm theo quy định."],
-    ["4", "Xem tổng hợp", "Tổng hợp theo lớp chỉ dựa trên minh chứng Đạt; dữ liệu có thể lọc theo khóa."],
-    ["5", "Xuất danh sách", "Bảng xuất có xem trước, chỉnh sửa bản nháp rồi mới xuất Excel/Word/PDF. Các cột hoạt động của BTT và các nhóm chủ động chỉ hiện khi có dữ liệu."],
-    ["6", "Sao lưu", "Vào Cài đặt để xuất JSON sao lưu. Database online Supabase là nguồn dữ liệu dùng chung cho nhiều thiết bị."],
-  ];
-  const steps = role === "admin" ? adminSteps : studentSteps;
-  return (<div><PageHead title="Hướng dẫn sử dụng" sub="Có thể mở lại mục này bất cứ lúc nào khi cần xem cách dùng hệ thống." /><Card className="p-5 mb-4" style={{ background: C.blueBg, borderColor: "#D6E4F2" }}><div className="font-bold mb-1 flex items-center gap-2" style={{ color: C.navy }}><HelpCircle size={17} /> Hướng dẫn nhanh cho {role === "admin" ? "quản trị viên" : "sinh viên"}</div><div className="text-xs" style={{ color: C.navy2 }}>Mỗi bước đều có thể thực hiện lại; dữ liệu đã lưu trên database online không bị mất chỉ vì website được cập nhật code.</div></Card><div className="space-y-3">{steps.map(([n,t,d]) => <Card key={n} className="p-4 flex gap-3"><div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 font-bold" style={{ background: C.navy, color: C.gold }}>{n}</div><div><div className="font-bold text-sm" style={{ color: C.navy }}>{t}</div><div className="text-xs mt-1 leading-relaxed" style={{ color: C.gray }}>{d}</div></div></Card>)}</div></div>);
-}
-
 function RulesPage() {
   return (
     <div>
@@ -2980,12 +3008,12 @@ function AdminApp(props) {
     { key: "export", label: "Xuất dữ liệu", icon: FileSpreadsheet },
     { key: "admins", label: "Quản trị viên", icon: ShieldCheck },
     { key: "audit", label: "Nhật ký quản trị", icon: History },
+    { key: "cohorts", label: "Quản lý khóa dữ liệu", icon: Archive },
     { key: "settings", label: "Cài đặt", icon: Settings },
-    { key: "help", label: "Hướng dẫn sử dụng", icon: HelpCircle },
   ];
 
   return (
-    <Shell title="CỔNG QUẢN TRỊ" subtitle={admin.hoten} tabs={tabs} active={tab} onTab={setTab} onLogout={onLogout} badgeCounts={{ review: pendingCount, complaints: complaintCount, chat: chatCount }} online={props.online}>
+    <Shell title="CỔNG QUẢN TRỊ" subtitle={admin.hoten} tabs={tabs} active={tab} onTab={setTab} onLogout={onLogout} badgeCounts={{ review: pendingCount, complaints: complaintCount, chat: chatCount }}>
       {tab === "dashboard" && <AdminDashboard {...props} onTab={setTab} />}
       {tab === "students" && <AdminStudents {...props} admin={admin} />}
       {tab === "activities" && <AdminActivities {...props} admin={admin} />}
@@ -2996,8 +3024,8 @@ function AdminApp(props) {
       {tab === "export" && <AdminExport {...props} />}
       {tab === "admins" && <AdminManageAdmins {...props} admin={admin} />}
       {tab === "audit" && <AdminAudit {...props} />}
+      {tab === "cohorts" && <AdminCohortData {...props} admin={admin} />}
       {tab === "settings" && <AdminSettings {...props} admin={admin} />}
-      {tab === "help" && <HelpPage role="admin" />}
     </Shell>
   );
 }
@@ -3285,16 +3313,16 @@ function EvidenceDataView({ ev }) {
       d.tuNgay && ["Từ ngày (trang cá nhân)", fmtD(d.tuNgay)],
       d.denNgay && ["Đến ngày", fmtD(d.denNgay)],
       d.xacNhan2Ngay !== undefined && ["SV tự xác nhận trong hạn 2 ngày", d.xacNhan2Ngay ? "Có" : "Không"],
-      ["Link Facebook cá nhân", d.link],
-      d.video && ["Video bổ sung", d.video],
+      ["Link minh chứng", d.link],
     ].filter(Boolean);
   } else if (ev.loai === "QC") {
     rows = [
       ["Hình thức", { to_chuc: "Ban Truyền thông tổ chức", cau_lac_bo: "Tham gia CLB Truyền thông", tu_lam: "Tự quay/chụp" }[d.nguon] || d.nguon],
-      d.ten && ["Tên minh chứng / video", d.ten],
-      d.nguoiMoi && ["Thành viên CLB đã mời", d.nguoiMoi],
+      d.ten && ["Tên video", d.ten],
+      ["Thời gian", fmtFlex(d.thoiGian)],
+      d.thucHienCung && ["Thực hiện cùng", d.thucHienCung],
       ["Link Drive", d.link],
-      d.video && ["Video bổ sung", d.video],
+      d.moTa && ["Mô tả", d.moTa],
     ].filter(Boolean);
   } else if (ev.loai === "TV") {
     rows = [["Thời gian tham gia", fmtDT(d.thoiGian)]];
@@ -3472,58 +3500,159 @@ function objRowsToTable(heading, rows) {
   const columns = rows.length ? Object.keys(rows[0]) : [];
   return { heading, columns, rows: rows.map((r) => columns.map((c) => r[c])) };
 }
-function buildExportSummaryRows(db) {
-  const bttActs = db.activities.slice().sort((a,b) => new Date(a.batDau) - new Date(b.batDau));
-  const approved = db.evidences.filter((e) => e.status === "dat");
-  const hasSelf = approved.some((e) => e.activityId === null && e.loai === "QC" && e.data?.nguon === "tu_lam");
-  const hasClub = approved.some((e) => e.activityId === null && e.loai === "QC" && e.data?.nguon === "cau_lac_bo");
-  const hasShare = approved.some((e) => e.activityId === null && e.loai === "SH");
-  const columns = ["STT", "MSSV", "Họ tên", "Khóa", "Lớp"];
-  bttActs.forEach((a) => columns.push(`${a.ma} · ${a.ten}`));
-  if (hasSelf) columns.push("Tự quay/chụp");
-  if (hasClub) columns.push("Tham gia cùng CLB Truyền thông");
-  if (hasShare) columns.push("Chia sẻ bài viết");
-  columns.push("Tổng hoạt động", "Điểm cộng");
-  const rows = db.students.map((s, idx) => {
-    const out = { STT: idx + 1, MSSV: s.mssv, "Họ tên": s.hoTen, Khóa: s.khoa, Lớp: s.lop };
-    let total = 0;
-    bttActs.forEach((a) => { const q = quyDoiForActivity(a, db.evidences.filter((e) => e.mssv === s.mssv && e.activityId === a.id)); out[`${a.ma} · ${a.ten}`] = q; total += q; });
-    if (hasSelf) { const q = Math.floor(db.evidences.filter((e) => e.mssv === s.mssv && e.status === "dat" && !e.activityId && e.loai === "QC" && e.data?.nguon === "tu_lam").length / 5); out["Tự quay/chụp"] = q; total += q; }
-    if (hasClub) { const q = Math.floor(db.evidences.filter((e) => e.mssv === s.mssv && e.status === "dat" && !e.activityId && e.loai === "QC" && e.data?.nguon === "cau_lac_bo").length / 5); out["Tham gia cùng CLB Truyền thông"] = q; total += q; }
-    if (hasShare) { const q = Math.floor(db.evidences.filter((e) => e.mssv === s.mssv && e.status === "dat" && !e.activityId && e.loai === "SH").reduce((n,e)=>n+(Number(e.data?.soLuot)||0),0) / 10); out["Chia sẻ bài viết"] = q; total += q; }
-    out["Tổng hoạt động"] = total; out["Điểm cộng"] = calcPoints(total);
-    return out;
-  });
-  return { columns, rows };
+function getEvidenceTime(e) {
+  return e.approvedAt || e.submittedAt || e.data?.thoiGian || e.data?.tuNgay || "";
 }
-function AdminExport({ db, log, admin, show }) {
-  const [kind, setKind] = useState("final");
-  const [draft, setDraft] = useState(() => buildExportSummaryRows(db));
-  useEffect(() => { setDraft(buildExportSummaryRows(db)); }, [db.students.length, db.activities.length, db.evidences.length]);
-  const detailRows = db.evidences.map((e) => { const st = db.students.find((s) => s.mssv === e.mssv); const act = e.activityId ? db.activities.find((a) => a.id === e.activityId) : null; return { MSSV: e.mssv, "Họ tên": st?.hoTen || "", Lớp: st?.lop || "", "Mã HĐ": act ? act.ma : `${e.loai}-CD`, "Tên HĐ": act ? act.ten : `${typeOf(e.loai)?.name} (chủ động)`, "Loại": typeOf(e.loai)?.name || "", "Trạng thái": STATUS_META[e.status]?.label || "", "Người duyệt": e.approvedBy || "", "Nộp lúc": fmtDT(e.submittedAt), "Ghi chú": e.note || "" }; });
-  const buildRowsForKind = () => {
-    if (kind === "detail") return { columns: Object.keys(detailRows[0] || {MSSV:""}), rows: detailRows };
-    if (kind === "summary" || kind === "final") return draft;
-    const classes = [...new Set(db.students.map(s=>s.lop))];
-    const rows = []; classes.forEach((lop) => db.students.filter(s=>s.lop===lop).forEach((s,i)=> { const { total, points }=computeStudentTotals(db,s.mssv); rows.push({ Lớp:lop, STT:i+1, MSSV:s.mssv, "Họ tên":s.hoTen, Khóa:s.khoa, "Tổng hoạt động":total, "Điểm cộng":points }); }));
-    return { columns: Object.keys(rows[0] || {Lớp:""}), rows };
+function inDateRange(value, from, to) {
+  if (!value) return false;
+  const d = new Date(value); if (Number.isNaN(d.getTime())) return false;
+  const a = new Date(from + "T00:00:00");
+  const b = new Date(to + "T23:59:59.999");
+  return d >= a && d <= b;
+}
+function evidenceIsDatInRange(e, from, to) {
+  if (e.status !== "dat") return false;
+  // Với minh chứng thuộc một hoạt động do BTT tạo, ưu tiên thời gian của hoạt động;
+  // với minh chứng chủ động (không có activityId), dùng thời gian minh chứng/nộp.
+  return inDateRange(getEvidenceTime(e), from, to);
+}
+function contributionForActivity(activity, evidences) {
+  const dat = evidences.filter(e => e.status === "dat");
+  if (!dat.length) return 0;
+  switch (activity.loai) {
+    case "SH": return Math.floor(dat.reduce((n,e)=>n+(Number(e.data?.soLuot)||0),0)/10);
+    case "QC": return Math.floor(dat.length/5);
+    case "TV": case "VD": case "GT": return activity.loai === "GT" ? dat.length*2 : dat.length;
+    case "KH": return Math.floor(dat.length/(Number(activity.soLuongCanDat)||1))*(Number(activity.quyDoiHoatDong)||1);
+    default: return 0;
+  }
+}
+function buildExportDataset(db, from, to, selectedMssv) {
+  const rangeEvs = db.evidences.filter(e => evidenceIsDatInRange(e, from, to));
+  const activities = db.activities.filter(a => {
+    const has = rangeEvs.some(e => e.activityId === a.id);
+    const start = a.batDau ? new Date(a.batDau) : null;
+    const end = a.ketThuc ? new Date(a.ketThuc) : null;
+    const f = new Date(from+"T00:00:00"), t = new Date(to+"T23:59:59.999");
+    const overlap = start && end && start <= t && end >= f;
+    return has || overlap;
+  }).sort((a,b)=>new Date(a.batDau||0)-new Date(b.batDau||0));
+
+  const columns = activities.map(a => ({ key:"act:"+a.id, label:a.ten }));
+  const proactive = [];
+  if (rangeEvs.some(e=>!e.activityId && e.loai === "QC" && e.data?.nguon === "tu_lam")) proactive.push({key:"pro:tu_lam",label:"Tự quay/chụp"});
+  if (rangeEvs.some(e=>!e.activityId && e.loai === "QC" && e.data?.nguon === "cau_lac_bo")) proactive.push({key:"pro:cau_lac_bo",label:"Tham gia cùng CLB Truyền thông"});
+  if (rangeEvs.some(e=>!e.activityId && e.loai === "SH")) proactive.push({key:"pro:SH",label:"Chia sẻ bài viết"});
+  const allColumns = [...columns, ...proactive];
+
+  const makeRow = (s) => {
+    const row = { "MSSV":s.mssv, "HỌ VÀ TÊN":s.hoTen, "KHÓA":s.khoa, "LỚP":s.lop };
+    let total = 0;
+    activities.forEach(a => {
+      const evs = rangeEvs.filter(e=>e.mssv===s.mssv && e.activityId===a.id);
+      const q = contributionForActivity(a, evs); row["act:"+a.id]=q || ""; total += q;
+    });
+    proactive.forEach(c => {
+      let evs=[];
+      if(c.key==="pro:tu_lam") evs=rangeEvs.filter(e=>e.mssv===s.mssv&&!e.activityId&&e.loai==="QC"&&e.data?.nguon==="tu_lam");
+      if(c.key==="pro:cau_lac_bo") evs=rangeEvs.filter(e=>e.mssv===s.mssv&&!e.activityId&&e.loai==="QC"&&e.data?.nguon==="cau_lac_bo");
+      if(c.key==="pro:SH") evs=rangeEvs.filter(e=>e.mssv===s.mssv&&!e.activityId&&e.loai==="SH");
+      const q = c.key==="pro:SH" ? Math.floor(evs.reduce((n,e)=>n+(Number(e.data?.soLuot)||0),0)/10) : Math.floor(evs.length/5);
+      row[c.key]=q || ""; total += q;
+    });
+    row["Tổng hoạt động"] = total;
+    row["Điểm cộng"] = calcPoints(total);
+    return {row,total};
   };
-  const data = buildRowsForKind();
-  const setCell = (rowIndex, col, value) => setDraft((d) => ({ ...d, rows: d.rows.map((r,i)=>i===rowIndex ? { ...r, [col]: value } : r) }));
-  const exportNow = (format) => {
-    const rows = data.rows; const title = kind === "detail" ? "Danh sách chi tiết" : kind === "byclass" ? "Báo cáo theo lớp" : "Danh sách chốt điểm"; const sheet = [{ name: "Danh sách".slice(0,31), rows }];
-    if (format === "excel") downloadXlsx("danh-sach-bav.xlsx", sheet);
-    if (format === "word") exportWordFromTables("danh-sach-bav.doc", title, [objRowsToTable("Danh sách", rows)]);
-    if (format === "pdf") exportPdfFromTables(title, [objRowsToTable("Danh sách", rows)]);
-    log(admin.hoten, `Xuất ${format}`, title, "Đã xem trước và xuất"); show(format === "pdf" ? "Đã mở bản in PDF." : "Đã xuất danh sách.");
+  const students = db.students.filter(s=>selectedMssv.includes(s.mssv)).map(makeRow).filter(x=>x.total>0);
+  return { activities, proactive, columns:allColumns, students, rangeEvs };
+}
+function AdminExport({ db, update, log, admin, show }) {
+  const today = new Date();
+  const defaultFrom = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-01`;
+  const defaultTo = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
+  const [from,setFrom]=useState(defaultFrom); const [to,setTo]=useState(defaultTo);
+  const [semester,setSemester]=useState(db.settings?.semester||"Học kỳ I"); const [academicYear,setAcademicYear]=useState(db.settings?.academicYear||"2026–2027");
+  const [draft,setDraft]=useState([]); const [preview,setPreview]=useState(false); const [addOpen,setAddOpen]=useState(false); const [extra,setExtra]=useState([]); const [summaryMode,setSummaryMode]=useState("all");
+  const [error,setError]=useState("");
+  const selectedIds = draft.length ? draft.map(r=>r.mssv) : db.students.map(s=>s.mssv);
+  const data = buildExportDataset(db,from,to,selectedIds);
+  const ensureDraft=()=>{
+    if(!from||!to||new Date(from)>new Date(to)) return setError("Thời gian tổng kết không hợp lệ.");
+    const rows=data.students.map(x=>({mssv:x.row.MSSV, ...x.row}));
+    if(!rows.length) return setError("Không có sinh viên nào có điểm cộng trong khoảng thời gian đã chọn.");
+    setDraft(rows); setPreview(true); setError("");
   };
-  return (<div>
-    <PageHead title="Xuất danh sách" sub="Xem trước → chỉnh sửa bản nháp → xuất file. Chỉnh sửa tại đây không làm thay đổi dữ liệu gốc trong database." />
-    <div className="flex flex-wrap gap-2 mb-4">{[["final","Chốt điểm cuối"],["summary","Tổng hợp"],["byclass","Theo lớp"],["detail","Chi tiết minh chứng"]].map(([k,l])=><FilterChip key={k} active={kind===k} onClick={()=>setKind(k)}>{l}</FilterChip>)}</div>
-    <Card className="p-4 mb-4"><div className="flex items-center justify-between gap-3 flex-wrap"><div><div className="font-bold flex items-center gap-2" style={{ color:C.navy }}><Eye size={16}/> Bảng xem trước</div><div className="text-xs mt-1" style={{color:C.gray}}>Các cột hoạt động của Ban Truyền thông nằm sau thông tin sinh viên. Nhóm Tự quay/chụp, CLB và Chia sẻ chỉ xuất hiện khi có minh chứng Đạt.</div></div><div className="flex gap-2"><Btn variant="outline" icon={Download} onClick={()=>exportNow("excel")}>Xuất Excel</Btn><Btn variant="outline" icon={Download} onClick={()=>exportNow("word")}>Xuất Word</Btn><Btn variant="amber" icon={Download} onClick={()=>exportNow("pdf")}>Xuất PDF</Btn></div></div></Card>
-    <Card className="overflow-auto"><table className="text-xs" style={{ minWidth: Math.max(900, data.columns.length*150) }}><thead><tr style={{background:C.grayBg}}>{data.columns.map(c=><th key={c} className="text-left px-3 py-2.5 font-semibold whitespace-nowrap" style={{color:C.gray}}>{c}</th>)}</tr></thead><tbody>{data.rows.map((r,i)=><tr key={i} className="border-t" style={{borderColor:C.line}}>{data.columns.map(c=><td key={c} className="px-2 py-2 align-top"><input value={r[c] ?? ""} onChange={e=>kind !== "byclass" && setCell(i,c,e.target.value)} disabled={kind === "byclass" || kind === "detail"} className="w-full min-w-[90px] rounded-lg px-2 py-1 border" style={{borderColor:C.line, background:kind === "byclass" ? C.grayBg : "#fff", color:C.navy}} /></td>)}</tr>)}</tbody></table></Card>
-    <div className="text-[11px] mt-3" style={{color:C.gray}}>Lưu ý: số liệu tính điểm tự động dựa trên minh chứng Đạt. Các chỉnh sửa trong bảng xem trước chỉ là chỉnh sửa nội dung file xuất, không sửa dữ liệu gốc.</div>
-  </div>);
+  const colDefs=[
+    {key:"MSSV",label:"MSSV"},{key:"HỌ VÀ TÊN",label:"HỌ VÀ TÊN"},{key:"KHÓA",label:"KHÓA"},{key:"LỚP",label:"LỚP"},
+    ...data.columns.map(c=>({key:c.key,label:c.label})),
+    {key:"Tổng hoạt động",label:"TỔNG HOẠT ĐỘNG"},{key:"Điểm cộng",label:"ĐIỂM CỘNG"}
+  ];
+  const editCell=(i,k,v)=>setDraft(prev=>prev.map((r,idx)=>{
+    if(idx!==i) return r;
+    const next={...r,[k]:v};
+    if(k!=="MSSV"&&k!=="HỌ VÀ TÊN"&&k!=="KHÓA"&&k!=="LỚP"&&k!=="Tổng hoạt động"&&k!=="Điểm cộng") {
+      const total=colDefs.reduce((sum,c)=>{
+        if(c.key.startsWith("act:")||c.key.startsWith("pro:")) return sum+(Number(next[c.key])||0);
+        return sum;
+      },0);
+      next["Tổng hoạt động"]=total; next["Điểm cộng"]=calcPoints(total);
+    }
+    return next;
+  }));
+  const addStudent=(mssv)=>{
+    const s=db.students.find(x=>x.mssv===mssv); if(!s) return;
+    const built=buildExportDataset(db,from,to,[mssv]).students[0];
+    if(!built) { const base={"MSSV":s.mssv,"HỌ VÀ TÊN":s.hoTen,"KHÓA":s.khoa,"LỚP":s.lop}; data.columns.forEach(c=>base[c.key]=""); base["Tổng hoạt động"]=0;base["Điểm cộng"]=0; setDraft(prev=>[...prev,base]); }
+    else setDraft(prev=>prev.some(r=>r.MSSV===mssv)?prev:[...prev,{mssv:mssv,...built.row}]);
+    setExtra(prev=>prev.filter(x=>x!==mssv));
+  };
+  const getExportRows=()=>{
+    let rows=draft.map(r=>({...r}));
+    if(summaryMode!=="all") rows=rows.filter(r=>r.LỚP===summaryMode);
+    return rows;
+  };
+  const filename=`Tổng kết điểm cộng truyền thông ${semester} ${academicYear}`;
+  const buildTableRows=(rows)=>rows.map(r=>colDefs.map(c=>r[c.key]??""));
+  const exportExcel=()=>{
+    const rows=getExportRows(); if(!rows.length)return show("Không có dữ liệu để xuất.");
+    const header=colDefs.map(c=>c.label); const aoa=[header,...buildTableRows(rows)];
+    const wb=XLSX.utils.book_new(); const ws=XLSX.utils.aoa_to_sheet(aoa); XLSX.utils.book_append_sheet(wb,ws,"Tổng hợp");
+    const byClass={}; rows.forEach(r=>(byClass[r.LỚP]??=[]).push(r));
+    Object.entries(byClass).forEach(([lop,rs])=>{const w=XLSX.utils.aoa_to_sheet([header,...buildTableRows(rs)]);XLSX.utils.book_append_sheet(wb,w,lop.slice(0,31));});
+    XLSX.writeFile(wb,filename+".xlsx"); log(admin.hoten,"Xuất Excel",filename,"Thành công"); show("Đã xuất danh sách Excel.");
+  };
+  const exportWord=()=>{const rows=getExportRows(); if(!rows.length)return show("Không có dữ liệu để xuất."); const table={heading:summaryMode==="all"?"Tổng hợp toàn khóa":"Tổng hợp lớp "+summaryMode,columns:colDefs.map(c=>c.label),rows:buildTableRows(rows)}; exportWordFromTables(filename,filename,[table]);log(admin.hoten,"Xuất Word",filename,"Thành công");show("Đã xuất Word.");};
+  const exportPdf=()=>{const rows=getExportRows(); if(!rows.length)return show("Không có dữ liệu để xuất."); const table={heading:summaryMode==="all"?"Tổng hợp toàn khóa":"Tổng hợp lớp "+summaryMode,columns:colDefs.map(c=>c.label),rows:buildTableRows(rows)};exportPdfFromTables(filename,[table]);log(admin.hoten,"Xuất PDF",filename,"Thành công");};
+  const classes=[...new Set(draft.map(r=>r.LỚP).filter(Boolean))].sort();
+  const missing=db.students.filter(s=>!draft.some(r=>r.MSSV===s.mssv));
+  return <div>
+    <PageHead title="Tổng kết & xuất danh sách điểm cộng" sub="Chọn thời hạn → học kỳ/niên khóa → xem trước → chỉnh sửa → xuất file." />
+    <Card className="p-5 mb-4">
+      <div className="grid md:grid-cols-4 gap-3">
+        <Field label="Từ ngày"><TextInput type="date" value={from} onChange={e=>setFrom(e.target.value)} /></Field>
+        <Field label="Đến ngày"><TextInput type="date" value={to} onChange={e=>setTo(e.target.value)} /></Field>
+        <Field label="Học kỳ"><Select value={semester} onChange={e=>setSemester(e.target.value)}><option>Học kỳ I</option><option>Học kỳ II</option><option>Học kỳ III</option></Select></Field>
+        <Field label="Niên khóa"><TextInput value={academicYear} onChange={e=>setAcademicYear(e.target.value)} placeholder="2026–2027" /></Field>
+      </div>
+      <div className="text-xs mt-2" style={{color:C.gray}}>Chỉ minh chứng <b>Đạt</b> trong thời hạn mới được tính. Danh sách chỉ hiển thị sinh viên có điểm cộng.</div>
+      {error&&<div className="text-sm mt-3 p-2.5 rounded-lg" style={{background:C.redBg,color:C.red}}>{error}</div>}
+      <div className="flex flex-wrap gap-2 mt-4"><Btn variant="amber" icon={Eye} onClick={ensureDraft}>Tạo bảng xem trước</Btn>{draft.length>0&&<Btn variant="outline" onClick={()=>setDraft([])}>Tạo lại</Btn>}</div>
+    </Card>
+    {preview&&<Card className="p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <div><div className="font-bold" style={{color:C.navy}}>Xem trước: {filename}</div><div className="text-xs" style={{color:C.gray}}>Từ {fmtD(from)} đến {fmtD(to)} · {draft.length} dòng</div></div>
+        <div className="flex flex-wrap gap-2"><Btn variant="outline" icon={Plus} onClick={()=>setAddOpen(true)}>Thêm sinh viên</Btn><Select style={{width:180}} value={summaryMode} onChange={e=>setSummaryMode(e.target.value)}><option value="all">Tổng hợp toàn khóa</option>{classes.map(c=><option key={c} value={c}>Theo lớp {c}</option>)}</Select></div>
+      </div>
+      <div className="overflow-x-auto border rounded-xl"><table className="w-full text-xs"><thead><tr style={{background:C.grayBg}}>{colDefs.map(c=><th key={c.key} className="px-2 py-2 text-left whitespace-nowrap" style={{color:C.gray}}>{c.label}</th>)}</tr></thead><tbody>{getExportRows().map((r,i)=><tr key={r.MSSV} className="border-t" style={{borderColor:C.line}}>{colDefs.map(c=><td key={c.key} className="px-1 py-1"><input className="w-full min-w-[90px] px-2 py-1.5 rounded-lg border bg-white" value={r[c.key]??""} onChange={e=>editCell(draft.findIndex(x=>x.MSSV===r.MSSV),c.key,e.target.value)} /></td>)}</tr>)}</tbody></table></div>
+      <div className="flex flex-wrap gap-2 mt-4"><Btn variant="amber" icon={Download} onClick={exportExcel}>Xuất Excel</Btn><Btn variant="outline" icon={Download} onClick={exportWord}>Xuất Word</Btn><Btn variant="outline" icon={Download} onClick={exportPdf}>Xuất PDF</Btn></div>
+      <div className="text-xs mt-3 p-3 rounded-lg" style={{background:C.blueBg,color:C.blue}}>Các chỉnh sửa trong bảng chỉ chỉnh nội dung file xuất, không sửa dữ liệu gốc của sinh viên/minh chứng.</div>
+    </Card>}
+    <Modal open={addOpen} onClose={()=>setAddOpen(false)} title="Thêm sinh viên vào bảng tổng kết" width="max-w-2xl">
+      <div className="text-xs mb-3" style={{color:C.gray}}>Dùng khi thiếu sót trong danh sách. Có thể thêm bất kỳ sinh viên nào từ Tổng sinh viên.</div>
+      <div className="max-h-[420px] overflow-auto space-y-1">{missing.map(s=><button key={s.mssv} className="w-full text-left p-3 rounded-xl border hover:bg-gray-50 flex items-center justify-between" onClick={()=>addStudent(s.mssv)}><span><b>{s.hoTen}</b><span className="text-xs ml-2" style={{color:C.gray}}>{s.mssv} · {s.lop}</span></span><Plus size={15}/></button>)}</div>
+    </Modal>
+  </div>;
 }
 
 function AdminManageAdmins({ db, update, log, show, admin }) {
@@ -3624,6 +3753,62 @@ function AdminAudit({ db }) {
   );
 }
 
+function AdminCohortData({ db, update, log, show, admin }) {
+  const [newKhoa,setNewKhoa]=useState("");
+  const [newYear,setNewYear]=useState("");
+  const [confirm,setConfirm]=useState(null);
+  const cohorts=[...new Set([...(db.settings?.cohorts||[]).map(x=>typeof x==="string"?x:x.name), ...db.students.map(s=>s.khoa).filter(Boolean)])].sort();
+  const archives=db.archives||[];
+  const addCohort=()=>{
+    const name=newKhoa.trim(); if(!name) return show("Vui lòng nhập tên khóa.");
+    if(cohorts.includes(name)) return show("Khóa này đã tồn tại.");
+    update("settings",{...db.settings,cohorts:[...(db.settings?.cohorts||[]),{name,academicYear:newYear.trim(),createdAt:nowISO(),status:"active"}]});
+    log(admin.hoten,"Thêm khóa mới",name,newYear.trim()?`Niên khóa ${newYear.trim()}`:"Thành công");
+    show(`Đã thêm ${name}.`);setNewKhoa("");setNewYear("");
+  };
+  const doArchive=(khoa)=>{
+    const students=db.students.filter(s=>s.khoa===khoa); if(!students.length) return show("Khóa này hiện không có sinh viên để lưu trữ.");
+    const ids=new Set(students.map(s=>s.mssv));
+    const snap={id:uid(),khoa,academicYear:(db.settings?.cohorts||[]).find(x=>(typeof x==="string"?x:x.name)===khoa)?.academicYear||"",archivedAt:nowISO(),archivedBy:admin.hoten,students,evidences:db.evidences.filter(e=>ids.has(e.mssv)),complaints:db.complaints.filter(c=>ids.has(c.mssv)),notifications:db.notifications.filter(n=>ids.has(n.mssv))};
+    update("archives",arr=>[snap,...(arr||[])]);
+    update("students",arr=>arr.filter(s=>s.khoa!==khoa));
+    update("evidences",arr=>arr.filter(e=>!ids.has(e.mssv)));
+    update("complaints",arr=>arr.filter(c=>!ids.has(c.mssv)));
+    update("notifications",arr=>arr.filter(n=>!ids.has(n.mssv)));
+    update("settings",{...db.settings,cohorts:(db.settings?.cohorts||[]).map(x=>{const o=typeof x==="string"?{name:x}:x;return o.name===khoa?{...o,status:"archived",archivedAt:nowISO()}:o;})});
+    log(admin.hoten,"Lưu trữ khóa dữ liệu",khoa,`Đã lưu ${students.length} sinh viên`);show(`Đã lưu trữ ${khoa}. Có thể xóa vĩnh viễn tại mục dữ liệu đã lưu trữ.`);setConfirm(null);
+  };
+  const restore=(a)=>{
+    const ids=new Set(db.students.map(s=>s.mssv)); const fresh=a.students.filter(s=>!ids.has(s.mssv));
+    update("students",arr=>[...arr,...fresh]); update("evidences",arr=>[...arr,...a.evidences]); update("complaints",arr=>[...arr,...(a.complaints||[])]); update("notifications",arr=>[...arr,...(a.notifications||[])]);
+    update("archives",arr=>arr.filter(x=>x.id!==a.id));
+    update("settings",{...db.settings,cohorts:(db.settings?.cohorts||[]).map(x=>{const o=typeof x==="string"?{name:x}:x;return o.name===a.khoa?{...o,status:"active"}:o;})});
+    log(admin.hoten,"Khôi phục khóa dữ liệu",a.khoa,"Thành công");show(`Đã khôi phục ${a.khoa}.`);
+  };
+  const purge=(a)=>{update("archives",arr=>arr.filter(x=>x.id!==a.id));log(admin.hoten,"Xóa vĩnh viễn dữ liệu khóa cũ",a.khoa,"Đã xóa khỏi hệ thống");show(`Đã xóa vĩnh viễn dữ liệu ${a.khoa}.`);setConfirm(null);};
+  return <div>
+    <PageHead title="Quản lý khóa dữ liệu" sub="Thêm khóa mới, lưu trữ khóa đã ra trường và xóa vĩnh viễn dữ liệu cũ khi cần." />
+    <Card className="p-5 mb-4">
+      <div className="font-bold mb-3" style={{color:C.navy}}>Thêm khóa mới</div>
+      <div className="grid md:grid-cols-3 gap-3"><Field label="Tên khóa" required><TextInput placeholder="VD: K29" value={newKhoa} onChange={e=>setNewKhoa(e.target.value)} /></Field><Field label="Niên khóa"><TextInput placeholder="2027–2028" value={newYear} onChange={e=>setNewYear(e.target.value)} /></Field><div className="flex items-end"><Btn variant="amber" icon={Plus} onClick={addCohort}>Thêm khóa</Btn></div></div>
+    </Card>
+    <Card className="p-5 mb-4">
+      <div className="font-bold mb-3" style={{color:C.navy}}>Khóa đang quản lý</div>
+      <div className="space-y-2">{cohorts.length===0?<Empty title="Chưa có khóa"/>:cohorts.map(k=>{const count=db.students.filter(s=>s.khoa===k).length;const meta=(db.settings?.cohorts||[]).find(x=>(typeof x==="string"?x:x.name)===k);return <div key={k} className="flex flex-wrap items-center gap-3 p-3 rounded-xl border" style={{borderColor:C.line}}><div className="flex-1"><b style={{color:C.navy}}>{k}</b><div className="text-xs" style={{color:C.gray}}>{typeof meta==="object"?meta.academicYear||"":""} · {count} sinh viên đang hoạt động</div></div><Btn variant="outline" icon={Archive} onClick={()=>setConfirm({type:"archive",khoa:k})}>Lưu trữ khóa</Btn></div>})}</div>
+    </Card>
+    <Card className="p-5">
+      <div className="font-bold mb-3 flex items-center gap-2" style={{color:C.navy}}><Archive size={16}/> Dữ liệu khóa đã lưu trữ</div>
+      <div className="text-xs mb-3" style={{color:C.gray}}>Dữ liệu được giữ riêng trong Supabase. Bạn có thể khôi phục hoặc xóa vĩnh viễn. Xóa vĩnh viễn không thể hoàn tác.</div>
+      {archives.length===0?<Empty title="Chưa có khóa nào được lưu trữ"/>:<div className="space-y-2">{archives.map(a=><div key={a.id} className="flex flex-wrap items-center gap-3 p-3 rounded-xl border" style={{borderColor:C.line}}><div className="flex-1"><b style={{color:C.navy}}>{a.khoa}</b><div className="text-xs" style={{color:C.gray}}>{a.academicYear||""} · {a.students?.length||0} sinh viên · lưu ngày {fmtDT(a.archivedAt)}</div></div><Btn variant="outline" onClick={()=>setConfirm({type:"restore",archive:a})}>Khôi phục</Btn><Btn variant="danger" onClick={()=>setConfirm({type:"purge",archive:a})}>Xóa vĩnh viễn</Btn></div>)}</div>}
+    </Card>
+    <Modal open={!!confirm} onClose={()=>setConfirm(null)} title={confirm?.type==="archive"?`Lưu trữ ${confirm.khoa}`:confirm?.type==="purge"?`Xóa vĩnh viễn ${confirm.archive.khoa}`:"Khôi phục dữ liệu"}>
+      {confirm?.type==="archive"&&<div className="text-sm"><div className="p-3 rounded-lg mb-4" style={{background:C.blueBg,color:C.blue}}>Hệ thống sẽ lưu toàn bộ sinh viên của khóa, minh chứng, khiếu nại và thông báo liên quan vào khu lưu trữ, sau đó đưa chúng ra khỏi dữ liệu đang hoạt động. Hoạt động chung và nhật ký quản trị vẫn được giữ.</div><Btn variant="amber" className="w-full" onClick={()=>doArchive(confirm.khoa)}>Xác nhận lưu trữ</Btn></div>}
+      {confirm?.type==="restore"&&<div className="text-sm"><div className="p-3 rounded-lg mb-4" style={{background:C.greenBg,color:C.green}}>Khôi phục sẽ đưa dữ liệu của {confirm.archive.khoa} trở lại hệ thống đang hoạt động.</div><Btn variant="amber" className="w-full" onClick={()=>restore(confirm.archive)}>Xác nhận khôi phục</Btn></div>}
+      {confirm?.type==="purge"&&<div className="text-sm"><div className="p-3 rounded-lg mb-4" style={{background:C.redBg,color:C.red}}>CẢNH BÁO: dữ liệu của {confirm.archive.khoa} sẽ bị xóa vĩnh viễn khỏi kho lưu trữ và không thể hoàn tác. Hãy chắc chắn bạn đã sao lưu.</div><Btn variant="danger" className="w-full" onClick={()=>purge(confirm.archive)}>Xác nhận xóa vĩnh viễn</Btn></div>}
+    </Modal>
+  </div>;
+}
+
 function AdminSettings({ db, update, log, show, admin }) {
   const [pw, setPw] = useState({ cur: "", next: "", confirm: "" }); const [err, setErr] = useState("");
   const s = db.settings;
@@ -3675,7 +3860,7 @@ function AdminSettings({ db, update, log, show, admin }) {
 function BackupRestoreCard({ db, update, log, show, admin }) {
   const fileRef = React.useRef(null);
   const [confirmFile, setConfirmFile] = useState(null);
-  const DATA_KEYS = ["students", "admins", "activities", "evidences", "complaints", "notifications", "auditlog", "settings", "messages"];
+  const DATA_KEYS = ["students", "admins", "activities", "evidences", "complaints", "notifications", "auditlog", "settings", "messages", "archives"];
 
   const doBackup = () => {
     const payload = { exportedAt: nowISO(), exportedBy: admin.hoten, data: {} };
