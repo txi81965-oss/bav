@@ -1888,13 +1888,31 @@ async function loadAll() {
   }
 }
 async function saveKey(key, value) {
+  const writeAt = new Date().toISOString();
+  localWriteAt.set(key, writeAt);
   setLocal(key, value);
   if (!supabaseClient) return false;
-  try {
-    const { error } = await supabaseClient.from("bav_app_state").upsert({ key, value, updated_at: nowISO() }, { onConflict: "key" });
-    if (error) throw error;
-    return true;
-  } catch (e) { console.error("Supabase save failed", key, e); return false; }
+
+  // Serialize writes per key so a later approval/update cannot be overwritten
+  // by an earlier, slower network request. This prevents Đạt -> Chờ kiểm tra rollbacks.
+  const previous = saveQueues.get(key) || Promise.resolve(true);
+  const task = previous.catch(() => false).then(async () => {
+    try {
+      const { error } = await supabaseClient.from("bav_app_state").upsert(
+        { key, value, updated_at: writeAt },
+        { onConflict: "key" }
+      );
+      if (error) throw error;
+      return true;
+    } catch (e) {
+      console.error("Supabase save failed", key, e);
+      return false;
+    }
+  });
+  saveQueues.set(key, task.finally(() => {
+    if (saveQueues.get(key) === task) saveQueues.delete(key);
+  }));
+  return task;
 }
 /* =========================================================================
    ROOT APP
@@ -1935,6 +1953,9 @@ function App() {
         .on("postgres_changes", { event: "*", schema: "public", table: "bav_app_state" }, (payload) => {
           const row = payload.new || payload.old;
           if (!row?.key || !KEYS.includes(row.key)) return;
+          const remoteAt = row.updated_at ? new Date(row.updated_at).getTime() : 0;
+          const mineAt = localWriteAt.get(row.key);
+          if (mineAt && remoteAt && remoteAt < new Date(mineAt).getTime()) return;
           setDb((prev) => prev ? { ...prev, [row.key]: row.value } : prev);
           setLocal(row.key, row.value);
           setOnline(true);
@@ -2554,19 +2575,35 @@ function ActivityCard({ a, onClick, db, student }) {
     </Card>
   );
 }
+function unresolvedEvidenceForActivity(evidences, activity) {
+  const rows = evidences.filter((e) => e.activityId === activity.id);
+  if (activity.loai === "QC") return rows;
+  const hasAccepted = rows.some((e) => e.status === "dat" || e.manualAttendance);
+  return hasAccepted ? rows.filter((e) => e.status !== "cho_kiem_tra" || e.manualAttendance) : rows;
+}
+
+function normalizeAcceptedActivityEvidence(evidences, activityId, activityType) {
+  const rows = evidences.filter(e => e.activityId === activityId);
+  if (activityType === "QC") return rows;
+  const accepted = rows.some(e => e.status === "dat" || e.manualAttendance);
+  return accepted ? rows.filter(e => e.status !== "cho_kiem_tra" || e.manualAttendance) : rows;
+}
+
 function ActivityDetailModal({ a, onClose, db, update, log, show, student }) {
   const [form, setForm] = useState({});
   const T = typeOf(a.loai);
   const runtime = activityRuntimeStatus(a);
   const canSubmit = runtime === "running";
-  const mine = db.evidences.filter((e) => e.activityId === a.id && e.mssv === student.mssv);
+  const allMine = db.evidences.filter((e) => e.activityId === a.id && e.mssv === student.mssv);
+  const mine = unresolvedEvidenceForActivity(allMine, a);
   const [agree, setAgree] = useState(false);
   const [err, setErr] = useState("");
 
   const submit = () => {
     setErr("");
     if (!agree) return setErr("Bạn phải cam kết thông tin trung thực trước khi gửi.");
-    if ((a.loai === "TV" || a.loai === "GT") && mine.some((e) => e.status === "cho_kiem_tra")) return setErr("Bạn đã có minh chứng đang chờ kiểm tra cho hoạt động này.");
+    if (a.loai !== "QC" && allMine.some((e) => e.status === "cho_kiem_tra")) return setErr("Bạn đã có minh chứng đang chờ kiểm tra cho hoạt động này.");
+    if (a.loai !== "QC" && allMine.some((e) => e.status === "dat" || e.manualAttendance)) return setErr("Minh chứng của hoạt động này đã được xác nhận Đạt; không cần nộp lại.");
     let data = {};
     if (a.loai === "SH") {
       if (!form.soLuot || !form.link) return setErr("Vui lòng nhập số lượt chia sẻ và link Facebook cá nhân.");
@@ -3425,7 +3462,7 @@ function AdminReview({ db, update, notify, log, show, admin }) {
   const list = db.evidences.filter((e) => (!filterType || e.loai === filterType) && (!filterStatus || e.status === filterStatus)).sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
   const decide = (ev, status, note) => { update("evidences", arr=>arr.map(x=>x.id===ev.id?{...x,status,note,approvedBy:admin.hoten,approvedAt:nowISO()}:x)); const act=ev.activityId?db.activities.find(a=>a.id===ev.activityId):null; const label=act?act.ma:`${ev.loai}-CD`; log(admin.hoten,"Kiểm tra minh chứng",`${label} · ${ev.mssv}`,STATUS_META[status].label); notify(ev.mssv,`Minh chứng ${label} của bạn: ${STATUS_META[status].label}${note?" — "+note:""}`); show("Đã cập nhật kết quả kiểm tra."); setModalEv(null); };
   const manualAttendance = (mssv, activityId) => { const st=db.students.find(s=>s.mssv===mssv), a=db.activities.find(x=>x.id===activityId); if(!st||!a)return; const existing=db.evidences.find(e=>e.mssv===mssv&&e.activityId===activityId&&e.manualAttendance); if(existing){show("Sinh viên này đã được điểm danh thủ công.");return;} const ev={id:uid(),activityId,mssv,loai:a.loai,data:{nguon:"to_chuc",manual:true},status:"dat",manualAttendance:true,note:"Điểm danh thủ công bởi quản trị viên",approvedBy:admin.hoten,approvedAt:nowISO(),submittedAt:nowISO(),camKet:true}; update("evidences",arr=>[ev,...arr]); log(admin.hoten,"Điểm danh thủ công",`${a.ma} · ${mssv}`,"Đạt — ưu tiên cao nhất"); notify(mssv,`Bạn đã được quản trị viên điểm danh trong hoạt động ${a.ma}.`); show(`Đã điểm danh ${st.hoTen} trong ${a.ma}.`); setManual(false); };
-  return <div><PageHead title="Kiểm tra minh chứng" sub="Duyệt từng minh chứng. Điểm danh thủ công của quản trị viên có ưu tiên cao nhất." right={<Btn variant="amber" icon={UserCheck} onClick={()=>setManual(true)}>Điểm danh thủ công</Btn>}/><div className="flex flex-wrap gap-2 mb-4"><Select style={{width:200}} value={filterType} onChange={e=>setFilterType(e.target.value)}><option value="">Tất cả loại</option>{ACTIVITY_TYPES.map(t=><option key={t.code} value={t.code}>{t.name}</option>)}</Select><Select style={{width:200}} value={filterStatus} onChange={e=>setFilterStatus(e.target.value)}><option value="">Tất cả trạng thái</option>{Object.entries(STATUS_META).map(([k,v])=><option key={k} value={k}>{v.label}</option>)}</Select><Btn variant="outline" onClick={()=>setFilterStatus("dat")}>Xem lại minh chứng Đạt</Btn></div><Card className="overflow-x-auto">{list.length===0?<Empty icon={ClipboardCheck} title="Không có minh chứng nào phù hợp"/>:<table className="w-full text-sm"><thead><tr style={{background:C.grayBg}}>{["Sinh viên","Hoạt động","Loại","Nộp lúc","Trạng thái","Người duyệt",""].map(h=><th key={h} className="text-left px-4 py-2.5 text-xs font-semibold whitespace-nowrap" style={{color:C.gray}}>{h}</th>)}</tr></thead><tbody>{list.map(ev=>{const st=db.students.find(s=>s.mssv===ev.mssv), act=ev.activityId?db.activities.find(a=>a.id===ev.activityId):null;return <tr key={ev.id} className="border-t" style={{borderColor:C.line}}><td className="px-4 py-2.5"><div className="font-medium" style={{color:C.navy}}>{st?.hoTen||ev.mssv}</div><div className="text-xs" style={{color:C.gray}}>{ev.mssv} · {st?.lop}</div></td><td className="px-4 py-2.5 text-xs font-mono" style={{color:C.amber2}}>{act?act.ma:`${ev.loai}-CD`}</td><td className="px-4 py-2.5 text-xs">{typeOf(ev.loai)?.name}</td><td className="px-4 py-2.5 text-xs">{fmtDT(ev.submittedAt)}</td><td className="px-4 py-2.5"><StatusBadge status={ev.status}/></td><td className="px-4 py-2.5 text-xs">{ev.approvedBy||"—"}</td><td className="px-4 py-2.5 text-right"><Btn variant="outline" onClick={()=>setModalEv(ev)}>Xem &amp; duyệt</Btn></td></tr>})}</tbody></table>}</Card>{modalEv&&<ReviewModal ev={modalEv} db={db} onClose={()=>setModalEv(null)} onDecide={decide}/>} {manual&&<ManualAttendanceModal db={db} onClose={()=>setManual(false)} onSubmit={manualAttendance}/>}</div>;
+  return <div><PageHead title="Kiểm tra minh chứng" sub="Duyệt từng minh chứng. Điểm danh thủ công của quản trị viên có ưu tiên cao nhất." right={<Btn variant="amber" icon={UserCheck} onClick={()=>setManual(true)}>Điểm danh thủ công</Btn>}/><div className="flex flex-wrap gap-2 mb-4"><Select style={{width:200}} value={filterType} onChange={e=>setFilterType(e.target.value)}><option value="">Tất cả loại</option>{ACTIVITY_TYPES.map(t=><option key={t.code} value={t.code}>{t.name}</option>)}</Select><Select style={{width:200}} value={filterStatus} onChange={e=>setFilterStatus(e.target.value)}><option value="">Tất cả trạng thái</option>{Object.entries(STATUS_META).map(([k,v])=><option key={k} value={k}>{v.label}</option>)}</Select><Btn variant="outline" onClick={()=>setFilterStatus("dat")}>Xem lại minh chứng Đạt</Btn></div><Card className="overflow-x-auto">{list.length===0?<Empty icon={ClipboardCheck} title="Không có minh chứng nào phù hợp"/>:<table className="w-full text-sm"><thead><tr style={{background:C.grayBg}}>{["Sinh viên","Hoạt động","Loại","Nộp lúc","Trạng thái","Người duyệt",""].map(h=><th key={h} className="text-left px-4 py-2.5 text-xs font-semibold whitespace-nowrap" style={{color:C.gray}}>{h}</th>)}</tr></thead><tbody>{list.map(ev=>{const st=db.students.find(s=>s.mssv===ev.mssv), act=ev.activityId?db.activities.find(a=>a.id===ev.activityId):null;return <tr key={ev.id} className="border-t" style={{borderColor:C.line}}><td className="px-4 py-2.5"><div className="font-medium" style={{color:C.navy}}>{st?.hoTen||ev.mssv}</div><div className="text-xs" style={{color:C.gray}}>{ev.mssv} · {st?.lop}</div></td><td className="px-4 py-2.5 text-xs font-mono" style={{color:C.amber2}}>{act?act.ma:`${ev.loai}-CD`}</td><td className="px-4 py-2.5 text-xs">{typeOf(ev.loai)?.name}</td><td className="px-4 py-2.5 text-xs">{fmtDT(ev.submittedAt)}</td><td className="px-4 py-2.5"><StatusBadge status={ev.status}/>{ev.approvedAt && <span className="ml-2 text-[11px]" style={{color:C.gray}}>Duyệt {fmtDT(ev.approvedAt)}</span>}</td><td className="px-4 py-2.5 text-xs">{ev.approvedBy||"—"}</td><td className="px-4 py-2.5 text-right"><Btn variant="outline" onClick={()=>setModalEv(ev)}>Xem &amp; duyệt</Btn></td></tr>})}</tbody></table>}</Card>{modalEv&&<ReviewModal ev={modalEv} db={db} onClose={()=>setModalEv(null)} onDecide={decide}/>} {manual&&<ManualAttendanceModal db={db} onClose={()=>setManual(false)} onSubmit={manualAttendance}/>}</div>;
 }
 function ManualAttendanceModal({ db, onClose, onSubmit }) {
   const [q,setQ]=useState(""); const [mssv,setMssv]=useState(""); const [activityId,setActivityId]=useState("");
