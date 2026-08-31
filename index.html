@@ -2703,9 +2703,11 @@ function EvidenceForm({ loai, form, setForm }) {
 function StudentProactive({ update, log, show, student }) {
   const [openShare, setOpenShare] = useState(false);
   const [openQC, setOpenQC] = useState(false);
+  const [openGT, setOpenGT] = useState(false);
   const cards = [
-    { key: "SH", icon: Share2, title: "Chia sẻ bài viết", desc: "Khai báo số bài đã chia sẻ, link Facebook và thời gian thực hiện trên trang cá nhân.", action: () => setOpenShare(true), color: C.amber },
-    { key: "QC", icon: Camera, title: "Quay / chụp", desc: "Nộp minh chứng cho việc tự quay/chụp hoặc tham gia cùng CLB Truyền thông.", action: () => setOpenQC(true), color: C.blue },
+    { key: "SH", icon: Share2, title: "Chia sẻ bài viết", desc: "Khai báo số bài đã chia sẻ và link Facebook cá nhân.", action: () => setOpenShare(true), color: C.amber },
+    { key: "QC", icon: Camera, title: "Quay / chụp", desc: "Nộp minh chứng tự quay/chụp hoặc tham gia cùng CLB Truyền thông.", action: () => setOpenQC(true), color: C.blue },
+    { key: "GT", icon: UserPlus2, title: "Giới thiệu người học", desc: "Khai báo người học bạn giới thiệu và xác nhận tình trạng nhập học, nộp học phí.", action: () => setOpenGT(true), color: C.purple },
   ];
   return (
     <div>
@@ -2730,7 +2732,64 @@ function StudentProactive({ update, log, show, student }) {
       <Modal open={openQC} onClose={() => setOpenQC(false)} title="Nộp minh chứng · Quay / chụp" width="max-w-lg">
         <ProactiveQCForm update={update} log={log} show={show} student={student} onDone={() => setOpenQC(false)} />
       </Modal>
+      <Modal open={openGT} onClose={() => setOpenGT(false)} title="Nộp minh chứng · Giới thiệu người học" width="max-w-lg">
+        <ProactiveGTForm update={update} log={log} show={show} student={student} onDone={() => setOpenGT(false)} />
+      </Modal>
     </div>
+  );
+}
+function ProactiveGTForm({ update, log, show, student, onDone }) {
+  const [hoTen, setHoTen] = useState("");
+  const [daNhapHoc, setDaNhapHoc] = useState(false);
+  const [daNopHocPhi, setDaNopHocPhi] = useState(false);
+  const [ghiChu, setGhiChu] = useState("");
+  const [camKet, setCamKet] = useState(false);
+  const [err, setErr] = useState("");
+  const submit = (e) => {
+    e.preventDefault(); setErr("");
+    if (!hoTen.trim()) return setErr("Vui lòng nhập họ tên người học được giới thiệu.");
+    if (!daNhapHoc) return setErr("Vui lòng xác nhận người học đã nhập học.");
+    if (!daNopHocPhi) return setErr("Vui lòng xác nhận người học đã nộp học phí.");
+    if (!camKet) return setErr("Vui lòng cam kết thông tin trung thực.");
+    const ev = {
+      id: uid(), activityId: null, mssv: student.mssv, loai: "GT", nguonNop: "chu_dong",
+      data: { hoTen: hoTen.trim(), daNhapHoc: true, daNopHocPhi: true, ghiChu: ghiChu.trim() },
+      status: "cho_kiem_tra", note: "", approvedBy: "", approvedAt: "", submittedAt: nowISO(), camKet: true
+    };
+    update("evidences", (arr) => [ev, ...arr]);
+    log(student.mssv, "Nộp minh chứng chủ động", "GT-CD", "Đã gửi giới thiệu người học, chờ kiểm tra");
+    show("Đã gửi thông tin người học, vui lòng chờ kiểm tra.");
+    setHoTen(""); setDaNhapHoc(false); setDaNopHocPhi(false); setGhiChu(""); setCamKet(false); onDone();
+  };
+  return (
+    <form onSubmit={submit}>
+      <div className="text-xs p-3 rounded-lg mb-4" style={{ background: C.purple + "18", color: C.purple }}>
+        <b>Quy định giới thiệu người học:</b> 01 người học được quản trị viên xác minh đã nhập học và hoàn thành việc nộp học phí kỳ đầu tiên được tính theo quy đổi của hệ thống.
+      </div>
+      <Field label="Họ tên người học được giới thiệu" required>
+        <TextInput value={hoTen} onChange={(e) => setHoTen(e.target.value)} placeholder="Nhập họ và tên" />
+      </Field>
+      <label className="flex items-start gap-2 text-xs mb-3" style={{ color: C.navy2 }}>
+        <input type="checkbox" checked={daNhapHoc} onChange={(e) => setDaNhapHoc(e.target.checked)} className="mt-0.5" />
+        Tôi xác nhận người học trên <b>đã nhập học</b>.
+      </label>
+      <label className="flex items-start gap-2 text-xs mb-3" style={{ color: C.navy2 }}>
+        <input type="checkbox" checked={daNopHocPhi} onChange={(e) => setDaNopHocPhi(e.target.checked)} className="mt-0.5" />
+        Tôi xác nhận người học trên <b>đã nộp học phí kỳ đầu tiên</b>.
+      </label>
+      <Field label="Ghi chú thêm">
+        <TextArea rows={2} value={ghiChu} onChange={(e) => setGhiChu(e.target.value)} placeholder="Thông tin bổ sung nếu cần" />
+      </Field>
+      <div className="text-xs p-3 rounded-lg mb-3" style={{ background: C.blueBg, color: C.blue }}>
+        <b>Lưu ý:</b> Các xác nhận của sinh viên vẫn phải được quản trị viên kiểm tra/xác minh trước khi minh chứng được chuyển sang trạng thái Đạt và cộng điểm.
+      </div>
+      <label className="flex items-start gap-2 text-xs mb-3" style={{ color: C.navy2 }}>
+        <input type="checkbox" checked={camKet} onChange={(e) => setCamKet(e.target.checked)} className="mt-0.5" />
+        Tôi cam kết các thông tin cung cấp là trung thực, chính xác.
+      </label>
+      {err && <div className="text-xs font-medium mb-3" style={{ color: C.red }}>{err}</div>}
+      <Btn type="submit" variant="amber" className="w-full">Gửi minh chứng</Btn>
+    </form>
   );
 }
 function ProactiveShareForm({ update, log, show, student, onDone }) {
@@ -2815,13 +2874,14 @@ function ProactiveQCForm({ update, log, show, student, onDone }) {
 
 function StudentHistory({ db, student }) {
   const rows = db.evidences.filter((e) => e.mssv === student.mssv).sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
+  const [viewEv, setViewEv] = useState(null);
   return (
     <div>
       <PageHead title="Lịch sử hoạt động của tôi" sub="Toàn bộ minh chứng đã nộp và kết quả kiểm tra." />
       <Card className="overflow-hidden">
         {rows.length === 0 ? <Empty title="Chưa có lịch sử nào" /> : (
           <table className="w-full text-sm">
-            <thead><tr style={{ background: C.grayBg }}>{["Mã HĐ", "Loại", "Nộp lúc", "Trạng thái", "Người duyệt", "Ghi chú"].map((h) => <th key={h} className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: C.gray }}>{h}</th>)}</tr></thead>
+            <thead><tr style={{ background: C.grayBg }}>{["Mã HĐ", "Loại", "Nộp lúc", "Trạng thái", "Người duyệt", "Ghi chú", ""].map((h) => <th key={h} className="text-left px-4 py-2.5 text-xs font-semibold" style={{ color: C.gray }}>{h}</th>)}</tr></thead>
             <tbody>
               {rows.map((e) => {
                 const act = e.activityId ? db.activities.find((a) => a.id === e.activityId) : null;
@@ -2833,6 +2893,7 @@ function StudentHistory({ db, student }) {
                     <td className="px-4 py-2.5"><StatusBadge status={e.status} /></td>
                     <td className="px-4 py-2.5 text-xs">{e.approvedBy || "—"}</td>
                     <td className="px-4 py-2.5 text-xs" style={{ color: C.gray }}>{e.note || "—"}</td>
+                    <td className="px-4 py-2.5 text-right"><Btn variant="outline" onClick={() => setViewEv(e)}>Xem lại</Btn></td>
                   </tr>
                 );
               })}
@@ -2840,6 +2901,10 @@ function StudentHistory({ db, student }) {
           </table>
         )}
       </Card>
+      {viewEv && <Modal open onClose={() => setViewEv(null)} title="Xem lại minh chứng đã nộp" width="max-w-lg">
+        <EvidenceDataView ev={viewEv} />
+        <div className="text-xs p-3 rounded-lg" style={{ background: C.grayBg, color: C.gray }}>Nộp lúc: <b>{fmtDT(viewEv.submittedAt)}</b> · Người duyệt: <b>{viewEv.approvedBy || "—"}</b></div>
+      </Modal>}
     </div>
   );
 }
@@ -3161,7 +3226,18 @@ function AdminStudents({ db, update, log, show, admin }) {
   const list=db.students.filter(s=>(!q||s.hoTen.toLowerCase().includes(q.toLowerCase())||s.mssv.toLowerCase().includes(q.toLowerCase()))&&(!khoa||s.khoa===khoa)&&(!lop||s.lop===lop));
   const khoas=[...new Set(db.students.map(s=>s.khoa).filter(Boolean))]; const lops=[...new Set(db.students.filter(s=>!khoa||s.khoa===khoa).map(s=>s.lop).filter(Boolean))];
   const toggleLock=s=>{const next=s.trangThai==="locked"?"active":"locked";update("students",arr=>arr.map(x=>x.mssv===s.mssv?{...x,trangThai:next}:x));log(admin.hoten,next==="locked"?"Khóa tài khoản sinh viên":"Mở tài khoản sinh viên",s.mssv,"Thành công");show(next==="locked"?`Đã khóa ${s.mssv}`:`Đã mở ${s.mssv}`)};
-  const remove=s=>{if(!confirm(`Xóa tài khoản sinh viên ${s.mssv} · ${s.hoTen}? Dữ liệu minh chứng cũ sẽ vẫn được giữ.`))return;update("students",arr=>arr.filter(x=>x.mssv!==s.mssv));log(admin.hoten,"Xóa tài khoản sinh viên",s.mssv,"Đã xóa tài khoản",{key:"students",value:db.students});show(`Đã xóa tài khoản ${s.mssv}.`)};
+  const remove=s=>{
+    if(!confirm(`Xóa tài khoản sinh viên ${s.mssv} · ${s.hoTen}?\n\nToàn bộ dữ liệu gắn với sinh viên này sẽ bị xóa khỏi hệ thống, gồm: minh chứng, khiếu nại, thông báo, tin nhắn và dữ liệu lưu trữ theo khóa. Thao tác không thể hoàn tác.`)) return;
+    const mssv=s.mssv;
+    update("students",arr=>arr.filter(x=>x.mssv!==mssv));
+    update("evidences",arr=>arr.filter(x=>x.mssv!==mssv));
+    update("complaints",arr=>arr.filter(x=>x.mssv!==mssv));
+    update("notifications",arr=>arr.filter(x=>x.mssv!==mssv));
+    update("messages",arr=>arr.filter(x=>x.mssv!==mssv));
+    update("cohortArchives",arr=>(arr||[]).map(snapshot=>({...snapshot,students:(snapshot.students||[]).filter(x=>x.mssv!==mssv),evidences:(snapshot.evidences||[]).filter(x=>x.mssv!==mssv),complaints:(snapshot.complaints||[]).filter(x=>x.mssv!==mssv),notifications:(snapshot.notifications||[]).filter(x=>x.mssv!==mssv),messages:(snapshot.messages||[]).filter(x=>x.mssv!==mssv)})));
+    log(admin.hoten,"Xóa toàn bộ dữ liệu sinh viên",mssv,"Đã xóa tài khoản và toàn bộ dữ liệu liên quan");
+    show(`Đã xóa ${s.hoTen} và toàn bộ dữ liệu liên quan.`);
+  };
   return <div><PageHead title="Quản lý sinh viên" sub={`${db.students.length} sinh viên trong hệ thống`} right={<Btn variant="amber" icon={Plus} onClick={()=>setOpenAdd(true)}>Thêm sinh viên</Btn>}/><div className="flex flex-wrap gap-2 mb-4"><div className="relative flex-1 min-w-[200px]"><Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{color:C.gray}}/><TextInput className="pl-9" placeholder="Tìm theo tên hoặc MSSV..." value={q} onChange={e=>setQ(e.target.value)}/></div><Select style={{width:140}} value={khoa} onChange={e=>{setKhoa(e.target.value);setLop("")}}><option value="">Tất cả khóa</option>{khoas.map(k=><option key={k}>{k}</option>)}</Select><Select style={{width:160}} value={lop} onChange={e=>setLop(e.target.value)}><option value="">Tất cả lớp</option>{lops.map(l=><option key={l}>{l}</option>)}</Select></div><Card className="overflow-x-auto"><table className="w-full text-sm"><thead><tr style={{background:C.grayBg}}>{["MSSV","Họ tên","Khóa","Lớp","SĐT","Email","Trạng thái",""].map(h=><th key={h} className="text-left px-4 py-2.5 text-xs font-semibold whitespace-nowrap" style={{color:C.gray}}>{h}</th>)}</tr></thead><tbody>{list.map(s=><tr key={s.mssv} className="border-t" style={{borderColor:C.line}}><td className="px-4 py-2.5 font-mono text-xs">{s.mssv}</td><td className="px-4 py-2.5 font-medium" style={{color:C.navy}}>{s.hoTen}</td><td className="px-4 py-2.5">{s.khoa}</td><td className="px-4 py-2.5">{s.lop}</td><td className="px-4 py-2.5 text-xs">{s.sdt}</td><td className="px-4 py-2.5 text-xs">{s.email}</td><td className="px-4 py-2.5">{s.trangThai==="locked"?<Badge bg={C.redBg} fg={C.red}>Đã khóa</Badge>:<Badge bg={C.greenBg} fg={C.green}>Hoạt động</Badge>}</td><td className="px-4 py-2.5"><div className="flex gap-1.5 justify-end"><button onClick={()=>setEditing(s)} className="p-1.5 rounded-lg hover:bg-gray-100" title="Xem"><Eye size={15}/></button><button onClick={()=>toggleLock(s)} className="p-1.5 rounded-lg hover:bg-gray-100" title="Khóa/mở">{s.trangThai==="locked"?<Unlock size={15} style={{color:C.green}}/>:<Lock size={15} style={{color:C.red}}/>}</button><button onClick={()=>remove(s)} className="p-1.5 rounded-lg hover:bg-gray-100" title="Xóa"><Trash2 size={15} style={{color:C.red}}/></button></div></td></tr>)}</tbody></table></Card>{editing&&<Modal open onClose={()=>setEditing(null)} title={`Hồ sơ · ${editing.mssv}`}><div className="space-y-2 text-sm mb-4">{[["Họ tên",editing.hoTen],["Khóa",editing.khoa],["Niên khóa",cohortAcademicYear(editing.khoa)],["Năm học hiện tại",`Năm ${currentStudentYear(editing.khoa)}`],["Lớp",editing.lop],["SĐT",editing.sdt],["Email",editing.email],["Facebook",editing.facebook]].map(([l,v])=><div key={l} className="flex justify-between py-1.5 border-b" style={{borderColor:C.line}}><span style={{color:C.gray}}>{l}</span><span className="font-medium">{v||"—"}</span></div>)}</div><ResetStudentPasswordForm student={editing} update={update} log={log} show={show} admin={admin}/></Modal>}<Modal open={openAdd} onClose={()=>setOpenAdd(false)} title="Thêm tài khoản sinh viên"><AddStudentForm db={db} update={update} log={log} show={show} admin={admin} onDone={()=>setOpenAdd(false)}/></Modal></div>;
 }
 function AddStudentForm({ db, update, log, show, admin, onDone }) {
@@ -3301,7 +3377,7 @@ function AdminReview({ db, update, notify, log, show, admin }) {
   const list = db.evidences.filter((e) => (!filterType || e.loai === filterType) && (!filterStatus || e.status === filterStatus)).sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
   const decide = (ev, status, note) => { update("evidences", arr=>arr.map(x=>x.id===ev.id?{...x,status,note,approvedBy:admin.hoten,approvedAt:nowISO()}:x)); const act=ev.activityId?db.activities.find(a=>a.id===ev.activityId):null; const label=act?act.ma:`${ev.loai}-CD`; log(admin.hoten,"Kiểm tra minh chứng",`${label} · ${ev.mssv}`,STATUS_META[status].label); notify(ev.mssv,`Minh chứng ${label} của bạn: ${STATUS_META[status].label}${note?" — "+note:""}`); show("Đã cập nhật kết quả kiểm tra."); setModalEv(null); };
   const manualAttendance = (mssv, activityId) => { const st=db.students.find(s=>s.mssv===mssv), a=db.activities.find(x=>x.id===activityId); if(!st||!a)return; const existing=db.evidences.find(e=>e.mssv===mssv&&e.activityId===activityId&&e.manualAttendance); if(existing){show("Sinh viên này đã được điểm danh thủ công.");return;} const ev={id:uid(),activityId,mssv,loai:a.loai,data:{nguon:"to_chuc",manual:true},status:"dat",manualAttendance:true,note:"Điểm danh thủ công bởi quản trị viên",approvedBy:admin.hoten,approvedAt:nowISO(),submittedAt:nowISO(),camKet:true}; update("evidences",arr=>[ev,...arr]); log(admin.hoten,"Điểm danh thủ công",`${a.ma} · ${mssv}`,"Đạt — ưu tiên cao nhất"); notify(mssv,`Bạn đã được quản trị viên điểm danh trong hoạt động ${a.ma}.`); show(`Đã điểm danh ${st.hoTen} trong ${a.ma}.`); setManual(false); };
-  return <div><PageHead title="Kiểm tra minh chứng" sub="Duyệt từng minh chứng. Điểm danh thủ công của quản trị viên có ưu tiên cao nhất." right={<Btn variant="amber" icon={UserCheck} onClick={()=>setManual(true)}>Điểm danh thủ công</Btn>}/><div className="flex flex-wrap gap-2 mb-4"><Select style={{width:200}} value={filterType} onChange={e=>setFilterType(e.target.value)}><option value="">Tất cả loại</option>{ACTIVITY_TYPES.map(t=><option key={t.code} value={t.code}>{t.name}</option>)}</Select><Select style={{width:200}} value={filterStatus} onChange={e=>setFilterStatus(e.target.value)}><option value="">Tất cả trạng thái</option>{Object.entries(STATUS_META).map(([k,v])=><option key={k} value={k}>{v.label}</option>)}</Select></div><Card className="overflow-x-auto">{list.length===0?<Empty icon={ClipboardCheck} title="Không có minh chứng nào phù hợp"/>:<table className="w-full text-sm"><thead><tr style={{background:C.grayBg}}>{["Sinh viên","Hoạt động","Loại","Nộp lúc","Trạng thái","Người duyệt",""].map(h=><th key={h} className="text-left px-4 py-2.5 text-xs font-semibold whitespace-nowrap" style={{color:C.gray}}>{h}</th>)}</tr></thead><tbody>{list.map(ev=>{const st=db.students.find(s=>s.mssv===ev.mssv), act=ev.activityId?db.activities.find(a=>a.id===ev.activityId):null;return <tr key={ev.id} className="border-t" style={{borderColor:C.line}}><td className="px-4 py-2.5"><div className="font-medium" style={{color:C.navy}}>{st?.hoTen||ev.mssv}</div><div className="text-xs" style={{color:C.gray}}>{ev.mssv} · {st?.lop}</div></td><td className="px-4 py-2.5 text-xs font-mono" style={{color:C.amber2}}>{act?act.ma:`${ev.loai}-CD`}</td><td className="px-4 py-2.5 text-xs">{typeOf(ev.loai)?.name}</td><td className="px-4 py-2.5 text-xs">{fmtDT(ev.submittedAt)}</td><td className="px-4 py-2.5"><StatusBadge status={ev.status}/></td><td className="px-4 py-2.5 text-xs">{ev.approvedBy||"—"}</td><td className="px-4 py-2.5 text-right"><Btn variant="outline" onClick={()=>setModalEv(ev)}>Xem &amp; duyệt</Btn></td></tr>})}</tbody></table>}</Card>{modalEv&&<ReviewModal ev={modalEv} db={db} onClose={()=>setModalEv(null)} onDecide={decide}/>} {manual&&<ManualAttendanceModal db={db} onClose={()=>setManual(false)} onSubmit={manualAttendance}/>}</div>;
+  return <div><PageHead title="Kiểm tra minh chứng" sub="Duyệt từng minh chứng. Điểm danh thủ công của quản trị viên có ưu tiên cao nhất." right={<Btn variant="amber" icon={UserCheck} onClick={()=>setManual(true)}>Điểm danh thủ công</Btn>}/><div className="flex flex-wrap gap-2 mb-4"><Select style={{width:200}} value={filterType} onChange={e=>setFilterType(e.target.value)}><option value="">Tất cả loại</option>{ACTIVITY_TYPES.map(t=><option key={t.code} value={t.code}>{t.name}</option>)}</Select><Select style={{width:200}} value={filterStatus} onChange={e=>setFilterStatus(e.target.value)}><option value="">Tất cả trạng thái</option>{Object.entries(STATUS_META).map(([k,v])=><option key={k} value={k}>{v.label}</option>)}</Select><Btn variant="outline" onClick={()=>setFilterStatus("dat")}>Xem lại minh chứng Đạt</Btn></div><Card className="overflow-x-auto">{list.length===0?<Empty icon={ClipboardCheck} title="Không có minh chứng nào phù hợp"/>:<table className="w-full text-sm"><thead><tr style={{background:C.grayBg}}>{["Sinh viên","Hoạt động","Loại","Nộp lúc","Trạng thái","Người duyệt",""].map(h=><th key={h} className="text-left px-4 py-2.5 text-xs font-semibold whitespace-nowrap" style={{color:C.gray}}>{h}</th>)}</tr></thead><tbody>{list.map(ev=>{const st=db.students.find(s=>s.mssv===ev.mssv), act=ev.activityId?db.activities.find(a=>a.id===ev.activityId):null;return <tr key={ev.id} className="border-t" style={{borderColor:C.line}}><td className="px-4 py-2.5"><div className="font-medium" style={{color:C.navy}}>{st?.hoTen||ev.mssv}</div><div className="text-xs" style={{color:C.gray}}>{ev.mssv} · {st?.lop}</div></td><td className="px-4 py-2.5 text-xs font-mono" style={{color:C.amber2}}>{act?act.ma:`${ev.loai}-CD`}</td><td className="px-4 py-2.5 text-xs">{typeOf(ev.loai)?.name}</td><td className="px-4 py-2.5 text-xs">{fmtDT(ev.submittedAt)}</td><td className="px-4 py-2.5"><StatusBadge status={ev.status}/></td><td className="px-4 py-2.5 text-xs">{ev.approvedBy||"—"}</td><td className="px-4 py-2.5 text-right"><Btn variant="outline" onClick={()=>setModalEv(ev)}>Xem &amp; duyệt</Btn></td></tr>})}</tbody></table>}</Card>{modalEv&&<ReviewModal ev={modalEv} db={db} onClose={()=>setModalEv(null)} onDecide={decide}/>} {manual&&<ManualAttendanceModal db={db} onClose={()=>setManual(false)} onSubmit={manualAttendance}/>}</div>;
 }
 function ManualAttendanceModal({ db, onClose, onSubmit }) {
   const [q,setQ]=useState(""); const [mssv,setMssv]=useState(""); const [activityId,setActivityId]=useState("");
@@ -3334,7 +3410,7 @@ function EvidenceDataView({ ev }) {
   } else if (ev.loai === "VD") {
     rows = [["Link Drive", d.link], ["Mô tả", d.moTa || "—"]];
   } else if (ev.loai === "GT") {
-    rows = [["Người giới thiệu", d.hoTen], ["SĐT", d.sdt], ["Ghi chú", d.ghiChu || "—"]];
+    rows = [["Người học được giới thiệu", d.hoTen], d.daNhapHoc !== undefined && ["Xác nhận đã nhập học", d.daNhapHoc ? "Có" : "Không"], d.daNopHocPhi !== undefined && ["Xác nhận đã nộp học phí", d.daNopHocPhi ? "Có" : "Không"], ["SĐT", d.sdt || "—"], ["Ghi chú", d.ghiChu || "—"]].filter(Boolean);
   } else if (ev.loai === "KH") {
     rows = [["Mô tả", d.moTa], ["Link", d.link || "—"]];
   }
